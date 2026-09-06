@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG BROTHER — Admin Work V5.4 Pending Daily Cash Collection</title>
+<title>BIG BROTHER — Admin Work V5.5 Daily Cash Review Accept Reject</title>
 <style>
 :root{
   --bg:#f4f7fb;--card:#fff;--line:#dfe6ef;--text:#17304f;--muted:#6d7d91;
@@ -334,7 +334,16 @@ tbody tr:hover{background:#f9fbfe}
       </table>
     </div>
     <div class="note" id="dcReviewTotals"></div>
-    <button class="btn secondary" style="width:100%;margin-top:12px" onclick="closePendingDailyCashReview()">Close</button>
+    <div class="note" id="dcBankReview" style="margin-top:10px"></div>
+    <div class="field" style="margin-top:12px">
+      <label>Reject Reason <span style="font-weight:400;color:#7a8798">(optional)</span></label>
+      <textarea id="dcRejectReason" rows="2" placeholder="Reason if the request is not correct"></textarea>
+    </div>
+    <div class="formerror" id="dcReviewError"></div>
+    <div class="actions">
+      <button class="btn danger" id="dcRejectBtn" onclick="rejectPendingDailyCash()">✕ Reject</button>
+      <button class="btn success" id="dcAcceptBtn" onclick="acceptPendingDailyCash()">✓ Accept</button>
+    </div>
   </div>
 </div>
 
@@ -988,7 +997,86 @@ function openPendingDailyCashReview(requestId){
     `<strong>Groups:</strong> ${num(r.groupCount)}`+
     `${r.note?`<br><strong>Note:</strong> ${esc(r.note)}`:""}`;
 
+  $("dcBankReview").innerHTML=r.alreadyDepositedBank
+    ? `<strong>Already Deposited to Bank:</strong> YES<br><strong>Bank:</strong> ${esc(r.bankAccount||"-")}<br><strong>Reference:</strong> ${esc(r.bankReference||"-")}<br><span style="color:#198754;font-weight:700">Accept → automatically goes to Deposit History.</span>`
+    : `<strong>Already Deposited to Bank:</strong> NO<br><span style="color:#966200;font-weight:700">Accept → moves to Pending Deposit.</span>`;
+
+  $("dcRejectReason").value="";
+  $("dcReviewError").textContent="";
+  $("dcReviewError").classList.remove("show");
   $("dailyCashRequestReviewOverlay").classList.remove("hidden");
+}
+
+
+async function acceptPendingDailyCash(){
+  if(!currentDailyCashCollectionRequest)return;
+  const r=currentDailyCashCollectionRequest;
+
+  const message=r.alreadyDepositedBank
+    ? `Accept ${r.requestId} as already deposited to ${r.bankAccount||"company bank"}?`
+    : `Accept ${r.requestId} and move it to Pending Deposit?`;
+
+  if(!confirm(message))return;
+
+  const btn=$("dcAcceptBtn");
+  btn.disabled=true;btn.textContent="Accepting…";
+  $("dcReviewError").textContent="";
+  $("dcReviewError").classList.remove("show");
+
+  try{
+    const d=await apiPost({
+      action:"dccApproveRequest",
+      requestData:JSON.stringify({
+        sessionToken,
+        requestId:r.requestId
+      })
+    });
+
+    closePendingDailyCashReview();
+    await loadPendingDailyCash(true);
+
+    alert(
+      d.alreadyDepositedBank
+        ? "Daily Cash accepted. It was already deposited to bank and is now in Deposit History."
+        : "Daily Cash accepted and moved to Pending Deposit."
+    );
+  }catch(e){
+    $("dcReviewError").textContent=e.message||"Could not accept Daily Cash Request.";
+    $("dcReviewError").classList.add("show");
+  }finally{
+    btn.disabled=false;btn.textContent="✓ Accept";
+  }
+}
+
+async function rejectPendingDailyCash(){
+  if(!currentDailyCashCollectionRequest)return;
+  const r=currentDailyCashCollectionRequest;
+  if(!confirm(`Reject ${r.requestId}?`))return;
+
+  const btn=$("dcRejectBtn");
+  btn.disabled=true;btn.textContent="Rejecting…";
+  $("dcReviewError").textContent="";
+  $("dcReviewError").classList.remove("show");
+
+  try{
+    await apiPost({
+      action:"dccRejectRequest",
+      requestData:JSON.stringify({
+        sessionToken,
+        requestId:r.requestId,
+        reason:$("dcRejectReason").value.trim()
+      })
+    });
+
+    closePendingDailyCashReview();
+    await loadPendingDailyCash(true);
+    alert("Daily Cash Request rejected. Its invoices are available to request again.");
+  }catch(e){
+    $("dcReviewError").textContent=e.message||"Could not reject Daily Cash Request.";
+    $("dcReviewError").classList.add("show");
+  }finally{
+    btn.disabled=false;btn.textContent="✕ Reject";
+  }
 }
 
 function closePendingDailyCashReview(){
