@@ -68,74 +68,245 @@ tbody tr:hover{background:#f9fbfe}
 @media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr 1fr}.topbar{flex-direction:column}.userbox{justify-content:flex-start}}
 @media(max-width:560px){body{padding:10px}.cards{grid-template-columns:1fr 1fr;gap:8px}.filters{grid-template-columns:1fr}.actions{grid-template-columns:1fr}.topbar h1{font-size:23px}}
 
-/* ===== V6.2 PENDING DAILY CASH REVIEW ===== */
+/* ===== V6.3 PENDING DAILY CASH REVIEW — MOCKUP MATCH ===== */
 .dc-review-shell{
-  width:min(1380px,97vw);
-  max-height:95vh;
+  width:min(1460px,96vw);
+  height:min(900px,94vh);
   background:#fff;
   border-radius:18px;
   box-shadow:0 28px 90px rgba(15,35,65,.32);
-  overflow:auto;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
 }
 .dc-review-head{
-  display:flex;justify-content:space-between;gap:18px;align-items:flex-start;
-  padding:20px 22px 14px;border-bottom:1px solid var(--line);
+  display:flex;
+  justify-content:space-between;
+  gap:18px;
+  align-items:flex-start;
+  padding:18px 24px 14px;
+  border-bottom:1px solid #e2e9f2;
+  background:#fff;
+  flex:0 0 auto;
 }
-.dc-review-head h2{margin:0 0 5px;font-size:25px}
-.dc-review-head p{margin:0;color:var(--muted)}
+.dc-review-head h2{
+  margin:0 0 4px;
+  font-size:26px;
+  color:#17365d;
+  letter-spacing:-.2px;
+}
+.dc-review-head p{
+  margin:0;
+  color:#667891;
+  font-size:14px;
+}
 .dc-review-status{
-  padding:10px 14px;border-radius:12px;background:#fff4d9;border:1px solid #f2d38a;
-  color:#915c00;font-weight:800;white-space:nowrap
+  padding:10px 14px;
+  border-radius:12px;
+  background:#fff5dc;
+  border:1px solid #f0d48d;
+  color:#8e5c00;
+  font-weight:900;
+  white-space:nowrap;
 }
-.dc-review-body{padding:16px 18px 18px}
+.dc-review-body{
+  padding:14px 18px 16px;
+  overflow:auto;
+  flex:1 1 auto;
+  background:#fbfdff;
+}
 .dc-section{
-  border:1px solid var(--line);border-radius:14px;background:#fff;margin-bottom:12px;overflow:hidden
+  border:1px solid #dbe5f1;
+  border-radius:14px;
+  background:#fff;
+  margin-bottom:12px;
+  overflow:hidden;
+  box-shadow:0 1px 0 rgba(20,50,90,.02);
 }
 .dc-section-title{
-  padding:11px 14px;font-size:15px;font-weight:900;background:#f8fbff;border-bottom:1px solid var(--line)
+  padding:10px 14px;
+  font-size:15px;
+  font-weight:900;
+  color:#183a66;
+  background:linear-gradient(180deg,#fbfdff 0%,#f5f9fe 100%);
+  border-bottom:1px solid #e2eaf3;
 }
 .dc-summary-grid{
-  display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:9px;padding:12px
+  display:grid;
+  grid-template-columns:repeat(7,minmax(130px,1fr));
+  gap:9px;
+  padding:10px;
 }
 .dc-summary-card{
-  border:1px solid var(--line);border-radius:11px;padding:11px;background:#fff;min-width:0
+  border:1px solid #dbe5f1;
+  border-radius:11px;
+  padding:10px 11px;
+  background:#fff;
+  min-width:0;
 }
-.dc-summary-card small{display:block;color:var(--muted);font-weight:800;margin-bottom:5px}
-.dc-summary-card strong{font-size:17px;word-break:break-word}
-.dc-summary-card.good{background:#eefaf3;border-color:#ccebd8}
-.dc-summary-card.warn{background:#fff8e8;border-color:#f4dfaa}
-.dc-review-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(310px,.7fr);gap:12px}
-.dc-side{display:flex;flex-direction:column;gap:12px}
-.dc-info-list{padding:8px 12px}
+.dc-summary-card small{
+  display:block;
+  color:#65758b;
+  font-weight:800;
+  font-size:11px;
+  line-height:1.15;
+  min-height:26px;
+  margin-bottom:4px;
+}
+.dc-summary-card strong{
+  display:block;
+  font-size:17px;
+  color:#15365f;
+  line-height:1.15;
+  white-space:nowrap;
+}
+.dc-summary-card.good{
+  background:#eefaf3;
+  border-color:#cdebd9;
+}
+.dc-summary-card.good strong{color:#13834f}
+.dc-summary-card.warn{
+  background:#fff8e8;
+  border-color:#f2dfac;
+}
+.dc-review-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.95fr) minmax(340px,.72fr);
+  gap:12px;
+  align-items:start;
+}
+.dc-side{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.dc-review-table-wrap{
+  overflow:auto;
+  max-height:335px;
+}
+.dc-review-table{
+  width:100%;
+  min-width:1180px;
+  border-collapse:separate;
+  border-spacing:0;
+}
+.dc-review-table thead th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:#f3f7fc;
+  color:#304b70;
+  font-weight:900;
+  border-bottom:1px solid #dce6f1;
+}
+.dc-review-table th,
+.dc-review-table td{
+  padding:8px 9px;
+  font-size:12px;
+  border-right:1px solid #edf1f6;
+}
+.dc-review-table th:last-child,
+.dc-review-table td:last-child{border-right:0}
+.dc-review-table tbody tr:nth-child(even){background:#fbfdff}
+.dc-review-table tbody tr:hover{background:#f4f8fd}
+.dc-review-table td strong{color:#163861}
+.dc-review-table tfoot td{
+  position:sticky;
+  bottom:0;
+  z-index:1;
+  font-weight:900;
+  background:#edf5ff;
+  color:#15365f;
+  border-top:1px solid #d8e5f3;
+}
+.dc-info-list{
+  padding:6px 12px 7px;
+}
 .dc-info-row{
-  display:flex;justify-content:space-between;gap:15px;padding:9px 2px;border-bottom:1px solid #edf1f6
+  display:flex;
+  justify-content:space-between;
+  gap:15px;
+  padding:8px 1px;
+  border-bottom:1px solid #edf1f6;
+  font-size:13px;
 }
 .dc-info-row:last-child{border-bottom:0}
-.dc-info-row span:first-child{color:var(--muted)}
-.dc-info-row strong{text-align:right}
-.dc-review-table-wrap{overflow:auto}
-.dc-review-table{min-width:1120px}
-.dc-review-table th,.dc-review-table td{padding:9px 10px;font-size:12px}
-.dc-review-table tfoot td{font-weight:900;background:#f3f8ff}
+.dc-info-row span:first-child{color:#65758b}
+.dc-info-row strong{
+  text-align:right;
+  color:#15365f;
+}
 .dc-match{
-  display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;
-  font-weight:900;background:#eaf8ef;color:#198754
+  display:inline-flex;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  font-weight:900;
+  background:#eaf8ef;
+  color:#198754;
 }
-.dc-decision{padding:12px 14px}
-.dc-decision textarea{width:100%;box-sizing:border-box}
-.dc-review-actions{display:grid;grid-template-columns:1fr 1.6fr;gap:10px;margin-top:10px}
-@media(max-width:1080px){
-  .dc-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.dc-decision{
+  padding:10px 12px 12px;
+}
+.dc-decision .field{
+  margin-bottom:0;
+}
+.dc-decision textarea{
+  width:100%;
+  box-sizing:border-box;
+  min-height:62px;
+}
+.dc-review-actions{
+  display:grid;
+  grid-template-columns:1fr 1.5fr;
+  gap:10px;
+  margin-top:10px;
+}
+.dc-review-actions .btn{
+  min-height:42px;
+  font-weight:900;
+}
+.dc-review-shell .close{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  border:0;
+  background:#f0f3f7;
+  color:#1c3557;
+  font-size:20px;
+  cursor:pointer;
+}
+.dc-review-shell .close:hover{background:#e6ebf1}
+.dc-review-shell .note{
+  background:#fff8e9;
+  border:1px solid #f1dfad;
+  color:#8b5c00;
+  border-radius:9px;
+  padding:8px 10px;
+  font-size:12px;
+  line-height:1.4;
+}
+@media(max-width:1180px){
+  .dc-summary-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
   .dc-review-grid{grid-template-columns:1fr}
+  .dc-review-table-wrap{max-height:320px}
 }
-@media(max-width:680px){
-  .dc-review-head{padding:15px;flex-direction:column}
+@media(max-width:760px){
+  .dc-review-shell{
+    width:98vw;
+    height:97vh;
+    border-radius:12px;
+  }
+  .dc-review-head{
+    padding:14px;
+    flex-direction:column;
+  }
+  .dc-review-head h2{font-size:21px}
   .dc-review-status{white-space:normal}
   .dc-review-body{padding:10px}
   .dc-summary-grid{grid-template-columns:1fr 1fr}
   .dc-review-actions{grid-template-columns:1fr}
 }
-
 </style>
 </head>
 <body>
@@ -479,11 +650,6 @@ tbody tr:hover{background:#f9fbfe}
           </section>
 
           <section class="dc-section">
-            <div class="dc-section-title">Close Method & Result</div>
-            <div class="dc-info-list" id="dcBankReview"></div>
-          </section>
-
-          <section class="dc-section">
             <div class="dc-section-title">Physical Cash Verification</div>
             <div class="dc-info-list">
               <div class="dc-info-row"><span>Expected Selected Invoice Value</span><strong id="dcVerifyExpected">$0.00</strong></div>
@@ -492,6 +658,10 @@ tbody tr:hover{background:#f9fbfe}
               <div class="dc-info-row"><span>Actual Equivalent USD</span><strong id="dcVerifyEquivalent">$0.00</strong></div>
               <div class="dc-info-row"><span>Result</span><strong><span class="dc-match" id="dcVerifyResult">✓ MATCH</span></strong></div>
             </div>
+          </section>
+<section class="dc-section">
+            <div class="dc-section-title">Close Method & Result</div>
+            <div class="dc-info-list" id="dcBankReview"></div>
           </section>
         </aside>
       </div>
@@ -1225,12 +1395,12 @@ function openPendingDailyCashReview(requestId){
   }).join("");
 
   $("dcInvoiceCountBadge").textContent=`(${invoices.length})`;
-  $("dcTableOriginalTotal").textContent=money(originalUsdTotal,"USD")+" equiv.";
+  $("dcTableOriginalTotal").textContent=money(originalUsdTotal||num(r.expectedUSD),"USD")+" equiv.";
   $("dcTableCashTotal").textContent=
     `${money(cashUsdTotal,"USD")} + ${money(cashKhrTotal,"KHR")}`;
   $("dcTableExpectedTotal").textContent=money(expectedTotal,"USD");
 
-  $("dcOriginalTotal").textContent=money(originalUsdTotal,"USD");
+  $("dcOriginalTotal").textContent=money(originalUsdTotal||num(r.expectedUSD),"USD");
   $("dcPhysicalUSD").textContent=money(r.actualCashUSD,"USD");
   $("dcPhysicalKHR").textContent=money(r.actualCashKHR,"KHR");
   $("dcExpectedValue").textContent=money(r.expectedUSD,"USD");
