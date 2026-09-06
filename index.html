@@ -3,147 +3,723 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG BROTHER — Admin Work V1</title>
+<title>BIG BROTHER — Admin Work V2 Pending Receivable Request</title>
 <style>
 :root{
-  --bg:#f4f7fb;
-  --card:#ffffff;
-  --line:#dfe6ef;
-  --text:#17304f;
-  --muted:#6d7d91;
-  --blue:#1f5fbf;
-  --blue2:#174b98;
-  --shadow:0 10px 28px rgba(20,48,82,.08);
+  --bg:#f4f7fb;--card:#fff;--line:#dfe6ef;--text:#17304f;--muted:#6d7d91;
+  --blue:#1f5fbf;--blue2:#174b98;--green:#198754;--red:#c93c46;--amber:#b67a00;
+  --shadow:0 10px 28px rgba(20,48,82,.08)
 }
 *{box-sizing:border-box}
-html,body{
-  margin:0;
-  min-height:100%;
-  font-family:Arial,Helvetica,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
+html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
 body{padding:20px}
 .wrap{max-width:1500px;margin:0 auto}
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:14px;
-  margin-bottom:16px;
-}
-.topbar h1{
-  margin:0 0 5px;
-  font-size:28px;
-  color:#12365f;
-}
-.subtitle{
-  margin:0;
-  color:var(--muted);
-  font-size:14px;
-}
-.pill{
-  display:inline-flex;
-  align-items:center;
-  padding:8px 12px;
-  border:1px solid #c9d8ec;
-  border-radius:999px;
-  background:#edf5ff;
-  color:#245da8;
-  font-size:12px;
-  font-weight:800;
-  white-space:nowrap;
-}
-.panel{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:14px;
-  box-shadow:var(--shadow);
-  min-height:560px;
-  overflow:hidden;
-}
-.panel-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  padding:15px 16px;
-  border-bottom:1px solid var(--line);
-  background:#fbfcfe;
-}
-.panel-head h2{
-  margin:0;
-  font-size:18px;
-}
-.panel-head span{
-  color:var(--muted);
-  font-size:12px;
-}
-.empty{
-  min-height:500px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:30px;
-  text-align:center;
-}
-.empty-box{
-  max-width:620px;
-  padding:36px 28px;
-  border:1px dashed #cbd7e6;
-  border-radius:14px;
-  background:#fafcff;
-}
-.empty-icon{
-  font-size:44px;
-  margin-bottom:12px;
-}
-.empty-box h3{
-  margin:0 0 10px;
-  font-size:22px;
-  color:#153d70;
-}
-.empty-box p{
-  margin:0;
-  color:var(--muted);
-  line-height:1.6;
-  font-size:14px;
-}
-@media(max-width:700px){
-  body{padding:10px}
-  .topbar{align-items:flex-start;flex-direction:column}
-  .panel-head{align-items:flex-start;flex-direction:column}
-}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}
+.topbar h1{margin:0 0 5px;font-size:28px}
+.subtitle{margin:0;color:var(--muted)}
+.userbox{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.pill{padding:8px 12px;border:1px solid #c9d8ec;border-radius:999px;background:#edf5ff;color:#245da8;font-size:12px;font-weight:800}
+.logout{border:1px solid #cfd8e4;background:#fff;color:#4e6076;border-radius:9px;padding:8px 12px;cursor:pointer;font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:var(--shadow)}
+.card small{display:block;color:var(--muted);font-weight:700;margin-bottom:7px}
+.card strong{font-size:24px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.view-banner{padding:10px 14px;background:#eef5ff;border-bottom:1px solid #d6e5f7;color:#245da8;font-size:12px;font-weight:700}
+.filters{padding:14px;display:grid;grid-template-columns:1.4fr 1.2fr 1fr auto auto;gap:10px;border-bottom:1px solid var(--line)}
+input,select,textarea{width:100%;border:1px solid #cbd6e3;border-radius:9px;padding:10px 11px;font:inherit;color:var(--text);background:#fff}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(31,95,191,.14);border-color:#6f9ed8}
+.btn{border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer}
+.btn.primary{background:var(--blue);color:#fff}.btn.primary:hover{background:var(--blue2)}
+.btn.secondary{background:#eef3f8;color:#284761}.btn.danger{background:#fff0f1;color:var(--red)}
+.btn.success{background:var(--green);color:#fff}.btn:disabled{opacity:.55;cursor:not-allowed}
+.tablewrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:1180px}
+th,td{padding:11px 10px;border-bottom:1px solid #e7edf4;text-align:left;font-size:13px;white-space:nowrap}
+th{background:#f7f9fc;color:#53657a;font-size:12px;position:sticky;top:0;z-index:1}
+tbody tr:hover{background:#f9fbfe}
+.money{text-align:right;font-variant-numeric:tabular-nums}.center{text-align:center}
+.status{display:inline-block;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}
+.status.processing{background:#e9f2ff;color:#1f5fbf}
+.empty{text-align:center;color:var(--muted);padding:30px}
+.foot{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 14px;color:var(--muted);font-size:12px}
+.placeholder{padding:70px 20px;text-align:center;color:var(--muted)}
+.placeholder h2{color:#17304f;margin:0 0 8px}
+.overlay{position:fixed;inset:0;background:rgba(10,27,48,.68);display:flex;align-items:center;justify-content:center;padding:18px;z-index:9999}
+.overlay.hidden{display:none}
+.loginbox,.modalbox{width:min(520px,100%);background:#fff;border-radius:16px;padding:22px;box-shadow:0 25px 70px rgba(0,0,0,.25)}
+.modalbox{width:min(720px,96vw);max-height:92vh;overflow:auto}
+.loginbox h2,.modalbox h2{margin:0 0 7px}
+.loginbox p,.modalbox p{color:var(--muted);margin:0 0 16px;line-height:1.5}
+.field{margin-bottom:12px}.field label{display:block;font-size:12px;font-weight:800;color:#556a82;margin-bottom:5px}
+.loginerror,.formerror{display:none;margin-top:10px;padding:9px 10px;background:#fff0f1;color:var(--red);border-radius:8px;font-size:12px}
+.loginerror.show,.formerror.show{display:block}
+.modalhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.close{border:0;background:#eef2f7;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px}
+.remember-row{display:flex;align-items:center;gap:8px;margin:8px 0 14px;font-size:12px;color:#50647b}
+.remember-row input{width:16px;height:16px;margin:0;accent-color:var(--blue)}
+.batch-list{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:9px;margin:8px 0 12px}
+.batch-item{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;border-bottom:1px solid #edf1f5;font-size:12px}
+.batch-item:last-child{border-bottom:0}
+.batch-total{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 12px;background:#eef8f2;border:1px solid #cfe8d8;border-radius:9px;margin-bottom:12px;font-weight:800;color:#146c43}
+.meta{font-size:12px;line-height:1.8;color:#50647b;margin-bottom:12px}
+.secure-note{font-size:11px;color:var(--muted);margin-top:10px}
+.actions{display:grid;grid-template-columns:1fr 1.5fr;gap:8px;margin-top:8px}
+@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr 1fr}.topbar{flex-direction:column}.userbox{justify-content:flex-start}}
+@media(max-width:560px){body{padding:10px}.cards{grid-template-columns:1fr 1fr;gap:8px}.filters{grid-template-columns:1fr}.actions{grid-template-columns:1fr}.topbar h1{font-size:23px}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="topbar">
     <div>
-      <h1>Admin Work</h1>
-      <p class="subtitle">BIG BROTHER — Administration Workspace</p>
+      <h1 id="pageTitle">Pending Receivable Request</h1>
+      <p class="subtitle" id="pageSubtitle">Receivable payment requests sent by Salespersons for Admin review.</p>
     </div>
-    <span class="pill">Admin Work</span>
+    <div class="userbox">
+      <span class="pill" id="accessPill">Admin Work</span>
+      <button class="logout" id="logoutBtn" onclick="logout()" hidden>Logout</button>
+    </div>
   </div>
 
-  <div class="panel">
-    <div class="panel-head">
-      <h2>Administration Workspace</h2>
-      <span>Foundation Page V1</span>
+  <div id="pendingReceivableView">
+    <div class="cards">
+      <div class="card"><small>Pending Requests</small><strong id="sumRequests">0</strong></div>
+      <div class="card"><small>Requested USD</small><strong id="sumUSD">$0.00</strong></div>
+      <div class="card"><small>Requested KHR</small><strong id="sumKHR">៛0</strong></div>
+      <div class="card"><small>Invoices in Request</small><strong id="sumInvoices">0</strong></div>
     </div>
 
-    <div class="empty">
-      <div class="empty-box">
-        <div class="empty-icon">🛠️</div>
-        <h3>Admin Work Page Ready</h3>
-        <p>
-          This page is intentionally left clean for the next step.
-          We can add the exact elements, request types, tables, filters,
-          buttons, approval workflow, and security rules you want.
-        </p>
+    <div class="panel">
+      <div class="view-banner">Only A/R payment requests with Status = Processing are shown here. When Admin clears or rejects a request, it disappears from this Pending list automatically.</div>
+
+      <div class="filters">
+        <input id="searchBox" placeholder="Search Request ID, Invoice No. or Customer" oninput="render()">
+        <input id="salesmanFilter" placeholder="Filter Salesperson" oninput="render()">
+        <select id="currencyFilter" onchange="render()">
+          <option value="">All currencies</option>
+          <option value="USD">USD ($)</option>
+          <option value="KHR">KHR (៛)</option>
+        </select>
+        <button class="btn secondary" onclick="clearFilters()">Clear</button>
+        <button class="btn primary" id="refreshBtn" onclick="loadPending(true)">↻ Refresh</button>
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Request ID</th>
+              <th>Customer</th>
+              <th>Requested By</th>
+              <th>Location</th>
+              <th class="center">Invoice Count</th>
+              <th>Payment Method</th>
+              <th>Transaction ID</th>
+              <th>Currency</th>
+              <th class="money">Requested Amount</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="requestBody">
+            <tr><td colspan="11" class="empty">Checking Admin access...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="foot">
+        <span id="rowCount">0 requests</span>
+        <span id="syncStatus">Secure Admin Work</span>
       </div>
     </div>
   </div>
+
+  <div id="placeholderView" class="panel" style="display:none">
+    <div class="placeholder">
+      <h2 id="placeholderTitle">Admin Work</h2>
+      <p>This section is ready for the next workflow.</p>
+    </div>
+  </div>
 </div>
+
+<div class="overlay hidden" id="loginOverlay">
+  <div class="loginbox">
+    <h2>🔐 Admin Access</h2>
+    <p>Enter your active Admin Code to review Pending Receivable Requests.</p>
+    <div class="field">
+      <label>Admin Code</label>
+      <input id="accessCode" type="password" placeholder="Enter admin code" onkeydown="if(event.key==='Enter')login()">
+    </div>
+    <label class="remember-row"><input type="checkbox" id="rememberDevice"> Remember me on this device</label>
+    <button class="btn primary" id="loginBtn" style="width:100%" onclick="login()">Sign In</button>
+    <div class="loginerror" id="loginError"></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="reviewOverlay">
+  <div class="modalbox">
+    <div class="modalhead">
+      <div>
+        <h2>Review Receivable Request</h2>
+        <p id="reviewInfo">Loading request...</p>
+      </div>
+      <button class="close" onclick="closeReview()">×</button>
+    </div>
+
+    <div class="batch-list" id="reviewList"></div>
+    <div class="batch-total"><span>Requested Total</span><span id="reviewTotal">$0.00</span></div>
+    <div class="meta" id="reviewMeta"></div>
+
+    <div class="field">
+      <label>Reject Reason <span style="font-weight:400;color:#7a8798">(optional)</span></label>
+      <textarea id="rejectReason" rows="2" placeholder="Example: Wrong amount, wrong transaction ID, customer has not paid yet"></textarea>
+    </div>
+
+    <div class="formerror" id="reviewError"></div>
+
+    <div class="actions">
+      <button class="btn danger" id="rejectBtn" onclick="rejectRequest()">✕ Reject Request</button>
+      <button class="btn success" id="clearBtn" onclick="clearRequest()">✓ Clear Request & Save Payment</button>
+    </div>
+
+    <div class="secure-note">Clear saves the real Receivable payment and reduces the invoice outstanding balance. Reject changes no balance.</div>
+  </div>
+</div>
+
+<script>
+const SALES_API="https://script.google.com/macros/s/AKfycbyM5mUlz5SeMZ_oPJCo2FgLkPEcodAQ7wPl5wxAdrvfqLvsZLaHxiOtS02L1Q3ZRA3D/exec";
+
+const SESSION_KEY="bb_ar_admin_session";
+const DEVICE_KEY="bb_ar_admin_device";
+const CACHE_KEY="BB_ADMIN_WORK_PENDING_RECEIVABLE_CACHE_V1";
+const SYNC_MS=20000;
+
+const $=id=>document.getElementById(id);
+const VIEW=(new URLSearchParams(location.search).get("view")||"pending-receivable").toLowerCase();
+
+let sessionToken=sessionStorage.getItem(SESSION_KEY)||"";
+let deviceToken=localStorage.getItem(DEVICE_KEY)||"";
+let rows=[];
+let groups=[];
+let revision="";
+let syncTimer=null;
+let syncBusy=false;
+let currentRequest=null;
+
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
+function money(v,c="USD"){return (String(c).toUpperCase()==="KHR"?"៛":"$")+num(v).toLocaleString(undefined,{minimumFractionDigits:String(c).toUpperCase()==="KHR"?0:2,maximumFractionDigits:String(c).toUpperCase()==="KHR"?0:2})}
+function norm(v){return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim().toLowerCase()}
+
+async function apiPost(params){
+  const body=new URLSearchParams();
+  Object.entries(params).forEach(([k,v])=>body.append(k,v==null?"":String(v)));
+  const res=await fetch(SALES_API,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},body,redirect:"follow"});
+  const text=await res.text();
+  let data;
+  try{data=JSON.parse(text)}catch(_){throw new Error("Server returned an unreadable response.")}
+  if(data?.success===false)throw new Error(data.error||"Database error.");
+  return data;
+}
+
+async function apiGet(params){
+  const res=await fetch(SALES_API+"?"+new URLSearchParams(params).toString(),{cache:"no-store"});
+  const data=await res.json();
+  if(data?.success===false)throw new Error(data.error||"Database error.");
+  return data;
+}
+
+function configureView(){
+  if(VIEW==="pending-receivable"){
+    $("pendingReceivableView").style.display="";
+    $("placeholderView").style.display="none";
+    $("pageTitle").textContent="Pending Receivable Request";
+    $("pageSubtitle").textContent="Receivable payment requests sent by Salespersons for Admin review.";
+    return true;
+  }
+
+  const names={
+    "pending-deposit":"Pending Deposit Request",
+    "deposit-history":"Deposit History",
+    "staff-request":"Staff Request",
+    "admin-request":"Admin Request"
+  };
+
+  $("pendingReceivableView").style.display="none";
+  $("placeholderView").style.display="";
+  $("placeholderTitle").textContent=names[VIEW]||"Admin Work";
+  $("pageTitle").textContent=names[VIEW]||"Admin Work";
+  $("pageSubtitle").textContent="Administration Workspace";
+  return false;
+}
+
+function setLoginError(msg){
+  $("loginError").textContent=msg||"";
+  $("loginError").classList.toggle("show",!!msg);
+}
+
+function setReviewError(msg){
+  $("reviewError").textContent=msg||"";
+  $("reviewError").classList.toggle("show",!!msg);
+}
+
+function cacheIdentity(){
+  return deviceToken||"admin";
+}
+
+function cacheKey(){
+  let hash=0,s=cacheIdentity();
+  for(let i=0;i<s.length;i++){hash=((hash<<5)-hash)+s.charCodeAt(i);hash|=0}
+  return CACHE_KEY+"_"+Math.abs(hash);
+}
+
+function saveCache(){
+  try{
+    localStorage.setItem(cacheKey(),JSON.stringify({revision,rows,savedAt:Date.now()}));
+  }catch(_){}
+}
+
+function restoreCache(){
+  try{
+    const raw=localStorage.getItem(cacheKey());
+    if(!raw)return false;
+    const d=JSON.parse(raw);
+    if(!Array.isArray(d.rows))return false;
+    rows=d.rows;
+    revision=String(d.revision||"");
+    buildGroups();
+    $("syncStatus").textContent="Cached • checking for updates...";
+    return true;
+  }catch(_){return false}
+}
+
+function buildGroups(){
+  const map=new Map();
+
+  rows
+    .filter(r=>String(r.requestStatus||r.arStatus||"").toLowerCase()==="processing" && r.requestId)
+    .forEach(r=>{
+      const id=String(r.requestId);
+      if(!map.has(id)){
+        map.set(id,{
+          requestId:id,
+          customer:r.customer||"",
+          requestedBy:r.requestedBy||r.salesperson||"",
+          paymentMethod:r.requestPaymentMethod||"",
+          transactionId:r.requestTransactionId||"",
+          currency:String(r.currency||"USD").toUpperCase(),
+          total:0,
+          invoices:[],
+          locations:new Set()
+        });
+      }
+
+      const g=map.get(id);
+      g.total+=num(r.requestedAmount);
+      g.invoices.push({
+        invoiceNo:r.invoiceNo||"",
+        requestedAmount:num(r.requestedAmount),
+        currency:r.currency||g.currency,
+        locationName:r.locationName||r.locationCode||"",
+        locationCode:r.locationCode||""
+      });
+      if(r.locationName||r.locationCode)g.locations.add(r.locationName||r.locationCode);
+    });
+
+  groups=[...map.values()].map(g=>({
+    ...g,
+    locations:[...g.locations]
+  })).sort((a,b)=>b.requestId.localeCompare(a.requestId));
+
+  render();
+}
+
+function render(){
+  const search=norm($("searchBox")?.value);
+  const salesman=norm($("salesmanFilter")?.value);
+  const currency=$("currencyFilter")?.value||"";
+
+  const visible=groups.filter(g=>{
+    const text=norm([
+      g.requestId,
+      g.customer,
+      g.requestedBy,
+      ...g.invoices.map(x=>x.invoiceNo)
+    ].join(" "));
+    return (!search||text.includes(search)) &&
+           (!salesman||norm(g.requestedBy).includes(salesman)) &&
+           (!currency||g.currency===currency);
+  });
+
+  $("rowCount").textContent=`${visible.length} request${visible.length===1?"":"s"}`;
+
+  const totalUSD=visible.filter(g=>g.currency==="USD").reduce((s,g)=>s+g.total,0);
+  const totalKHR=visible.filter(g=>g.currency==="KHR").reduce((s,g)=>s+g.total,0);
+  const invCount=visible.reduce((s,g)=>s+g.invoices.length,0);
+
+  $("sumRequests").textContent=visible.length;
+  $("sumUSD").textContent=money(totalUSD,"USD");
+  $("sumKHR").textContent=money(totalKHR,"KHR");
+  $("sumInvoices").textContent=invCount;
+
+  if(!visible.length){
+    $("requestBody").innerHTML='<tr><td colspan="11" class="empty">No Pending Receivable Requests.</td></tr>';
+    return;
+  }
+
+  $("requestBody").innerHTML=visible.map(g=>{
+    const loc=g.locations.length===1?g.locations[0]:(g.locations.length>1?"Multiple Locations":"-");
+    return `<tr>
+      <td><strong>${esc(g.requestId)}</strong></td>
+      <td>${esc(g.customer)}</td>
+      <td>${esc(g.requestedBy||"-")}</td>
+      <td>${esc(loc)}</td>
+      <td class="center">${g.invoices.length}</td>
+      <td>${esc(g.paymentMethod||"-")}</td>
+      <td>${esc(g.transactionId||"-")}</td>
+      <td>${esc(g.currency)}</td>
+      <td class="money"><strong>${money(g.total,g.currency)}</strong></td>
+      <td><span class="status processing">Processing</span></td>
+      <td><button class="btn primary" onclick='openReview(${JSON.stringify(g.requestId)})'>Review Request</button></td>
+    </tr>`;
+  }).join("");
+}
+
+function clearFilters(){
+  $("searchBox").value="";
+  $("salesmanFilter").value="";
+  $("currencyFilter").value="";
+  render();
+}
+
+async function loadPending(force=false){
+  if(!sessionToken)throw new Error("Admin session required.");
+
+  const btn=$("refreshBtn");
+  if(force){btn.disabled=true;btn.textContent="Refreshing…"}
+  $("syncStatus").textContent=force?"Syncing…":"Loading…";
+
+  try{
+    const d=await apiPost({
+      action:"arList",
+      sessionToken,
+      view:"all"
+    });
+
+    rows=Array.isArray(d.receivables)?d.receivables:[];
+    revision=String(d.revision||revision||"");
+
+    if(d.access){
+      $("accessPill").textContent="🛡️ "+(d.access.adminName||"Admin");
+    }
+
+    buildGroups();
+    saveCache();
+    $("syncStatus").textContent="Up to date · smart sync 20s";
+    return d;
+
+  }finally{
+    if(force){btn.disabled=false;btn.textContent="↻ Refresh"}
+  }
+}
+
+async function fetchRevision(){
+  const d=await apiGet({action:"invoiceHistoryRevision",_ts:Date.now()});
+  return String(d.revision||"0");
+}
+
+async function smartSync(force=false){
+  if(!sessionToken||syncBusy)return;
+  if(document.hidden&&!force)return;
+
+  syncBusy=true;
+  try{
+    const r=await fetchRevision();
+
+    if(revision&&r===revision){
+      $("syncStatus").textContent="Up to date · smart sync 20s";
+      return;
+    }
+
+    revision=r;
+    await loadPending(false);
+
+  }catch(e){
+    console.warn("Admin Work sync:",e);
+    if(rows.length)$("syncStatus").textContent="Cached data · sync will retry";
+  }finally{
+    syncBusy=false;
+  }
+}
+
+function startSync(){
+  if(syncTimer)clearInterval(syncTimer);
+  syncTimer=setInterval(()=>smartSync(false),SYNC_MS);
+}
+
+async function login(){
+  const code=$("accessCode").value.trim();
+  const remember=$("rememberDevice").checked;
+
+  if(!code)return setLoginError("Please enter Admin Code.");
+
+  const btn=$("loginBtn");
+  btn.disabled=true;
+  btn.textContent="Checking…";
+  setLoginError("");
+
+  try{
+    const d=await apiPost({
+      action:"arAdminLogin",
+      adminCode:code,
+      rememberDevice:remember
+    });
+
+    if(!d||!d.authorized)throw new Error(d?.error||"Access denied.");
+
+    sessionToken=d.sessionToken;
+    sessionStorage.setItem(SESSION_KEY,sessionToken);
+
+    if(remember&&d.deviceToken){
+      deviceToken=d.deviceToken;
+      localStorage.setItem(DEVICE_KEY,deviceToken);
+      localStorage.setItem(DEVICE_KEY+"_saved_at",String(Date.now()));
+    }else if(!remember){
+      deviceToken="";
+      localStorage.removeItem(DEVICE_KEY);
+      localStorage.removeItem(DEVICE_KEY+"_saved_at");
+    }
+
+    $("accessCode").value="";
+    $("accessPill").textContent="🛡️ "+(d.adminName||"Admin");
+    $("loginOverlay").classList.add("hidden");
+    $("logoutBtn").hidden=false;
+
+    const cached=restoreCache();
+    if(cached)await smartSync(true);
+    else await loadPending(true);
+
+    startSync();
+
+  }catch(e){
+    setLoginError(e.message||"Access denied.");
+  }finally{
+    btn.disabled=false;
+    btn.textContent="Sign In";
+  }
+}
+
+async function restoreAccess(){
+  if(!configureView())return;
+
+  deviceToken=localStorage.getItem(DEVICE_KEY)||"";
+  sessionToken=sessionStorage.getItem(SESSION_KEY)||"";
+
+  $("rememberDevice").checked=!!deviceToken;
+
+  if(sessionToken||deviceToken){
+    $("loginOverlay").classList.add("hidden");
+  }
+
+  if(sessionToken){
+    try{
+      $("logoutBtn").hidden=false;
+      const cached=restoreCache();
+      if(cached)await smartSync(true);
+      else await loadPending(true);
+      startSync();
+      return;
+    }catch(_){
+      sessionStorage.removeItem(SESSION_KEY);
+      sessionToken="";
+    }
+  }
+
+  if(deviceToken){
+    try{
+      $("syncStatus").textContent="Restoring saved Admin access…";
+
+      const d=await apiPost({
+        action:"arDeviceLogin",
+        deviceToken,
+        role:"admin"
+      });
+
+      if(!d||!d.authorized)throw new Error(d?.error||"Remembered access failed.");
+
+      sessionToken=d.sessionToken;
+      sessionStorage.setItem(SESSION_KEY,sessionToken);
+      $("accessPill").textContent="🛡️ "+(d.adminName||"Admin");
+      $("logoutBtn").hidden=false;
+
+      const cached=restoreCache();
+      if(cached)await smartSync(true);
+      else await loadPending(true);
+
+      startSync();
+      return;
+
+    }catch(e){
+      deviceToken="";
+      localStorage.removeItem(DEVICE_KEY);
+      localStorage.removeItem(DEVICE_KEY+"_saved_at");
+      sessionToken="";
+      sessionStorage.removeItem(SESSION_KEY);
+      $("rememberDevice").checked=false;
+    }
+  }
+
+  $("loginOverlay").classList.remove("hidden");
+  $("requestBody").innerHTML='<tr><td colspan="11" class="empty">Sign in to view Pending Receivable Requests.</td></tr>';
+}
+
+async function logout(){
+  const s=sessionToken,d=deviceToken;
+
+  sessionToken="";
+  deviceToken="";
+  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(DEVICE_KEY);
+  localStorage.removeItem(DEVICE_KEY+"_saved_at");
+
+  if(syncTimer){clearInterval(syncTimer);syncTimer=null}
+
+  try{
+    if(s||d)await apiPost({action:"arLogout",sessionToken:s,deviceToken:d});
+  }catch(_){}
+
+  rows=[];
+  groups=[];
+  revision="";
+  $("accessPill").textContent="Admin Work";
+  $("logoutBtn").hidden=true;
+  $("loginOverlay").classList.remove("hidden");
+  $("requestBody").innerHTML='<tr><td colspan="11" class="empty">Sign in to view Pending Receivable Requests.</td></tr>';
+  $("sumRequests").textContent="0";
+  $("sumUSD").textContent="$0.00";
+  $("sumKHR").textContent="៛0";
+  $("sumInvoices").textContent="0";
+}
+
+async function openReview(requestId){
+  if(!sessionToken||!requestId)return;
+
+  currentRequest=null;
+  setReviewError("");
+  $("rejectReason").value="";
+  $("reviewInfo").textContent="Loading request…";
+  $("reviewList").innerHTML="";
+  $("reviewMeta").innerHTML="";
+  $("reviewOverlay").classList.remove("hidden");
+
+  try{
+    const d=await apiPost({
+      action:"arRequestDetail",
+      sessionToken,
+      requestId
+    });
+
+    currentRequest=d.request;
+    const r=currentRequest;
+    const allocations=Array.isArray(r.allocations)?r.allocations:[];
+    const total=allocations.reduce((s,a)=>s+num(a.requestedAmount),0);
+
+    $("reviewInfo").textContent=
+      `${r.requestId} · ${r.customer} · requested by ${r.salesmanName||"Salesman"}`;
+
+    $("reviewList").innerHTML=allocations.length
+      ? allocations.map(a=>`<div class="batch-item"><span><strong>${esc(a.invoiceNo)}</strong></span><span>${money(a.requestedAmount,a.currency||r.currency)}</span></div>`).join("")
+      : '<div class="empty" style="padding:12px">No allocation rows found.</div>';
+
+    $("reviewTotal").textContent=money(total,r.currency);
+
+    $("reviewMeta").innerHTML=
+      `<strong>Request Date:</strong> ${esc(r.requestDate||"-")}<br>`+
+      `<strong>Payment Method:</strong> ${esc(r.paymentMethod||"-")}`+
+      `${r.bankPayment?`<br><strong>Bank:</strong> ${esc(r.bankPayment)}`:""}`+
+      `${r.transactionId?`<br><strong>Transaction ID:</strong> ${esc(r.transactionId)}`:""}`+
+      `${r.bankReference?`<br><strong>Bank Reference:</strong> ${esc(r.bankReference)}`:""}`+
+      `${r.note?`<br><strong>Note:</strong> ${esc(r.note)}`:""}`;
+
+  }catch(e){
+    setReviewError(e.message||"Could not load request.");
+  }
+}
+
+function closeReview(){
+  $("reviewOverlay").classList.add("hidden");
+  currentRequest=null;
+}
+
+async function clearRequest(){
+  if(!currentRequest)return;
+
+  if(!confirm(`Clear ${currentRequest.requestId} and save the Receivable payment?`))return;
+
+  const btn=$("clearBtn");
+  btn.disabled=true;
+  btn.textContent="Clearing…";
+  setReviewError("");
+
+  try{
+    const d=await apiPost({
+      action:"arClearRequest",
+      requestData:JSON.stringify({
+        sessionToken,
+        requestId:currentRequest.requestId
+      })
+    });
+
+    closeReview();
+    await loadPending(true);
+    alert(`Receivable request cleared successfully.\nPayment ID: ${d.paymentId||""}\nApproved by: ${d.approvedBy||"Admin"}`);
+
+  }catch(e){
+    setReviewError(e.message||"Could not clear request.");
+  }finally{
+    btn.disabled=false;
+    btn.textContent="✓ Clear Request & Save Payment";
+  }
+}
+
+async function rejectRequest(){
+  if(!currentRequest)return;
+
+  if(!confirm(`Reject ${currentRequest.requestId}?`))return;
+
+  const btn=$("rejectBtn");
+  btn.disabled=true;
+  btn.textContent="Rejecting…";
+  setReviewError("");
+
+  try{
+    await apiPost({
+      action:"arRejectRequest",
+      requestData:JSON.stringify({
+        sessionToken,
+        requestId:currentRequest.requestId,
+        reason:$("rejectReason").value.trim()
+      })
+    });
+
+    closeReview();
+    await loadPending(true);
+    alert("Receivable request rejected.");
+
+  }catch(e){
+    setReviewError(e.message||"Could not reject request.");
+  }finally{
+    btn.disabled=false;
+    btn.textContent="✕ Reject Request";
+  }
+}
+
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden&&sessionToken&&VIEW==="pending-receivable")smartSync(true);
+});
+
+restoreAccess();
+</script>
 </body>
 </html>
