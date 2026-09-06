@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG BROTHER — Admin Work V5.6 Company Deposit Visibility Fix</title>
+<title>BIG BROTHER — Admin Work V5.7 Final Daily Cash Review Flow</title>
 <style>
 :root{
   --bg:#f4f7fb;--card:#fff;--line:#dfe6ef;--text:#17304f;--muted:#6d7d91;
@@ -419,14 +419,14 @@ function configureView(){
   if(VIEW==="pending-deposit"){
     $("pendingDepositView").style.display="";
     $("pageTitle").textContent="Pending Deposit";
-    $("pageSubtitle").textContent="Approved Receivable Cash waiting for company bank deposit.";
+    $("pageSubtitle").textContent="Approved real cash waiting for company bank deposit. Includes Receivable and Daily Cash Collection.";
     return true;
   }
 
   if(VIEW==="deposit-history"){
     $("depositHistoryView").style.display="";
     $("pageTitle").textContent="Deposit History";
-    $("pageSubtitle").textContent="Deposited Receivable payments.";
+    $("pageSubtitle").textContent="Completed company bank deposits from Receivable and Daily Cash Collection.";
     return true;
   }
 
@@ -1000,8 +1000,8 @@ function openPendingDailyCashReview(requestId){
     `${r.note?`<br><strong>Note:</strong> ${esc(r.note)}`:""}`;
 
   $("dcBankReview").innerHTML=r.alreadyDepositedBank
-    ? `<strong>Already Deposited to Bank:</strong> YES<br><strong>Bank:</strong> ${esc(r.bankAccount||"-")}<br><strong>Reference:</strong> ${esc(r.bankReference||"-")}<br><span style="color:#198754;font-weight:700">Accept → automatically goes to Deposit History.</span>`
-    : `<strong>Already Deposited to Bank:</strong> NO<br><span style="color:#966200;font-weight:700">Accept → moves to Pending Deposit.</span>`;
+    ? `<strong>Already Deposited to Bank:</strong> YES<br><strong>Bank:</strong> ${esc(r.bankAccount||"-")}<br><strong>Bank Transaction ID:</strong> ${esc(r.transactionId||r.bankReference||"-")}<br><span style="color:#198754;font-weight:700">Staff already deposited this money. Admin only reviews. Accept → automatically goes to Deposit History.</span>`
+    : `<strong>Already Deposited to Bank:</strong> NO<br><span style="color:#966200;font-weight:700">Staff gives real cash to Accountant. Admin checks received cash. Accept → moves to Pending Deposit.</span>`;
 
   $("dcRejectReason").value="";
   $("dcReviewError").textContent="";
