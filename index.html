@@ -307,7 +307,28 @@ tbody tr:hover{background:#f9fbfe}
   .dc-summary-grid{grid-template-columns:1fr 1fr}
   .dc-review-actions{grid-template-columns:1fr}
 }
+
+/* ===== V6.4 VAULT REPORT ===== */
+.vault-report-shell{width:min(1500px,97vw);height:min(940px,95vh);background:#fff;border-radius:18px;box-shadow:0 30px 90px rgba(15,35,65,.35);overflow:hidden;display:flex;flex-direction:column}
+.vr-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding:16px 20px;border-bottom:1px solid var(--line);background:#fff}
+.vr-head h2{margin:0 0 4px;font-size:25px;color:#17365d}.vr-head p{margin:0;color:#6f7f93;font-size:13px}
+.vr-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.vr-toolbar{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;padding:12px 18px;border-bottom:1px solid var(--line);background:#fbfdff}.vr-toolbar .field{margin:0}
+.vr-body{padding:14px 16px 18px;overflow:auto;background:#f8fbff}
+.vr-page{background:#fff;border:1px solid #dce6f1;border-radius:14px;margin-bottom:16px;overflow:hidden}
+.vr-banner{padding:13px 16px;font-size:17px;font-weight:900;color:#fff;background:#0c4f82;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.vr-banner.receivable{background:#56319a}
+.vr-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px}
+.vr-card{border:1px solid #dce6f1;background:#fff;border-radius:11px;padding:11px}.vr-card small{display:block;color:#66788f;font-weight:800;font-size:11px;margin-bottom:4px}.vr-card strong{font-size:18px;color:#183a66}
+.vr-table-wrap{overflow:auto;padding:0 12px 12px}.vr-table{width:100%;min-width:1040px;border-collapse:collapse}.vr-table th{background:#0d5a92;color:#fff;font-size:12px;padding:8px;border-right:1px solid rgba(255,255,255,.25)}
+.vr-table.receivable th{background:#5b38a0}.vr-table td{font-size:12px;padding:8px;border-bottom:1px solid #e5edf5;border-right:1px solid #edf2f7}.vr-table tbody tr:nth-child(even){background:#f8fbff}.vr-table tfoot td{font-weight:900;background:#edf5ff}.vr-table.receivable tfoot td{background:#f2edff}
+.vr-final{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1.3fr;gap:10px;padding:12px;border-top:1px solid #dce6f1;background:#effaf2}.vr-final .vr-card{background:rgba(255,255,255,.82)}.vr-final .total-value{background:#0d7b42;color:#fff;border-color:#0d7b42}.vr-final .total-value small,.vr-final .total-value strong{color:#fff}
+.vr-page-count{padding:8px 12px 12px;color:#6f7f93;font-size:12px;display:flex;justify-content:space-between}
+@media(max-width:900px){.vr-toolbar{grid-template-columns:1fr 1fr}.vr-summary{grid-template-columns:1fr 1fr}.vr-final{grid-template-columns:1fr 1fr}}
+@media print{body *{visibility:hidden!important}#vaultReportOverlay,#vaultReportOverlay *{visibility:visible!important}#vaultReportOverlay{position:absolute!important;inset:0!important;background:#fff!important}.vault-report-shell{width:100%!important;height:auto!important;box-shadow:none!important;border-radius:0!important}.vr-actions,.vr-toolbar,.close{display:none!important}.vr-body{overflow:visible!important;background:#fff!important;padding:0!important}.vr-page{break-after:page;margin:0!important;border-radius:0!important}.vr-page:last-child{break-after:auto}}
+
 </style>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -419,7 +440,8 @@ tbody tr:hover{background:#f9fbfe}
       <div class="card"><small>Cash Vault USD</small><strong id="vaultUSD">$0.00</strong></div>
       <div class="card"><small>Cash Vault KHR</small><strong id="vaultKHR">៛0</strong></div>
       <div class="card"><small>Vault Status</small><strong id="vaultStatus" style="font-size:16px">Loading…</strong></div>
-      <div class="card"><small>Vault Deposit</small><button class="btn success" onclick="openVaultDeposit()">Deposit Vault Cash</button></div>
+      <div class="card"><small>Vault Deposit</small><button class="btn success" onclick="openVaultDeposit()">Deposit Vault Cash</button>
+<button class="btn primary" onclick="openVaultReport()">📊 Vault Report</button></div>
     </div>
     <div class="cards">
       <div class="card"><small>Daily Cash in Vault — USD</small><strong id="vaultDailyUSD">$0.00</strong></div>
@@ -1856,6 +1878,187 @@ document.addEventListener("visibilitychange",()=>{
 });
 
 restoreAccess();
+
+let vaultReportData=null;
+
+function vrUsd(v){return "$"+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+function vrKhr(v){return "៛"+Math.round(Number(v||0)).toLocaleString();}
+function vrEsc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m];});}
+
+function closeVaultReport(){$("vaultReportOverlay").classList.add("hidden");}
+
+function openVaultReport(){
+  $("vaultReportOverlay").classList.remove("hidden");
+  if(!$("vaultReportDate").value)$("vaultReportDate").value=new Date().toISOString().slice(0,10);
+  loadVaultReport();
+}
+
+async function loadVaultReport(){
+  try{
+    const rate=Number($("vaultReportRate").value||0);
+    const qs=new URLSearchParams({
+      action:"vaultReport",
+      currentRate:String(rate),
+      sessionToken:getAdminSessionToken?getAdminSessionToken():""
+    });
+    const r=await fetch(API_URL+"?"+qs.toString(),{cache:"no-store"});
+    const d=await r.json();
+    if(!d.ok)throw new Error(d.error||"Could not load Vault Report");
+    vaultReportData=d;
+    renderVaultReport();
+  }catch(e){alert("Vault Report: "+e.message);}
+}
+
+function recalcVaultReportValue(){
+  if(!vaultReportData)return;
+  const rate=Number($("vaultReportRate").value||0);
+  vaultReportData.currentRate=rate;
+  vaultReportData.totalVaultUSD=rate>0?Number(vaultReportData.vaultUSD||0)+(Number(vaultReportData.vaultKHR||0)/rate):null;
+  renderVaultReport();
+}
+
+function renderVaultReport(){
+  const d=vaultReportData||{};
+  const reportDate=$("vaultReportDate").value||d.reportDate||"";
+  $("vrDailyDate").textContent="Report Date: "+reportDate;
+  $("vrReceivableDate").textContent="Report Date: "+reportDate;
+
+  const daily=Array.isArray(d.dailyRows)?d.dailyRows:[];
+  const recv=Array.isArray(d.receivableRows)?d.receivableRows:[];
+
+  $("vrDailyInvoiceCount").textContent=Number(d.totalClosedInvoices||0).toLocaleString();
+  $("vrDailyUSD").textContent=vrUsd(d.dailyUSD);
+  $("vrDailyKHR").textContent=vrKhr(d.dailyKHR);
+  $("vrDailyBatchCount").textContent=daily.length.toLocaleString();
+  $("vrDailyFootInvoices").textContent=Number(d.totalClosedInvoices||0).toLocaleString();
+  $("vrDailyFootUSD").textContent=vrUsd(d.dailyUSD);
+  $("vrDailyFootKHR").textContent=vrKhr(d.dailyKHR);
+
+  $("vrDailyBody").innerHTML=daily.length?daily.map((x,i)=>`<tr>
+    <td>${i+1}</td><td>${vrEsc(x.saleDate||x.date||"-")}</td><td>${vrEsc(x.locationCode||"-")}</td>
+    <td>${vrEsc(x.salesperson||"-")}</td><td>${Number(x.invoiceCount||0).toLocaleString()}</td>
+    <td>${vrUsd(x.usd)}</td><td>${vrKhr(x.khr)}</td>
+  </tr>`).join(""):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#7a8798">No Daily Cash currently in Vault.</td></tr>';
+  $("vrDailyPageInfo").innerHTML=`<span>${daily.length} batch(es)</span><span>Report layout supports 20 rows per page.</span>`;
+
+  $("vrReceivableUSD").textContent=vrUsd(d.receivableUSD);
+  $("vrReceivableKHR").textContent=vrKhr(d.receivableKHR);
+  $("vrReceivableCount").textContent=recv.length.toLocaleString();
+  $("vrReceivableBody").innerHTML=recv.length?recv.map((x,i)=>{
+    const amt=x.currency==="KHR"?vrKhr(x.amount):x.currency==="USD"?vrUsd(x.amount):`${vrUsd(x.usd)} + ${vrKhr(x.khr)}`;
+    return `<tr><td>${i+1}</td><td>${vrEsc(x.date||"-")}</td><td>${vrEsc(x.receivedFrom||"-")}</td><td>${vrEsc(x.currency||"-")}</td><td>${amt}</td><td>${vrEsc(x.referenceId||"-")}</td><td>${vrEsc(x.note||"-")}</td></tr>`;
+  }).join(""):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#7a8798">No Receivable Cash currently in Vault.</td></tr>';
+  $("vrReceivableFoot").textContent=`${vrUsd(d.receivableUSD)} + ${vrKhr(d.receivableKHR)}`;
+  $("vrReceivablePageInfo").innerHTML=`<span>${recv.length} receipt(s)</span><span>Report layout supports 20 rows per page.</span>`;
+
+  $("vrVaultUSD").textContent=vrUsd(d.vaultUSD);
+  $("vrVaultKHR").textContent=vrKhr(d.vaultKHR);
+  $("vrCurrentRate").textContent=Number(d.currentRate||0).toLocaleString();
+  $("vrTotalVaultUSD").textContent=d.totalVaultUSD==null?"Enter Rate":vrUsd(d.totalVaultUSD);
+}
+
+async function saveVaultReportPicture(){
+  try{
+    if(typeof html2canvas==="undefined")return alert("Picture export library is not loaded.");
+    const canvas=await html2canvas($("vaultReportCapture"),{scale:2,backgroundColor:"#fff",useCORS:true,logging:false});
+    const a=document.createElement("a");
+    a.download=`BIG_BROTHER_VAULT_REPORT_${$("vaultReportDate").value||"report"}.png`;
+    a.href=canvas.toDataURL("image/png");
+    a.click();
+  }catch(e){alert("Could not save picture: "+e.message);}
+}
+
+async function shareVaultReportTelegram(){
+  try{
+    if(typeof html2canvas==="undefined")return alert("Picture export library is not loaded.");
+    const canvas=await html2canvas($("vaultReportCapture"),{scale:2,backgroundColor:"#fff",useCORS:true,logging:false});
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+    const file=new File([blob],`BIG_BROTHER_VAULT_REPORT_${$("vaultReportDate").value||"report"}.png`,{type:"image/png"});
+
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({title:"BIG BROTHER Vault Cash Detail Report",text:"Vault Cash Detail Report",files:[file]});
+      return;
+    }
+
+    window.open("https://t.me/share/url?url=&text="+encodeURIComponent("BIG BROTHER Vault Cash Detail Report"),"_blank");
+    alert("Telegram opened. This browser cannot attach the PNG automatically, so use Save as Picture and attach it.");
+  }catch(e){
+    if(e&&e.name==="AbortError")return;
+    alert("Could not share report: "+e.message);
+  }
+}
+
 </script>
+
+<div class="overlay hidden" id="vaultReportOverlay">
+  <div class="vault-report-shell">
+    <div class="vr-head">
+      <div>
+        <h2>Vault Cash Detail Report</h2>
+        <p>Daily Cash Sale + Receivable Cash currently held before full bank deposit.</p>
+      </div>
+      <div class="vr-actions">
+        <button class="btn secondary" onclick="saveVaultReportPicture()">Save as Picture</button>
+        <button class="btn secondary" onclick="shareVaultReportTelegram()">Share to Telegram</button>
+        <button class="btn secondary" onclick="window.print()">Print / Save PDF</button>
+        <button class="close" onclick="closeVaultReport()">×</button>
+      </div>
+    </div>
+
+    <div class="vr-toolbar">
+      <div class="field"><label>Current Day Exchange Rate (KHR per USD)</label><input id="vaultReportRate" type="number" min="0" step="1" placeholder="Example: 4060" oninput="recalcVaultReportValue()"></div>
+      <div class="field"><label>Report Date</label><input id="vaultReportDate" type="date"></div>
+      <button class="btn primary" onclick="loadVaultReport()">Refresh</button>
+      <button class="btn secondary" onclick="closeVaultReport()">Close</button>
+    </div>
+
+    <div class="vr-body" id="vaultReportCapture">
+      <section class="vr-page">
+        <div class="vr-banner"><span>DAILY CASH COLLECTION — VAULT CASH DETAIL REPORT</span><span id="vrDailyDate"></span></div>
+        <div class="vr-summary">
+          <div class="vr-card"><small>Total Closed Invoices</small><strong id="vrDailyInvoiceCount">0</strong></div>
+          <div class="vr-card"><small>Total Daily Cash USD</small><strong id="vrDailyUSD">$0.00</strong></div>
+          <div class="vr-card"><small>Total Daily Cash KHR</small><strong id="vrDailyKHR">៛0</strong></div>
+          <div class="vr-card"><small>Daily Cash Batches</small><strong id="vrDailyBatchCount">0</strong></div>
+        </div>
+        <div class="vr-table-wrap">
+          <table class="vr-table">
+            <thead><tr><th>No.</th><th>Daily Sale Date</th><th>Location Name</th><th>Salesman Name</th><th>Total Closed Invoice</th><th>Cash Received USD</th><th>Cash Received KHR</th></tr></thead>
+            <tbody id="vrDailyBody"></tbody>
+            <tfoot><tr><td colspan="4">Total</td><td id="vrDailyFootInvoices">0</td><td id="vrDailyFootUSD">$0.00</td><td id="vrDailyFootKHR">៛0</td></tr></tfoot>
+          </table>
+        </div>
+        <div class="vr-page-count" id="vrDailyPageInfo"></div>
+      </section>
+
+      <section class="vr-page">
+        <div class="vr-banner receivable"><span>RECEIVABLE CASH RECEIPT — VAULT CASH DETAIL REPORT</span><span id="vrReceivableDate"></span></div>
+        <div class="vr-summary">
+          <div class="vr-card"><small>Total Receivable Cash USD</small><strong id="vrReceivableUSD">$0.00</strong></div>
+          <div class="vr-card"><small>Total Receivable Cash KHR</small><strong id="vrReceivableKHR">៛0</strong></div>
+          <div class="vr-card"><small>Total Receipts</small><strong id="vrReceivableCount">0</strong></div>
+          <div class="vr-card"><small>Report Type</small><strong>Cash Received</strong></div>
+        </div>
+        <div class="vr-table-wrap">
+          <table class="vr-table receivable">
+            <thead><tr><th>No.</th><th>Receive Date</th><th>Received From</th><th>Currency</th><th>Amount</th><th>Reference</th><th>Note</th></tr></thead>
+            <tbody id="vrReceivableBody"></tbody>
+            <tfoot><tr><td colspan="4">Total</td><td colspan="3" id="vrReceivableFoot">$0.00 + ៛0</td></tr></tfoot>
+          </table>
+        </div>
+        <div class="vr-page-count" id="vrReceivablePageInfo"></div>
+
+        <div class="vr-final">
+          <div class="vr-card"><small>Vault Cash Total</small><strong>Daily Cash + Receivable</strong></div>
+          <div class="vr-card"><small>Total Vault USD</small><strong id="vrVaultUSD">$0.00</strong></div>
+          <div class="vr-card"><small>Total Vault KHR</small><strong id="vrVaultKHR">៛0</strong></div>
+          <div class="vr-card"><small>Current Day Exchange Rate</small><strong id="vrCurrentRate">0</strong></div>
+          <div class="vr-card total-value"><small>Total Vault Value in USD</small><strong id="vrTotalVaultUSD">$0.00</strong></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
