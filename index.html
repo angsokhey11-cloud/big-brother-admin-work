@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG BROTHER — Admin Work V2 Pending Receivable Request</title>
+<title>BIG BROTHER — Admin Work V3 Pending Daily Cash Request</title>
 <style>
 :root{
   --bg:#f4f7fb;--card:#fff;--line:#dfe6ef;--text:#17304f;--muted:#6d7d91;
@@ -135,6 +135,58 @@ tbody tr:hover{background:#f9fbfe}
     </div>
   </div>
 
+
+  <div id="pendingDailyCashView" style="display:none">
+    <div class="cards">
+      <div class="card"><small>Pending Daily Cash Requests</small><strong id="dcSumRequests">0</strong></div>
+      <div class="card"><small>Cash USD</small><strong id="dcSumUSD">$0.00</strong></div>
+      <div class="card"><small>Cash KHR</small><strong id="dcSumKHR">៛0</strong></div>
+      <div class="card"><small>Daily Cash in USD</small><strong id="dcSumDailyUSD">$0.00</strong></div>
+    </div>
+
+    <div class="panel">
+      <div class="view-banner">
+        Daily Cash Deposit Requests sent by Salespersons. Only requests with Status = Processing are shown here.
+      </div>
+
+      <div class="filters">
+        <input id="dcSearchBox" placeholder="Search Request ID, Salesperson or Location" oninput="renderDailyCash()">
+        <input id="dcSalesmanFilter" placeholder="Filter Salesperson" oninput="renderDailyCash()">
+        <select id="dcDateFilter" onchange="renderDailyCash()">
+          <option value="">All request dates</option>
+        </select>
+        <button class="btn secondary" onclick="clearDailyCashFilters()">Clear</button>
+        <button class="btn primary" id="dcRefreshBtn" onclick="loadPendingDailyCash(true)">↻ Refresh</button>
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Request ID</th>
+              <th>Request Date</th>
+              <th>Requested By</th>
+              <th class="center">Cash Groups</th>
+              <th class="money">Cash USD</th>
+              <th class="money">Cash KHR</th>
+              <th class="money">Daily Cash in USD</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="dailyCashBody">
+            <tr><td colspan="9" class="empty">Loading Pending Daily Cash Requests...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="foot">
+        <span id="dcRowCount">0 requests</span>
+        <span id="dcSyncStatus">Secure Admin Work</span>
+      </div>
+    </div>
+  </div>
+
   <div id="placeholderView" class="panel" style="display:none">
     <div class="placeholder">
       <h2 id="placeholderTitle">Admin Work</h2>
@@ -187,6 +239,27 @@ tbody tr:hover{background:#f9fbfe}
   </div>
 </div>
 
+
+<div class="overlay hidden" id="dailyCashReviewOverlay">
+  <div class="modalbox" style="width:min(820px,96vw)">
+    <div class="modalhead">
+      <div>
+        <h2>Pending Daily Cash Request</h2>
+        <p id="dcReviewInfo">Loading request...</p>
+      </div>
+      <button class="close" onclick="closeDailyCashReview()">×</button>
+    </div>
+
+    <div class="batch-list" id="dcReviewList"></div>
+    <div class="batch-total"><span>Total Daily Cash in USD</span><span id="dcReviewTotal">$0.00</span></div>
+    <div class="meta" id="dcReviewMeta"></div>
+
+    <div class="secure-note">
+      This page currently reviews the Daily Cash request only. Approval / Reject workflow can be added next.
+    </div>
+  </div>
+</div>
+
 <script>
 const SALES_API="https://script.google.com/macros/s/AKfycbyM5mUlz5SeMZ_oPJCo2FgLkPEcodAQ7wPl5wxAdrvfqLvsZLaHxiOtS02L1Q3ZRA3D/exec";
 
@@ -206,6 +279,9 @@ let revision="";
 let syncTimer=null;
 let syncBusy=false;
 let currentRequest=null;
+let dailyCashRequests=[];
+let dailyCashRevision="";
+let currentDailyCashRequest=null;
 
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
@@ -231,22 +307,30 @@ async function apiGet(params){
 }
 
 function configureView(){
+  $("pendingReceivableView").style.display="none";
+  $("pendingDailyCashView").style.display="none";
+  $("placeholderView").style.display="none";
+
   if(VIEW==="pending-receivable"){
     $("pendingReceivableView").style.display="";
-    $("placeholderView").style.display="none";
     $("pageTitle").textContent="Pending Receivable Request";
     $("pageSubtitle").textContent="Receivable payment requests sent by Salespersons for Admin review.";
     return true;
   }
 
+  if(VIEW==="pending-deposit"){
+    $("pendingDailyCashView").style.display="";
+    $("pageTitle").textContent="Pending Daily Cash Request";
+    $("pageSubtitle").textContent="Daily Cash Deposit Requests sent by Salespersons for Admin review.";
+    return true;
+  }
+
   const names={
-    "pending-deposit":"Pending Deposit Request",
     "deposit-history":"Deposit History",
     "staff-request":"Staff Request",
     "admin-request":"Admin Request"
   };
 
-  $("pendingReceivableView").style.display="none";
   $("placeholderView").style.display="";
   $("placeholderTitle").textContent=names[VIEW]||"Admin Work";
   $("pageTitle").textContent=names[VIEW]||"Admin Work";
@@ -437,17 +521,30 @@ async function smartSync(force=false){
   try{
     const r=await fetchRevision();
 
-    if(revision&&r===revision){
-      $("syncStatus").textContent="Up to date · smart sync 20s";
+    if(VIEW==="pending-receivable"){
+      if(revision&&r===revision){
+        $("syncStatus").textContent="Up to date · smart sync 20s";
+        return;
+      }
+      revision=r;
+      await loadPending(false);
       return;
     }
 
-    revision=r;
-    await loadPending(false);
+    if(VIEW==="pending-deposit"){
+      if(dailyCashRevision&&r===dailyCashRevision){
+        $("dcSyncStatus").textContent="Up to date · smart sync 20s";
+        return;
+      }
+      dailyCashRevision=r;
+      await loadPendingDailyCash(false);
+      return;
+    }
 
   }catch(e){
     console.warn("Admin Work sync:",e);
-    if(rows.length)$("syncStatus").textContent="Cached data · sync will retry";
+    if(VIEW==="pending-receivable"&&rows.length)$("syncStatus").textContent="Cached data · sync will retry";
+    if(VIEW==="pending-deposit"&&dailyCashRequests.length)$("dcSyncStatus").textContent="Current data · sync will retry";
   }finally{
     syncBusy=false;
   }
@@ -496,9 +593,13 @@ async function login(){
     $("loginOverlay").classList.add("hidden");
     $("logoutBtn").hidden=false;
 
-    const cached=restoreCache();
-    if(cached)await smartSync(true);
-    else await loadPending(true);
+    if(VIEW==="pending-receivable"){
+      const cached=restoreCache();
+      if(cached)await smartSync(true);
+      else await loadPending(true);
+    }else if(VIEW==="pending-deposit"){
+      await loadPendingDailyCash(true);
+    }
 
     startSync();
 
@@ -508,6 +609,155 @@ async function login(){
     btn.disabled=false;
     btn.textContent="Sign In";
   }
+}
+
+
+function populateDailyCashDates(){
+  const sel=$("dcDateFilter");
+  if(!sel)return;
+  const cur=sel.value;
+  const dates=[...new Set(dailyCashRequests.map(r=>String(r.requestDate||"").slice(0,10)).filter(Boolean))].sort().reverse();
+  sel.innerHTML='<option value="">All request dates</option>'+dates.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("");
+  if(dates.includes(cur))sel.value=cur;
+}
+
+function renderDailyCash(){
+  if(VIEW!=="pending-deposit")return;
+
+  const q=norm($("dcSearchBox")?.value);
+  const salesman=norm($("dcSalesmanFilter")?.value);
+  const date=$("dcDateFilter")?.value||"";
+
+  const visible=dailyCashRequests.filter(r=>{
+    const allocs=Array.isArray(r.allocations)?r.allocations:[];
+    const text=norm([
+      r.depositRequestId,
+      r.salesman,
+      ...allocs.map(a=>a.locationCode),
+      ...allocs.map(a=>a.collectionDate)
+    ].join(" "));
+
+    return (!q||text.includes(q)) &&
+           (!salesman||norm(r.salesman).includes(salesman)) &&
+           (!date||String(r.requestDate||"").slice(0,10)===date);
+  });
+
+  $("dcRowCount").textContent=`${visible.length} request${visible.length===1?"":"s"}`;
+  $("dcSumRequests").textContent=visible.length;
+  $("dcSumUSD").textContent=money(visible.reduce((s,r)=>s+num(r.cashUSD),0),"USD");
+  $("dcSumKHR").textContent=money(visible.reduce((s,r)=>s+num(r.cashKHR),0),"KHR");
+  $("dcSumDailyUSD").textContent=money(visible.reduce((s,r)=>s+num(r.dailyCashUSD),0),"USD");
+
+  if(!visible.length){
+    $("dailyCashBody").innerHTML='<tr><td colspan="9" class="empty">No Pending Daily Cash Requests.</td></tr>';
+    return;
+  }
+
+  $("dailyCashBody").innerHTML=visible.map(r=>`
+    <tr>
+      <td><strong>${esc(r.depositRequestId)}</strong></td>
+      <td>${esc(r.requestDate||"-")}</td>
+      <td>${esc(r.salesman||"-")}</td>
+      <td class="center">${num(r.groupCount)||(r.allocations||[]).length}</td>
+      <td class="money">${money(r.cashUSD,"USD")}</td>
+      <td class="money">${money(r.cashKHR,"KHR")}</td>
+      <td class="money"><strong>${money(r.dailyCashUSD,"USD")}</strong></td>
+      <td><span class="status processing">Processing</span></td>
+      <td><button class="btn primary" onclick='openDailyCashReview(${JSON.stringify(r.depositRequestId)})'>Review Request</button></td>
+    </tr>
+  `).join("");
+}
+
+function clearDailyCashFilters(){
+  $("dcSearchBox").value="";
+  $("dcSalesmanFilter").value="";
+  $("dcDateFilter").value="";
+  renderDailyCash();
+}
+
+async function loadPendingDailyCash(force=false){
+  if(!sessionToken)throw new Error("Admin session required.");
+
+  const btn=$("dcRefreshBtn");
+  if(force&&btn){btn.disabled=true;btn.textContent="Refreshing…"}
+  $("dcSyncStatus").textContent=force?"Syncing…":"Loading…";
+
+  try{
+    const d=await apiGet({
+      action:"adminPendingDailyCashRequests",
+      sessionToken,
+      _ts:Date.now()
+    });
+
+    dailyCashRequests=Array.isArray(d.requests)?d.requests:[];
+    dailyCashRevision=String(d.revision||dailyCashRevision||"");
+
+    if(d.access)$("accessPill").textContent="🛡️ "+(d.access.adminName||"Admin");
+
+    populateDailyCashDates();
+    renderDailyCash();
+    $("dcSyncStatus").textContent="Up to date · smart sync 20s";
+    return d;
+  }finally{
+    if(force&&btn){btn.disabled=false;btn.textContent="↻ Refresh"}
+  }
+}
+
+async function openDailyCashReview(requestId){
+  if(!sessionToken||!requestId)return;
+
+  currentDailyCashRequest=null;
+  $("dailyCashReviewOverlay").classList.remove("hidden");
+  $("dcReviewInfo").textContent="Loading request…";
+  $("dcReviewList").innerHTML="";
+  $("dcReviewMeta").innerHTML="";
+
+  try{
+    const d=await apiGet({
+      action:"adminDailyCashRequestDetail",
+      sessionToken,
+      requestId,
+      _ts:Date.now()
+    });
+
+    const r=d.request;
+    currentDailyCashRequest=r;
+    const allocations=Array.isArray(r.allocations)?r.allocations:[];
+
+    $("dcReviewInfo").textContent=
+      `${r.depositRequestId} · requested by ${r.salesman||"Salesman"} · ${r.requestDate||"-"}`;
+
+    $("dcReviewList").innerHTML=allocations.length
+      ? allocations.map(a=>`
+          <div class="batch-item">
+            <span>
+              <strong>${esc(a.collectionDate||"-")} · ${esc(a.locationCode||"-")}</strong><br>
+              ${esc(a.salesman||r.salesman||"")} · ${num(a.invoiceCount)} paid invoice${num(a.invoiceCount)===1?"":"s"}
+            </span>
+            <span style="text-align:right">
+              ${money(a.cashUSD,"USD")}<br>
+              ${money(a.cashKHR,"KHR")}<br>
+              <strong>${money(a.dailyCashUSD,"USD")}</strong>
+            </span>
+          </div>`).join("")
+      : '<div class="empty" style="padding:12px">No Daily Cash groups found.</div>';
+
+    $("dcReviewTotal").textContent=money(r.dailyCashUSD,"USD");
+    $("dcReviewMeta").innerHTML=
+      `<strong>Cash USD:</strong> ${money(r.cashUSD,"USD")}<br>`+
+      `<strong>Cash KHR:</strong> ${money(r.cashKHR,"KHR")}<br>`+
+      `<strong>Cash Groups:</strong> ${num(r.groupCount)||allocations.length}`+
+      `${r.note?`<br><strong>Note:</strong> ${esc(r.note)}`:""}`;
+
+  }catch(e){
+    $("dcReviewInfo").textContent="Could not load request";
+    $("dcReviewMeta").innerHTML=`<span style="color:#c93c46">${esc(e.message||"Could not load request.")}</span>`;
+  }
+}
+
+function closeDailyCashReview(){
+  $("dailyCashReviewOverlay").classList.add("hidden");
+  currentDailyCashRequest=null;
 }
 
 async function restoreAccess(){
@@ -525,9 +775,13 @@ async function restoreAccess(){
   if(sessionToken){
     try{
       $("logoutBtn").hidden=false;
-      const cached=restoreCache();
-      if(cached)await smartSync(true);
-      else await loadPending(true);
+      if(VIEW==="pending-receivable"){
+        const cached=restoreCache();
+        if(cached)await smartSync(true);
+        else await loadPending(true);
+      }else if(VIEW==="pending-deposit"){
+        await loadPendingDailyCash(true);
+      }
       startSync();
       return;
     }catch(_){
@@ -553,9 +807,13 @@ async function restoreAccess(){
       $("accessPill").textContent="🛡️ "+(d.adminName||"Admin");
       $("logoutBtn").hidden=false;
 
-      const cached=restoreCache();
-      if(cached)await smartSync(true);
-      else await loadPending(true);
+      if(VIEW==="pending-receivable"){
+        const cached=restoreCache();
+        if(cached)await smartSync(true);
+        else await loadPending(true);
+      }else if(VIEW==="pending-deposit"){
+        await loadPendingDailyCash(true);
+      }
 
       startSync();
       return;
@@ -716,7 +974,7 @@ async function rejectRequest(){
 }
 
 document.addEventListener("visibilitychange",()=>{
-  if(!document.hidden&&sessionToken&&VIEW==="pending-receivable")smartSync(true);
+  if(!document.hidden&&sessionToken&&(VIEW==="pending-receivable"||VIEW==="pending-deposit"))smartSync(true);
 });
 
 restoreAccess();
