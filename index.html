@@ -308,26 +308,184 @@ tbody tr:hover{background:#f9fbfe}
   .dc-review-actions{grid-template-columns:1fr}
 }
 
-/* ===== V6.4 VAULT REPORT ===== */
-.vault-report-shell{width:min(1500px,97vw);height:min(940px,95vh);background:#fff;border-radius:18px;box-shadow:0 30px 90px rgba(15,35,65,.35);overflow:hidden;display:flex;flex-direction:column}
-.vr-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding:16px 20px;border-bottom:1px solid var(--line);background:#fff}
-.vr-head h2{margin:0 0 4px;font-size:25px;color:#17365d}.vr-head p{margin:0;color:#6f7f93;font-size:13px}
-.vr-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.vr-toolbar{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;padding:12px 18px;border-bottom:1px solid var(--line);background:#fbfdff}.vr-toolbar .field{margin:0}
-.vr-body{padding:14px 16px 18px;overflow:auto;background:#f8fbff}
-.vr-page{background:#fff;border:1px solid #dce6f1;border-radius:14px;margin-bottom:16px;overflow:hidden}
-.vr-banner{padding:13px 16px;font-size:17px;font-weight:900;color:#fff;background:#0c4f82;display:flex;justify-content:space-between;gap:12px;align-items:center}
+/* ===== V6.5 VAULT REPORT — SIDE BY SIDE ===== */
+.vault-report-shell{
+  width:min(1680px,99vw);
+  height:min(960px,97vh);
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 30px 90px rgba(15,35,65,.35);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.vr-head{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:flex-start;
+  padding:14px 18px;
+  border-bottom:1px solid var(--line);
+  background:#fff;
+}
+.vr-head h2{margin:0 0 3px;font-size:24px;color:#17365d}
+.vr-head p{margin:0;color:#6f7f93;font-size:12px}
+.vr-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.vr-actions .btn{padding:8px 12px;font-size:12px}
+.vr-toolbar{
+  display:grid;
+  grid-template-columns:1fr 1fr auto auto;
+  gap:8px;
+  padding:10px 14px;
+  border-bottom:1px solid var(--line);
+  background:#fbfdff;
+}
+.vr-toolbar .field{margin:0}
+.vr-toolbar input{height:40px}
+.vr-body{
+  padding:12px;
+  overflow:auto;
+  background:#f8fbff;
+}
+.vr-sheets{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  align-items:start;
+}
+.vr-page{
+  background:#fff;
+  border:1px solid #dce6f1;
+  border-radius:12px;
+  overflow:hidden;
+  min-width:0;
+}
+.vr-banner{
+  padding:10px 12px;
+  font-size:15px;
+  font-weight:900;
+  color:#fff;
+  background:#0c4f82;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+}
 .vr-banner.receivable{background:#56319a}
-.vr-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px}
-.vr-card{border:1px solid #dce6f1;background:#fff;border-radius:11px;padding:11px}.vr-card small{display:block;color:#66788f;font-weight:800;font-size:11px;margin-bottom:4px}.vr-card strong{font-size:18px;color:#183a66}
-.vr-table-wrap{overflow:auto;padding:0 12px 12px}.vr-table{width:100%;min-width:1040px;border-collapse:collapse}.vr-table th{background:#0d5a92;color:#fff;font-size:12px;padding:8px;border-right:1px solid rgba(255,255,255,.25)}
-.vr-table.receivable th{background:#5b38a0}.vr-table td{font-size:12px;padding:8px;border-bottom:1px solid #e5edf5;border-right:1px solid #edf2f7}.vr-table tbody tr:nth-child(even){background:#f8fbff}.vr-table tfoot td{font-weight:900;background:#edf5ff}.vr-table.receivable tfoot td{background:#f2edff}
-.vr-final{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1.3fr;gap:10px;padding:12px;border-top:1px solid #dce6f1;background:#effaf2}.vr-final .vr-card{background:rgba(255,255,255,.82)}.vr-final .total-value{background:#0d7b42;color:#fff;border-color:#0d7b42}.vr-final .total-value small,.vr-final .total-value strong{color:#fff}
-.vr-page-count{padding:8px 12px 12px;color:#6f7f93;font-size:12px;display:flex;justify-content:space-between}
-@media(max-width:900px){.vr-toolbar{grid-template-columns:1fr 1fr}.vr-summary{grid-template-columns:1fr 1fr}.vr-final{grid-template-columns:1fr 1fr}}
-@media print{body *{visibility:hidden!important}#vaultReportOverlay,#vaultReportOverlay *{visibility:visible!important}#vaultReportOverlay{position:absolute!important;inset:0!important;background:#fff!important}.vault-report-shell{width:100%!important;height:auto!important;box-shadow:none!important;border-radius:0!important}.vr-actions,.vr-toolbar,.close{display:none!important}.vr-body{overflow:visible!important;background:#fff!important;padding:0!important}.vr-page{break-after:page;margin:0!important;border-radius:0!important}.vr-page:last-child{break-after:auto}}
-
-</style>
+.vr-summary{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+  padding:8px;
+}
+.vr-card{
+  border:1px solid #dce6f1;
+  background:#fff;
+  border-radius:9px;
+  padding:8px 9px;
+  min-width:0;
+}
+.vr-card small{
+  display:block;
+  color:#66788f;
+  font-weight:800;
+  font-size:10px;
+  margin-bottom:3px;
+  line-height:1.15;
+}
+.vr-card strong{
+  font-size:16px;
+  color:#183a66;
+  white-space:nowrap;
+}
+.vr-table-wrap{
+  overflow:auto;
+  padding:0 8px 8px;
+}
+.vr-table{
+  width:100%;
+  min-width:0;
+  table-layout:fixed;
+  border-collapse:collapse;
+}
+.vr-table th{
+  background:#0d5a92;
+  color:#fff;
+  font-size:10px;
+  padding:6px 5px;
+  border-right:1px solid rgba(255,255,255,.25);
+  line-height:1.15;
+}
+.vr-table.receivable th{background:#5b38a0}
+.vr-table td{
+  font-size:10px;
+  padding:5px 5px;
+  border-bottom:1px solid #e5edf5;
+  border-right:1px solid #edf2f7;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.vr-table tbody tr:nth-child(even){background:#f8fbff}
+.vr-table tfoot td{
+  font-weight:900;
+  background:#edf5ff;
+  font-size:10px;
+}
+.vr-table.receivable tfoot td{background:#f2edff}
+.vr-page-count{
+  padding:5px 8px 8px;
+  color:#6f7f93;
+  font-size:10px;
+  display:flex;
+  justify-content:space-between;
+}
+.vr-final{
+  display:grid;
+  grid-template-columns:1.2fr 1fr 1fr 1fr 1.15fr;
+  gap:8px;
+  margin-top:10px;
+  padding:9px;
+  border:1px solid #d6eadb;
+  border-radius:12px;
+  background:#effaf2;
+}
+.vr-final .vr-card{background:rgba(255,255,255,.88)}
+.vr-final .total-value{
+  background:#0d7b42;
+  color:#fff;
+  border-color:#0d7b42;
+}
+.vr-final .total-value small,
+.vr-final .total-value strong{color:#fff}
+.vr-empty{
+  text-align:center;
+  padding:16px!important;
+  color:#7a8798;
+}
+@media(max-width:1180px){
+  .vr-sheets{grid-template-columns:1fr}
+  .vr-summary{grid-template-columns:repeat(4,minmax(120px,1fr))}
+  .vr-table{min-width:760px}
+}
+@media(max-width:760px){
+  .vault-report-shell{width:99vw;height:98vh;border-radius:10px}
+  .vr-head{flex-direction:column}
+  .vr-toolbar{grid-template-columns:1fr 1fr}
+  .vr-summary{grid-template-columns:1fr 1fr}
+  .vr-final{grid-template-columns:1fr 1fr}
+}
+@media print{
+  body *{visibility:hidden!important}
+  #vaultReportOverlay,#vaultReportOverlay *{visibility:visible!important}
+  #vaultReportOverlay{position:absolute!important;inset:0!important;background:#fff!important}
+  .vault-report-shell{width:100%!important;height:auto!important;box-shadow:none!important;border-radius:0!important}
+  .vr-actions,.vr-toolbar,.close{display:none!important}
+  .vr-body{overflow:visible!important;background:#fff!important;padding:0!important}
+  .vr-sheets{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
+  .vr-page{break-inside:avoid;margin:0!important}
+  .vr-final{break-inside:avoid}
+}</style>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
@@ -1939,7 +2097,7 @@ function renderVaultReport(){
     <td>${vrEsc(x.salesperson||"-")}</td><td>${Number(x.invoiceCount||0).toLocaleString()}</td>
     <td>${vrUsd(x.usd)}</td><td>${vrKhr(x.khr)}</td>
   </tr>`).join(""):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#7a8798">No Daily Cash currently in Vault.</td></tr>';
-  $("vrDailyPageInfo").innerHTML=`<span>${daily.length} batch(es)</span><span>Report layout supports 20 rows per page.</span>`;
+  $("vrDailyPageInfo").innerHTML=`<span>${daily.length} batch(es)</span><span>Showing up to 20 rows.</span>`;
 
   $("vrReceivableUSD").textContent=vrUsd(d.receivableUSD);
   $("vrReceivableKHR").textContent=vrKhr(d.receivableKHR);
@@ -1949,7 +2107,7 @@ function renderVaultReport(){
     return `<tr><td>${i+1}</td><td>${vrEsc(x.date||"-")}</td><td>${vrEsc(x.receivedFrom||"-")}</td><td>${vrEsc(x.currency||"-")}</td><td>${amt}</td><td>${vrEsc(x.referenceId||"-")}</td><td>${vrEsc(x.note||"-")}</td></tr>`;
   }).join(""):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#7a8798">No Receivable Cash currently in Vault.</td></tr>';
   $("vrReceivableFoot").textContent=`${vrUsd(d.receivableUSD)} + ${vrKhr(d.receivableKHR)}`;
-  $("vrReceivablePageInfo").innerHTML=`<span>${recv.length} receipt(s)</span><span>Report layout supports 20 rows per page.</span>`;
+  $("vrReceivablePageInfo").innerHTML=`<span>${recv.length} receipt(s)</span><span>Showing up to 20 rows.</span>`;
 
   $("vrVaultUSD").textContent=vrUsd(d.vaultUSD);
   $("vrVaultKHR").textContent=vrKhr(d.vaultKHR);
@@ -1990,6 +2148,7 @@ async function shareVaultReportTelegram(){
 
 </script>
 
+
 <div class="overlay hidden" id="vaultReportOverlay">
   <div class="vault-report-shell">
     <div class="vr-head">
@@ -2006,59 +2165,128 @@ async function shareVaultReportTelegram(){
     </div>
 
     <div class="vr-toolbar">
-      <div class="field"><label>Current Day Exchange Rate (KHR per USD)</label><input id="vaultReportRate" type="number" min="0" step="1" placeholder="Example: 4060" oninput="recalcVaultReportValue()"></div>
-      <div class="field"><label>Report Date</label><input id="vaultReportDate" type="date"></div>
+      <div class="field">
+        <label>Current Day Exchange Rate (KHR per USD)</label>
+        <input id="vaultReportRate" type="number" min="0" step="1" placeholder="Example: 4060" oninput="recalcVaultReportValue()">
+      </div>
+      <div class="field">
+        <label>Report Date</label>
+        <input id="vaultReportDate" type="date">
+      </div>
       <button class="btn primary" onclick="loadVaultReport()">Refresh</button>
       <button class="btn secondary" onclick="closeVaultReport()">Close</button>
     </div>
 
     <div class="vr-body" id="vaultReportCapture">
-      <section class="vr-page">
-        <div class="vr-banner"><span>DAILY CASH COLLECTION — VAULT CASH DETAIL REPORT</span><span id="vrDailyDate"></span></div>
-        <div class="vr-summary">
-          <div class="vr-card"><small>Total Closed Invoices</small><strong id="vrDailyInvoiceCount">0</strong></div>
-          <div class="vr-card"><small>Total Daily Cash USD</small><strong id="vrDailyUSD">$0.00</strong></div>
-          <div class="vr-card"><small>Total Daily Cash KHR</small><strong id="vrDailyKHR">៛0</strong></div>
-          <div class="vr-card"><small>Daily Cash Batches</small><strong id="vrDailyBatchCount">0</strong></div>
-        </div>
-        <div class="vr-table-wrap">
-          <table class="vr-table">
-            <thead><tr><th>No.</th><th>Daily Sale Date</th><th>Location Name</th><th>Salesman Name</th><th>Total Closed Invoice</th><th>Cash Received USD</th><th>Cash Received KHR</th></tr></thead>
-            <tbody id="vrDailyBody"></tbody>
-            <tfoot><tr><td colspan="4">Total</td><td id="vrDailyFootInvoices">0</td><td id="vrDailyFootUSD">$0.00</td><td id="vrDailyFootKHR">៛0</td></tr></tfoot>
-          </table>
-        </div>
-        <div class="vr-page-count" id="vrDailyPageInfo"></div>
-      </section>
+      <div class="vr-sheets">
+        <section class="vr-page">
+          <div class="vr-banner">
+            <span>DAILY CASH COLLECTION — VAULT CASH DETAIL REPORT</span>
+            <span id="vrDailyDate"></span>
+          </div>
 
-      <section class="vr-page">
-        <div class="vr-banner receivable"><span>RECEIVABLE CASH RECEIPT — VAULT CASH DETAIL REPORT</span><span id="vrReceivableDate"></span></div>
-        <div class="vr-summary">
-          <div class="vr-card"><small>Total Receivable Cash USD</small><strong id="vrReceivableUSD">$0.00</strong></div>
-          <div class="vr-card"><small>Total Receivable Cash KHR</small><strong id="vrReceivableKHR">៛0</strong></div>
-          <div class="vr-card"><small>Total Receipts</small><strong id="vrReceivableCount">0</strong></div>
-          <div class="vr-card"><small>Report Type</small><strong>Cash Received</strong></div>
-        </div>
-        <div class="vr-table-wrap">
-          <table class="vr-table receivable">
-            <thead><tr><th>No.</th><th>Receive Date</th><th>Received From</th><th>Currency</th><th>Amount</th><th>Reference</th><th>Note</th></tr></thead>
-            <tbody id="vrReceivableBody"></tbody>
-            <tfoot><tr><td colspan="4">Total</td><td colspan="3" id="vrReceivableFoot">$0.00 + ៛0</td></tr></tfoot>
-          </table>
-        </div>
-        <div class="vr-page-count" id="vrReceivablePageInfo"></div>
+          <div class="vr-summary">
+            <div class="vr-card"><small>Total Closed Invoices</small><strong id="vrDailyInvoiceCount">0</strong></div>
+            <div class="vr-card"><small>Total Daily Cash USD</small><strong id="vrDailyUSD">$0.00</strong></div>
+            <div class="vr-card"><small>Total Daily Cash KHR</small><strong id="vrDailyKHR">៛0</strong></div>
+            <div class="vr-card"><small>Daily Cash Batches</small><strong id="vrDailyBatchCount">0</strong></div>
+          </div>
 
-        <div class="vr-final">
-          <div class="vr-card"><small>Vault Cash Total</small><strong>Daily Cash + Receivable</strong></div>
-          <div class="vr-card"><small>Total Vault USD</small><strong id="vrVaultUSD">$0.00</strong></div>
-          <div class="vr-card"><small>Total Vault KHR</small><strong id="vrVaultKHR">៛0</strong></div>
-          <div class="vr-card"><small>Current Day Exchange Rate</small><strong id="vrCurrentRate">0</strong></div>
-          <div class="vr-card total-value"><small>Total Vault Value in USD</small><strong id="vrTotalVaultUSD">$0.00</strong></div>
-        </div>
-      </section>
+          <div class="vr-table-wrap">
+            <table class="vr-table">
+              <colgroup>
+                <col style="width:6%">
+                <col style="width:14%">
+                <col style="width:19%">
+                <col style="width:19%">
+                <col style="width:15%">
+                <col style="width:13.5%">
+                <col style="width:13.5%">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Date</th>
+                  <th>Location</th>
+                  <th>Salesman</th>
+                  <th>Invoices</th>
+                  <th>Cash USD</th>
+                  <th>Cash KHR</th>
+                </tr>
+              </thead>
+              <tbody id="vrDailyBody"></tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="4">Total</td>
+                  <td id="vrDailyFootInvoices">0</td>
+                  <td id="vrDailyFootUSD">$0.00</td>
+                  <td id="vrDailyFootKHR">៛0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="vr-page-count" id="vrDailyPageInfo"></div>
+        </section>
+
+        <section class="vr-page">
+          <div class="vr-banner receivable">
+            <span>RECEIVABLE CASH RECEIPT — VAULT CASH DETAIL REPORT</span>
+            <span id="vrReceivableDate"></span>
+          </div>
+
+          <div class="vr-summary">
+            <div class="vr-card"><small>Total Receivable Cash USD</small><strong id="vrReceivableUSD">$0.00</strong></div>
+            <div class="vr-card"><small>Total Receivable Cash KHR</small><strong id="vrReceivableKHR">៛0</strong></div>
+            <div class="vr-card"><small>Total Receipts</small><strong id="vrReceivableCount">0</strong></div>
+            <div class="vr-card"><small>Report Type</small><strong>Cash Received</strong></div>
+          </div>
+
+          <div class="vr-table-wrap">
+            <table class="vr-table receivable">
+              <colgroup>
+                <col style="width:6%">
+                <col style="width:14%">
+                <col style="width:23%">
+                <col style="width:11%">
+                <col style="width:15%">
+                <col style="width:18%">
+                <col style="width:13%">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Date</th>
+                  <th>Received From</th>
+                  <th>Currency</th>
+                  <th>Amount</th>
+                  <th>Reference</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody id="vrReceivableBody"></tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="4">Total</td>
+                  <td colspan="3" id="vrReceivableFoot">$0.00 + ៛0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="vr-page-count" id="vrReceivablePageInfo"></div>
+        </section>
+      </div>
+
+      <div class="vr-final">
+        <div class="vr-card"><small>Vault Cash Total</small><strong>Daily Cash + Receivable</strong></div>
+        <div class="vr-card"><small>Total Vault USD</small><strong id="vrVaultUSD">$0.00</strong></div>
+        <div class="vr-card"><small>Total Vault KHR</small><strong id="vrVaultKHR">៛0</strong></div>
+        <div class="vr-card"><small>Current Day Exchange Rate</small><strong id="vrCurrentRate">0</strong></div>
+        <div class="vr-card total-value"><small>Total Vault Value in USD</small><strong id="vrTotalVaultUSD">$0.00</strong></div>
+      </div>
     </div>
   </div>
 </div>
+
 
 </body>
 </html>
