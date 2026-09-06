@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG BROTHER — Admin Work V5.5 Daily Cash Review Accept Reject</title>
+<title>BIG BROTHER — Admin Work V5.6 Company Deposit Visibility Fix</title>
 <style>
 :root{
   --bg:#f4f7fb;--card:#fff;--line:#dfe6ef;--text:#17304f;--muted:#6d7d91;
@@ -182,7 +182,7 @@ tbody tr:hover{background:#f9fbfe}
       <div class="card"><small>Source</small><strong style="font-size:18px">Receivable Cash</strong></div>
     </div>
     <div class="panel">
-      <div class="view-banner">Approved Receivable requests paid in Cash appear here until deposited to a company bank account.</div>
+      <div class="view-banner">Approved Cash awaiting company bank deposit. Includes Receivable Cash and Daily Cash Collection.</div>
       <div class="filters">
         <input id="pdSearch" placeholder="Search Deposit ID, Payment ID, Customer, Salesperson" oninput="renderPendingDeposit()">
         <input id="pdSalesman" placeholder="Filter Salesperson" oninput="renderPendingDeposit()">
@@ -193,10 +193,10 @@ tbody tr:hover{background:#f9fbfe}
       <div class="tablewrap">
         <table>
           <thead><tr>
-            <th>Deposit ID</th><th>Payment Date</th><th>Payment ID</th><th>Customer</th><th>Salesperson</th>
+            <th>Deposit ID</th><th>Source</th><th>Payment Date</th><th>Payment ID</th><th>Customer</th><th>Salesperson</th>
             <th>Location</th><th class="money">Amount</th><th>Status</th><th>Action</th>
           </tr></thead>
-          <tbody id="pendingDepositBody"><tr><td colspan="9" class="empty">Loading Pending Deposit...</td></tr></tbody>
+          <tbody id="pendingDepositBody"><tr><td colspan="10" class="empty">Loading Pending Deposit...</td></tr></tbody>
         </table>
       </div>
       <div class="foot"><span id="pdRowCount">0 deposits</span><span id="pdSyncStatus">Secure Admin Work</span></div>
@@ -215,7 +215,7 @@ tbody tr:hover{background:#f9fbfe}
       <div class="card"><small>Source</small><strong style="font-size:18px">Receivable</strong></div>
     </div>
     <div class="panel">
-      <div class="view-banner">Receivable Bank payments appear here automatically after approval. Completed Cash deposits also move here.</div>
+      <div class="view-banner">Completed company deposits. Includes Receivable payments and Daily Cash Collection deposited to bank.</div>
       <div class="filters">
         <input id="dhSearch" placeholder="Search Deposit ID, Payment ID, Customer, Bank or Transaction ID" oninput="renderDepositHistory()">
         <input id="dhSalesman" placeholder="Filter Salesperson" oninput="renderDepositHistory()">
@@ -226,10 +226,10 @@ tbody tr:hover{background:#f9fbfe}
       <div class="tablewrap">
         <table>
           <thead><tr>
-            <th>Deposit ID</th><th>Deposited At</th><th>Payment ID</th><th>Customer</th><th>Method</th>
+            <th>Deposit ID</th><th>Source</th><th>Deposited At</th><th>Payment ID</th><th>Customer</th><th>Method</th>
             <th>Company Bank</th><th>Reference</th><th class="money">Amount</th><th>Deposited By</th>
           </tr></thead>
-          <tbody id="depositHistoryBody"><tr><td colspan="9" class="empty">Loading Deposit History...</td></tr></tbody>
+          <tbody id="depositHistoryBody"><tr><td colspan="10" class="empty">Loading Deposit History...</td></tr></tbody>
         </table>
       </div>
       <div class="foot"><span id="dhRowCount">0 deposits</span><span id="dhSyncStatus">Secure Admin Work</span></div>
@@ -732,7 +732,7 @@ async function login(){
 
 function depositSearchText(r){
   return norm([
-    r.depositId,r.paymentId,r.requestId,r.customer,r.salesman,
+    r.depositId,r.source,r.paymentId,r.requestId,r.customer,r.salesman,
     r.locationCode,r.collectionBank,r.collectionTransactionId,
     r.companyBankAccount,r.depositReference
   ].join(" "));
@@ -755,6 +755,7 @@ function renderPendingDeposit(){
   $("pendingDepositBody").innerHTML=visible.length?visible.map(r=>`
     <tr>
       <td><strong>${esc(r.depositId)}</strong></td>
+      <td>${esc(r.source||"-")}</td>
       <td>${esc(r.paymentDate||"-")}</td>
       <td>${esc(r.paymentId||"-")}</td>
       <td>${esc(r.customer||"-")}</td>
@@ -764,7 +765,7 @@ function renderPendingDeposit(){
       <td><span class="status processing">Pending Deposit</span></td>
       <td><button class="btn success" onclick='openReceivableDeposit(${JSON.stringify(r.depositId)})'>Deposit</button></td>
     </tr>`).join("")
-  :'<tr><td colspan="9" class="empty">No Pending Deposit.</td></tr>';
+  :'<tr><td colspan="10" class="empty">No Pending Deposit.</td></tr>';
 }
 
 async function loadPendingDeposit(force=false){
@@ -774,7 +775,7 @@ async function loadPendingDeposit(force=false){
   $("pdSyncStatus").textContent=force?"Syncing…":"Loading…";
   try{
     const d=await apiGet({
-      action:"adminPendingReceivableDeposits",
+      action:"adminPendingCompanyDeposits",
       sessionToken,
       _ts:Date.now()
     });
@@ -870,6 +871,7 @@ function renderDepositHistory(){
   $("depositHistoryBody").innerHTML=visible.length?visible.map(r=>`
     <tr>
       <td><strong>${esc(r.depositId)}</strong></td>
+      <td>${esc(r.source||"-")}</td>
       <td>${esc(r.depositedAt||"-")}</td>
       <td>${esc(r.paymentId||"-")}</td>
       <td>${esc(r.customer||"-")}</td>
@@ -879,7 +881,7 @@ function renderDepositHistory(){
       <td class="money"><strong>${money(r.amount,r.currency)}</strong></td>
       <td>${esc(r.depositedBy||r.approvedBy||"-")}</td>
     </tr>`).join("")
-  :'<tr><td colspan="9" class="empty">No Deposit History.</td></tr>';
+  :'<tr><td colspan="10" class="empty">No Deposit History.</td></tr>';
 }
 
 async function loadDepositHistory(force=false){
@@ -889,7 +891,7 @@ async function loadDepositHistory(force=false){
   $("dhSyncStatus").textContent=force?"Syncing…":"Loading…";
   try{
     const d=await apiGet({
-      action:"adminReceivableDepositHistory",
+      action:"adminCompanyDepositHistory",
       sessionToken,
       _ts:Date.now()
     });
