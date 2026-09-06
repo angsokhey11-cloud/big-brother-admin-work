@@ -2093,7 +2093,7 @@ function renderVaultReport(){
   $("vrDailyFootKHR").textContent=vrKhr(d.dailyKHR);
 
   $("vrDailyBody").innerHTML=daily.length?daily.map((x,i)=>`<tr>
-    <td>${i+1}</td><td>${vrEsc(x.saleDate||x.date||"-")}</td><td>${vrEsc(x.locationCode||"-")}</td>
+    <td>${i+1}</td><td>${vrEsc(x.saleDate||x.date||"-")}</td><td title="${vrEsc(x.locationCode||"")}">${vrEsc(x.locationName||x.locationCode||"-")}</td>
     <td>${vrEsc(x.salesperson||"-")}</td><td>${Number(x.invoiceCount||0).toLocaleString()}</td>
     <td>${vrUsd(x.usd)}</td><td>${vrKhr(x.khr)}</td>
   </tr>`).join(""):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#7a8798">No Daily Cash currently in Vault.</td></tr>';
