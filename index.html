@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG BROTHER — Admin Work V3.3 Daily Cash Deposit Workflow</title>
+<title>BIG BROTHER — Admin Work V3.4 Fast Daily Cash Workflow</title>
 <style>
 :root{
   --bg:#f4f7fb;--card:#fff;--line:#dfe6ef;--text:#17304f;--muted:#6d7d91;
@@ -379,15 +379,36 @@ function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
 function money(v,c="USD"){return (String(c).toUpperCase()==="KHR"?"៛":"$")+num(v).toLocaleString(undefined,{minimumFractionDigits:String(c).toUpperCase()==="KHR"?0:2,maximumFractionDigits:String(c).toUpperCase()==="KHR"?0:2})}
 function norm(v){return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim().toLowerCase()}
 
-async function apiPost(params){
+async function apiPost(params,timeoutMs=15000){
   const body=new URLSearchParams();
   Object.entries(params).forEach(([k,v])=>body.append(k,v==null?"":String(v)));
-  const res=await fetch(SALES_API,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},body,redirect:"follow"});
-  const text=await res.text();
-  let data;
-  try{data=JSON.parse(text)}catch(_){throw new Error("Server returned an unreadable response.")}
-  if(data?.success===false)throw new Error(data.error||"Database error.");
-  return data;
+
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+
+  try{
+    const res=await fetch(SALES_API,{
+      method:"POST",
+      headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},
+      body,
+      redirect:"follow",
+      signal:controller.signal
+    });
+
+    const text=await res.text();
+    let data;
+    try{data=JSON.parse(text)}
+    catch(_){throw new Error("Server returned an unreadable response. Please redeploy the latest Sales Database version.");}
+
+    if(data?.success===false)throw new Error(data.error||"Database error.");
+    return data;
+
+  }catch(e){
+    if(e?.name==="AbortError")throw new Error("Sales Database took too long to respond. Please confirm the latest Apps Script version is deployed.");
+    throw e;
+  }finally{
+    clearTimeout(timer);
+  }
 }
 
 async function apiGet(params){
@@ -790,10 +811,10 @@ async function loadPendingDailyCash(force=false){
 
   try{
     const d=await apiPost({
-      action:"adminPendingDailyCashRequests",
+      action:"adminPendingDailyCashFast",
       sessionToken,
       _ts:Date.now()
-    });
+    },15000);
 
     dailyCashRequests=Array.isArray(d.requests)?d.requests:[];
     dailyCashRevision=String(d.revision||dailyCashRevision||"");
@@ -804,6 +825,14 @@ async function loadPendingDailyCash(force=false){
     renderDailyCash();
     $("dcSyncStatus").textContent="Up to date · smart sync 20s";
     return d;
+
+  }catch(e){
+    dailyCashRequests=[];
+    renderDailyCash();
+    $("dailyCashBody").innerHTML=`<tr><td colspan="9" class="empty" style="color:#c93c46"><strong>Could not load Pending Daily Cash Request.</strong><br>${esc(e.message||"Unknown error")}</td></tr>`;
+    $("dcSyncStatus").textContent="Sync error";
+    throw e;
+
   }finally{
     if(force&&btn){btn.disabled=false;btn.textContent="↻ Refresh"}
   }
@@ -980,7 +1009,7 @@ async function loadPendingDeposit(force=false){
   if(force&&btn){btn.disabled=true;btn.textContent="Refreshing…"}
   $("pdSyncStatus").textContent=force?"Syncing…":"Loading…";
   try{
-    const d=await apiPost({action:"adminPendingDepositRequests",sessionToken,_ts:Date.now()});
+    const d=await apiPost({action:"adminPendingDepositFast",sessionToken,_ts:Date.now()});
     pendingDepositRows=Array.isArray(d.requests)?d.requests:[];
     renderPendingDeposit();
     $("pdSyncStatus").textContent="Up to date · smart sync 20s";
@@ -1069,7 +1098,7 @@ async function loadDepositHistory(force=false){
   if(force&&btn){btn.disabled=true;btn.textContent="Refreshing…"}
   $("dhSyncStatus").textContent=force?"Syncing…":"Loading…";
   try{
-    const d=await apiPost({action:"adminDepositHistory",sessionToken,_ts:Date.now()});
+    const d=await apiPost({action:"adminDepositHistoryFast",sessionToken,_ts:Date.now()});
     depositHistoryRows=Array.isArray(d.requests)?d.requests:[];
     renderDepositHistory();
     $("dhSyncStatus").textContent="Up to date · smart sync 20s";
@@ -1087,41 +1116,51 @@ async function restoreAccess(){
 
   deviceToken=localStorage.getItem(DEVICE_KEY)||"";
   sessionToken=sessionStorage.getItem(SESSION_KEY)||"";
-
   $("rememberDevice").checked=!!deviceToken;
 
-  if(sessionToken||deviceToken){
-    $("loginOverlay").classList.add("hidden");
-  }
+  const loadCurrentView=async()=>{
+    if(VIEW==="pending-receivable"){
+      const cached=restoreCache();
+      if(cached)await smartSync(true);
+      else await loadPending(true);
+    }else if(VIEW==="pending-daily-cash"){
+      await loadPendingDailyCash(true);
+    }else if(VIEW==="pending-deposit"){
+      await loadPendingDeposit(true);
+    }else if(VIEW==="deposit-history"){
+      await loadDepositHistory(true);
+    }
+  };
+
+  if(sessionToken||deviceToken)$("loginOverlay").classList.add("hidden");
 
   if(sessionToken){
     try{
       $("logoutBtn").hidden=false;
-      if(VIEW==="pending-receivable"){
-        const cached=restoreCache();
-        if(cached)await smartSync(true);
-        else await loadPending(true);
-      }else if(VIEW==="pending-daily-cash"){
-        await loadPendingDailyCash(true);
-      }
+      await loadCurrentView();
       startSync();
       return;
-    }catch(_){
-      sessionStorage.removeItem(SESSION_KEY);
-      sessionToken="";
+    }catch(e){
+      // A real data-load error should be visible instead of silently leaving "Syncing...".
+      if(String(e.message||"").toLowerCase().includes("session")||String(e.message||"").toLowerCase().includes("access")){
+        sessionStorage.removeItem(SESSION_KEY);
+        sessionToken="";
+      }else{
+        $("logoutBtn").hidden=false;
+        startSync();
+        return;
+      }
     }
   }
 
   if(deviceToken){
     try{
-      $("syncStatus").textContent="Restoring saved Admin access…";
+      if(VIEW==="pending-receivable")$("syncStatus").textContent="Restoring saved Admin access…";
+      if(VIEW==="pending-daily-cash")$("dcSyncStatus").textContent="Restoring saved Admin access…";
+      if(VIEW==="pending-deposit")$("pdSyncStatus").textContent="Restoring saved Admin access…";
+      if(VIEW==="deposit-history")$("dhSyncStatus").textContent="Restoring saved Admin access…";
 
-      const d=await apiPost({
-        action:"arDeviceLogin",
-        deviceToken,
-        role:"admin"
-      });
-
+      const d=await apiPost({action:"arDeviceLogin",deviceToken,role:"admin"});
       if(!d||!d.authorized)throw new Error(d?.error||"Remembered access failed.");
 
       sessionToken=d.sessionToken;
@@ -1129,14 +1168,7 @@ async function restoreAccess(){
       $("accessPill").textContent="🛡️ "+(d.adminName||"Admin");
       $("logoutBtn").hidden=false;
 
-      if(VIEW==="pending-receivable"){
-        const cached=restoreCache();
-        if(cached)await smartSync(true);
-        else await loadPending(true);
-      }else if(VIEW==="pending-daily-cash"){
-        await loadPendingDailyCash(true);
-      }
-
+      await loadCurrentView();
       startSync();
       return;
 
@@ -1151,7 +1183,16 @@ async function restoreAccess(){
   }
 
   $("loginOverlay").classList.remove("hidden");
-  $("requestBody").innerHTML='<tr><td colspan="11" class="empty">Sign in to view Pending Receivable Requests.</td></tr>';
+
+  if(VIEW==="pending-receivable"){
+    $("requestBody").innerHTML='<tr><td colspan="11" class="empty">Sign in to view Pending Receivable Requests.</td></tr>';
+  }else if(VIEW==="pending-daily-cash"){
+    $("dailyCashBody").innerHTML='<tr><td colspan="9" class="empty">Sign in to view Pending Daily Cash Requests.</td></tr>';
+  }else if(VIEW==="pending-deposit"){
+    $("pendingDepositBody").innerHTML='<tr><td colspan="9" class="empty">Sign in to view Pending Deposit.</td></tr>';
+  }else if(VIEW==="deposit-history"){
+    $("depositHistoryBody").innerHTML='<tr><td colspan="9" class="empty">Sign in to view Deposit History.</td></tr>';
+  }
 }
 
 async function logout(){
