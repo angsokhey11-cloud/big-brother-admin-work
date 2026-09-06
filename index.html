@@ -1901,7 +1901,7 @@ async function loadVaultReport(){
       currentRate:String(rate),
       sessionToken:sessionToken||sessionStorage.getItem(SESSION_KEY)||""
     });
-    const r=await fetch(API_URL+"?"+qs.toString(),{cache:"no-store"});
+    const r=await fetch(SALES_API+"?"+qs.toString(),{cache:"no-store"});
     const d=await r.json();
     if(!d.ok)throw new Error(d.error||"Could not load Vault Report");
     vaultReportData=d;
