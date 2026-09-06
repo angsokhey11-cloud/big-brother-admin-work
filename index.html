@@ -67,6 +67,75 @@ tbody tr:hover{background:#f9fbfe}
 .actions{display:grid;grid-template-columns:1fr 1.5fr;gap:8px;margin-top:8px}
 @media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr 1fr}.topbar{flex-direction:column}.userbox{justify-content:flex-start}}
 @media(max-width:560px){body{padding:10px}.cards{grid-template-columns:1fr 1fr;gap:8px}.filters{grid-template-columns:1fr}.actions{grid-template-columns:1fr}.topbar h1{font-size:23px}}
+
+/* ===== V6.2 PENDING DAILY CASH REVIEW ===== */
+.dc-review-shell{
+  width:min(1380px,97vw);
+  max-height:95vh;
+  background:#fff;
+  border-radius:18px;
+  box-shadow:0 28px 90px rgba(15,35,65,.32);
+  overflow:auto;
+}
+.dc-review-head{
+  display:flex;justify-content:space-between;gap:18px;align-items:flex-start;
+  padding:20px 22px 14px;border-bottom:1px solid var(--line);
+}
+.dc-review-head h2{margin:0 0 5px;font-size:25px}
+.dc-review-head p{margin:0;color:var(--muted)}
+.dc-review-status{
+  padding:10px 14px;border-radius:12px;background:#fff4d9;border:1px solid #f2d38a;
+  color:#915c00;font-weight:800;white-space:nowrap
+}
+.dc-review-body{padding:16px 18px 18px}
+.dc-section{
+  border:1px solid var(--line);border-radius:14px;background:#fff;margin-bottom:12px;overflow:hidden
+}
+.dc-section-title{
+  padding:11px 14px;font-size:15px;font-weight:900;background:#f8fbff;border-bottom:1px solid var(--line)
+}
+.dc-summary-grid{
+  display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:9px;padding:12px
+}
+.dc-summary-card{
+  border:1px solid var(--line);border-radius:11px;padding:11px;background:#fff;min-width:0
+}
+.dc-summary-card small{display:block;color:var(--muted);font-weight:800;margin-bottom:5px}
+.dc-summary-card strong{font-size:17px;word-break:break-word}
+.dc-summary-card.good{background:#eefaf3;border-color:#ccebd8}
+.dc-summary-card.warn{background:#fff8e8;border-color:#f4dfaa}
+.dc-review-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(310px,.7fr);gap:12px}
+.dc-side{display:flex;flex-direction:column;gap:12px}
+.dc-info-list{padding:8px 12px}
+.dc-info-row{
+  display:flex;justify-content:space-between;gap:15px;padding:9px 2px;border-bottom:1px solid #edf1f6
+}
+.dc-info-row:last-child{border-bottom:0}
+.dc-info-row span:first-child{color:var(--muted)}
+.dc-info-row strong{text-align:right}
+.dc-review-table-wrap{overflow:auto}
+.dc-review-table{min-width:1120px}
+.dc-review-table th,.dc-review-table td{padding:9px 10px;font-size:12px}
+.dc-review-table tfoot td{font-weight:900;background:#f3f8ff}
+.dc-match{
+  display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;
+  font-weight:900;background:#eaf8ef;color:#198754
+}
+.dc-decision{padding:12px 14px}
+.dc-decision textarea{width:100%;box-sizing:border-box}
+.dc-review-actions{display:grid;grid-template-columns:1fr 1.6fr;gap:10px;margin-top:10px}
+@media(max-width:1080px){
+  .dc-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .dc-review-grid{grid-template-columns:1fr}
+}
+@media(max-width:680px){
+  .dc-review-head{padding:15px;flex-direction:column}
+  .dc-review-status{white-space:normal}
+  .dc-review-body{padding:10px}
+  .dc-summary-grid{grid-template-columns:1fr 1fr}
+  .dc-review-actions{grid-template-columns:1fr}
+}
+
 </style>
 </head>
 <body>
@@ -334,31 +403,118 @@ tbody tr:hover{background:#f9fbfe}
 </div>
 
 
+
 <div class="overlay hidden" id="dailyCashRequestReviewOverlay">
-  <div class="modalbox" style="width:min(820px,96vw)">
-    <div class="modalhead">
-      <div><h2>Pending Daily Cash Request</h2><p id="dcReviewInfo"></p></div>
-      <button class="close" onclick="closePendingDailyCashReview()">×</button>
+  <div class="dc-review-shell">
+    <div class="dc-review-head">
+      <div>
+        <h2>Pending Daily Cash Request Review</h2>
+        <p id="dcReviewInfo"></p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="dc-review-status">◷ Pending for Approval</div>
+        <button class="close" onclick="closePendingDailyCashReview()">×</button>
+      </div>
     </div>
-    <div class="tablewrap">
-      <table>
-        <thead><tr><th>Invoice No</th><th>Date</th><th>Customer</th><th>Location</th><th>Currency</th><th class="money">Cash Amount</th></tr></thead>
-        <tbody id="dcReviewBody"></tbody>
-      </table>
-    </div>
-    <div class="note" id="dcReviewTotals"></div>
-    <div class="note" id="dcBankReview" style="margin-top:10px"></div>
-    <div class="field" style="margin-top:12px">
-      <label>Reject Reason <span style="font-weight:400;color:#7a8798">(optional)</span></label>
-      <textarea id="dcRejectReason" rows="2" placeholder="Reason if the request is not correct"></textarea>
-    </div>
-    <div class="formerror" id="dcReviewError"></div>
-    <div class="actions">
-      <button class="btn danger" id="dcRejectBtn" onclick="rejectPendingDailyCash()">✕ Reject</button>
-      <button class="btn success" id="dcAcceptBtn" onclick="acceptPendingDailyCash()">✓ Accept</button>
+
+    <div class="dc-review-body">
+      <section class="dc-section">
+        <div class="dc-section-title">Request Summary</div>
+        <div class="dc-summary-grid">
+          <div class="dc-summary-card"><small>Original Invoice Total</small><strong id="dcOriginalTotal">$0.00</strong></div>
+          <div class="dc-summary-card"><small>Physical Cash USD</small><strong id="dcPhysicalUSD">$0.00</strong></div>
+          <div class="dc-summary-card"><small>Physical Cash KHR</small><strong id="dcPhysicalKHR">៛0</strong></div>
+          <div class="dc-summary-card"><small>Expected Close Value</small><strong id="dcExpectedValue">$0.00</strong></div>
+          <div class="dc-summary-card"><small>Closing Rate</small><strong id="dcClosingRate">0</strong></div>
+          <div class="dc-summary-card"><small>Actual Equivalent</small><strong id="dcActualEquivalent">$0.00</strong></div>
+          <div class="dc-summary-card good"><small>Close Difference</small><strong id="dcCloseDifference">$0.00</strong></div>
+        </div>
+      </section>
+
+      <div class="dc-review-grid">
+        <section class="dc-section">
+          <div class="dc-section-title">Cash Invoices <span id="dcInvoiceCountBadge"></span></div>
+          <div class="dc-review-table-wrap">
+            <table class="dc-review-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Invoice No</th>
+                  <th>Sale Date</th>
+                  <th>Customer</th>
+                  <th>Salesman</th>
+                  <th>Location</th>
+                  <th>Original Invoice Amount</th>
+                  <th>Invoice Rate</th>
+                  <th>Cash Amount</th>
+                  <th class="money">Expected USD</th>
+                </tr>
+              </thead>
+              <tbody id="dcReviewBody"></tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="6">Total</td>
+                  <td id="dcTableOriginalTotal">—</td>
+                  <td></td>
+                  <td id="dcTableCashTotal">—</td>
+                  <td class="money" id="dcTableExpectedTotal">$0.00</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+
+        <aside class="dc-side">
+          <section class="dc-section">
+            <div class="dc-section-title">Group Information</div>
+            <div class="dc-info-list">
+              <div class="dc-info-row"><span>Request No</span><strong id="dcInfoRequest">-</strong></div>
+              <div class="dc-info-row"><span>Salesman</span><strong id="dcInfoSalesman">-</strong></div>
+              <div class="dc-info-row"><span>Sale Date</span><strong id="dcInfoSaleDate">-</strong></div>
+              <div class="dc-info-row"><span>Location</span><strong id="dcInfoLocation">-</strong></div>
+              <div class="dc-info-row"><span>Total Invoices</span><strong id="dcInfoInvoiceCount">0</strong></div>
+              <div class="dc-info-row"><span>Groups</span><strong id="dcInfoGroups">1</strong></div>
+              <div class="dc-info-row"><span>Requested At</span><strong id="dcInfoCreated">-</strong></div>
+            </div>
+          </section>
+
+          <section class="dc-section">
+            <div class="dc-section-title">Close Method & Result</div>
+            <div class="dc-info-list" id="dcBankReview"></div>
+          </section>
+
+          <section class="dc-section">
+            <div class="dc-section-title">Physical Cash Verification</div>
+            <div class="dc-info-list">
+              <div class="dc-info-row"><span>Expected Selected Invoice Value</span><strong id="dcVerifyExpected">$0.00</strong></div>
+              <div class="dc-info-row"><span>Actual Physical USD</span><strong id="dcVerifyUSD">$0.00</strong></div>
+              <div class="dc-info-row"><span>Actual Physical KHR</span><strong id="dcVerifyKHR">៛0</strong></div>
+              <div class="dc-info-row"><span>Actual Equivalent USD</span><strong id="dcVerifyEquivalent">$0.00</strong></div>
+              <div class="dc-info-row"><span>Result</span><strong><span class="dc-match" id="dcVerifyResult">✓ MATCH</span></strong></div>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <section class="dc-section">
+        <div class="dc-section-title">Admin Decision</div>
+        <div class="dc-decision">
+          <div id="dcReviewTotals" class="note" style="margin-bottom:10px"></div>
+          <div class="field">
+            <label>Reject Reason <span style="font-weight:400;color:#7a8798">(optional)</span></label>
+            <textarea id="dcRejectReason" rows="3" placeholder="Reason if the request is not correct"></textarea>
+          </div>
+          <div class="formerror" id="dcReviewError"></div>
+          <div class="dc-review-actions">
+            <button class="btn danger" id="dcRejectBtn" onclick="rejectPendingDailyCash()">✕ Reject</button>
+            <button class="btn success" id="dcAcceptBtn" onclick="acceptPendingDailyCash()">✓ Accept</button>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 </div>
+
 
 
 <div class="overlay hidden" id="vaultDepositOverlay">
@@ -1021,44 +1177,104 @@ function clearPendingDailyCashFilters(){
   renderPendingDailyCash();
 }
 
+function nativeAmount(v,c){
+  return money(v,String(c||"USD").toUpperCase());
+}
+
 function openPendingDailyCashReview(requestId){
   currentDailyCashCollectionRequest=pendingDailyCashRequests.find(r=>r.requestId===requestId)||null;
   if(!currentDailyCashCollectionRequest)return;
 
   const r=currentDailyCashCollectionRequest;
-  $("dcReviewInfo").textContent=
-    `${r.requestId} · ${r.salesman} · ${r.invoiceCount} Cash invoices`;
+  const invoices=Array.isArray(r.invoices)?r.invoices:[];
+  const first=invoices[0]||{};
 
-  $("dcReviewBody").innerHTML=(r.invoices||[]).map(x=>`
-    <tr>
+  $("dcReviewInfo").textContent=
+    `${r.requestId} · ${r.salesman||"-"} · ${r.invoiceCount} Cash invoices`;
+
+  let originalUsdTotal=0;
+  let expectedTotal=0;
+  let cashUsdTotal=0;
+  let cashKhrTotal=0;
+
+  $("dcReviewBody").innerHTML=invoices.map((x,i)=>{
+    const originalCurrency=x.originalInvoiceCurrency||x.currency||"USD";
+    const originalAmount=num(x.originalInvoiceAmount);
+    const originalUsd=num(x.originalInvoiceUSD);
+    const expected=num(x.expectedUSD);
+    const cashCurrency=x.currency||"USD";
+    const cashAmount=num(x.amount);
+
+    originalUsdTotal+=originalUsd;
+    expectedTotal+=expected;
+    if(String(cashCurrency).toUpperCase()==="KHR")cashKhrTotal+=cashAmount;
+    else cashUsdTotal+=cashAmount;
+
+    return `<tr>
+      <td>${i+1}</td>
       <td><strong>${esc(x.invoiceNo||x.invoiceId||"-")}</strong></td>
       <td>${esc(x.invoiceDate||"-")}</td>
       <td>${esc(x.customer||"-")}</td>
+      <td>${esc(x.salesperson||r.salesman||"-")}</td>
       <td>${esc(x.locationCode||"-")}</td>
-      <td>${esc(x.currency||"-")}</td>
-      <td class="money">${money(x.amount,x.currency)}</td>
-    </tr>`).join("");
+      <td><strong>${nativeAmount(originalAmount,originalCurrency)}</strong></td>
+      <td>${num(x.originalInvoiceExchangeRate||x.exchangeRate)>0?num(x.originalInvoiceExchangeRate||x.exchangeRate).toLocaleString():"-"}</td>
+      <td>${nativeAmount(cashAmount,cashCurrency)}</td>
+      <td class="money">${money(expected,"USD")}</td>
+    </tr>`;
+  }).join("");
+
+  $("dcInvoiceCountBadge").textContent=`(${invoices.length})`;
+  $("dcTableOriginalTotal").textContent=money(originalUsdTotal,"USD")+" equiv.";
+  $("dcTableCashTotal").textContent=
+    `${money(cashUsdTotal,"USD")} + ${money(cashKhrTotal,"KHR")}`;
+  $("dcTableExpectedTotal").textContent=money(expectedTotal,"USD");
+
+  $("dcOriginalTotal").textContent=money(originalUsdTotal,"USD");
+  $("dcPhysicalUSD").textContent=money(r.actualCashUSD,"USD");
+  $("dcPhysicalKHR").textContent=money(r.actualCashKHR,"KHR");
+  $("dcExpectedValue").textContent=money(r.expectedUSD,"USD");
+  $("dcClosingRate").textContent=num(r.closingRate).toLocaleString();
+  $("dcActualEquivalent").textContent=money(r.actualEquivalentUSD,"USD");
+  $("dcCloseDifference").textContent=money(r.differenceUSD,"USD");
+
+  $("dcInfoRequest").textContent=r.requestId||"-";
+  $("dcInfoSalesman").textContent=r.salesman||"-";
+  $("dcInfoSaleDate").textContent=first.invoiceDate||r.requestDate||"-";
+  $("dcInfoLocation").textContent=first.locationCode||"-";
+  $("dcInfoInvoiceCount").textContent=num(r.invoiceCount);
+  $("dcInfoGroups").textContent=num(r.groupCount)||1;
+  $("dcInfoCreated").textContent=r.createdAt||r.requestDate||"-";
+
+  $("dcVerifyExpected").textContent=money(r.expectedUSD,"USD");
+  $("dcVerifyUSD").textContent=money(r.actualCashUSD,"USD");
+  $("dcVerifyKHR").textContent=money(r.actualCashKHR,"KHR");
+  $("dcVerifyEquivalent").textContent=money(r.actualEquivalentUSD,"USD");
+
+  const matched=Math.abs(num(r.differenceUSD))<=0.05;
+  $("dcVerifyResult").textContent=matched?"✓ MATCH":"✕ NOT MATCHED";
+  $("dcVerifyResult").style.background=matched?"#eaf8ef":"#fff0f0";
+  $("dcVerifyResult").style.color=matched?"#198754":"#c93c46";
 
   $("dcReviewTotals").innerHTML=
-    `<strong>Cash USD:</strong> ${money(r.cashUSD,"USD")} &nbsp; · &nbsp; `+
-    `<strong>Cash KHR:</strong> ${money(r.cashKHR,"KHR")} &nbsp; · &nbsp; `+
-    `<strong>Groups:</strong> ${num(r.groupCount)}`+
-    `${r.note?`<br><strong>Note:</strong> ${esc(r.note)}`:""}`;
+    `<strong>Request Note:</strong> ${r.note?esc(r.note):"No note"}<br>`+
+    `<strong>Admin action:</strong> ${
+      r.closeMethod==="Deposit to Company Bank"
+        ? "Accept will record the direct company-bank deposit in Deposit History."
+        : "Accept will add the physical USD/KHR to Cash Vault."
+    }`;
 
   $("dcBankReview").innerHTML=`
-    <strong>Close Method:</strong> ${esc(r.closeMethod||"-")}<br>
-    <strong>Expected Selected Invoice Value:</strong> ${money(r.expectedUSD,"USD")}<br>
-    <strong>Actual Physical Cash:</strong> ${money(r.actualCashUSD,"USD")} + ${money(r.actualCashKHR,"KHR")}<br>
-    <strong>Closing Exchange Rate:</strong> ${num(r.closingRate).toLocaleString()}<br>
-    <strong>Actual Equivalent:</strong> ${money(r.actualEquivalentUSD,"USD")}<br>
-    <strong>Close Difference:</strong> ${money(r.differenceUSD,"USD")}
+    <div class="dc-info-row"><span>Close Method</span><strong>${esc(r.closeMethod||"-")}</strong></div>
+    <div class="dc-info-row"><span>Closing Exchange Rate</span><strong>${num(r.closingRate).toLocaleString()}</strong></div>
+    <div class="dc-info-row"><span>Close Difference</span><strong>${money(r.differenceUSD,"USD")}</strong></div>
     ${r.closeMethod==="Deposit to Company Bank"
-      ? `<br><strong>Company Bank:</strong> ${esc(r.bankAccount||"-")}
-         <br><strong>Bank Transaction ID:</strong> ${esc(r.transactionId||"-")}
-         <br><strong>Deposit Exchange Rate:</strong> ${num(r.depositRate).toLocaleString()}
-         <br><strong>Final Bank Deposit USD:</strong> ${money(r.bankDepositUSD,"USD")}
-         <br><span style="color:#198754;font-weight:700">Accept → Deposit History.</span>`
-      : `<br><span style="color:#966200;font-weight:700">Accept → add the physical USD/KHR to Cash Vault.</span>`}
+      ? `<div class="dc-info-row"><span>Company Bank</span><strong>${esc(r.bankAccount||"-")}</strong></div>
+         <div class="dc-info-row"><span>Bank Transaction ID</span><strong>${esc(r.transactionId||"-")}</strong></div>
+         <div class="dc-info-row"><span>Deposit Exchange Rate</span><strong>${num(r.depositRate).toLocaleString()}</strong></div>
+         <div class="dc-info-row"><span>Final Bank Deposit USD</span><strong>${money(r.bankDepositUSD,"USD")}</strong></div>
+         <div class="dc-info-row"><span>Bank Difference</span><strong>${money(r.bankDifferenceUSD,"USD")}</strong></div>`
+      : `<div class="dc-info-row"><span>Destination</span><strong>Cash Vault</strong></div>`}
   `;
 
   $("dcRejectReason").value="";
@@ -1067,14 +1283,13 @@ function openPendingDailyCashReview(requestId){
   $("dailyCashRequestReviewOverlay").classList.remove("hidden");
 }
 
-
 async function acceptPendingDailyCash(){
   if(!currentDailyCashCollectionRequest)return;
   const r=currentDailyCashCollectionRequest;
 
-  const message=r.alreadyDepositedBank
-    ? `Accept ${r.requestId} as already deposited to ${r.bankAccount||"company bank"}?`
-    : `Accept ${r.requestId} and move it to Pending Deposit?`;
+  const message=r.closeMethod==="Deposit to Company Bank"
+    ? `Accept ${r.requestId} and record the direct company-bank deposit?`
+    : `Accept ${r.requestId} and add the physical USD/KHR to Cash Vault?`;
 
   if(!confirm(message))return;
 
