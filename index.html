@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG BROTHER — Admin Work V5.7 Final Daily Cash Review Flow</title>
+<title>BIG BROTHER — Admin Work V6 Daily Cash Vault Flow</title>
 <style>
 :root{
   --bg:#f4f7fb;--card:#fff;--line:#dfe6ef;--text:#17304f;--muted:#6d7d91;
@@ -176,6 +176,13 @@ tbody tr:hover{background:#f9fbfe}
   
   <div id="pendingDepositView" style="display:none">
     <div class="cards">
+      <div class="card"><small>Cash Vault USD</small><strong id="vaultUSD">$0.00</strong></div>
+      <div class="card"><small>Cash Vault KHR</small><strong id="vaultKHR">៛0</strong></div>
+      <div class="card"><small>Vault Status</small><strong id="vaultStatus" style="font-size:16px">Loading…</strong></div>
+      <div class="card"><small>Vault Deposit</small><button class="btn success" onclick="openVaultDeposit()">Deposit Vault Cash</button></div>
+    </div>
+
+    <div class="cards">
       <div class="card"><small>Pending Deposit</small><strong id="pdCount">0</strong></div>
       <div class="card"><small>Cash USD</small><strong id="pdUSD">$0.00</strong></div>
       <div class="card"><small>Cash KHR</small><strong id="pdKHR">៛0</strong></div>
@@ -347,6 +354,37 @@ tbody tr:hover{background:#f9fbfe}
   </div>
 </div>
 
+
+<div class="overlay hidden" id="vaultDepositOverlay">
+  <div class="modalbox" style="width:min(620px,96vw)">
+    <div class="modalhead">
+      <div>
+        <h2>Deposit Cash Vault</h2>
+        <p>Take real USD/KHR from Vault. KHR is converted using the deposit-day rate, then the final company-bank deposit is USD.</p>
+      </div>
+      <button class="close" onclick="closeVaultDeposit()">×</button>
+    </div>
+
+    <div class="cards" style="grid-template-columns:1fr 1fr">
+      <div class="card"><small>Available USD</small><strong id="vaultModalUSD">$0.00</strong></div>
+      <div class="card"><small>Available KHR</small><strong id="vaultModalKHR">៛0</strong></div>
+    </div>
+
+    <div class="field"><label>USD Taken From Vault</label><input id="vaultOutUSD" type="number" min="0" step="0.01" value="0" oninput="calcVaultDeposit()"></div>
+    <div class="field"><label>KHR Taken From Vault</label><input id="vaultOutKHR" type="number" min="0" step="100" value="0" oninput="calcVaultDeposit()"></div>
+    <div class="field"><label>Deposit Exchange Rate</label><input id="vaultDepositRate" type="number" min="0" step="1" placeholder="Example: 4050" oninput="calcVaultDeposit()"></div>
+    <div class="field"><label>Expected Bank USD</label><input id="vaultExpectedUSD" disabled></div>
+    <div class="field"><label>Actual Bank Deposit USD</label><input id="vaultBankUSD" type="number" min="0" step="0.01" oninput="calcVaultDeposit()"></div>
+    <div class="field"><label>Company Bank Account</label><input id="vaultBankAccount" placeholder="Example: ABA USD"></div>
+    <div class="field"><label>Bank Transaction ID</label><input id="vaultTransactionId" placeholder="Fresh unique Transaction ID"></div>
+    <div class="field"><label>Note</label><textarea id="vaultDepositNote" rows="2"></textarea></div>
+
+    <div class="formerror" id="vaultDepositError"></div>
+    <button class="btn success" id="vaultDepositBtn" style="width:100%;margin-top:12px" onclick="completeVaultDeposit()">Complete Vault Deposit</button>
+    <button class="btn secondary" style="width:100%;margin-top:8px" onclick="closeVaultDeposit()">Cancel</button>
+  </div>
+</div>
+
 <script>
 const SALES_API="https://script.google.com/macros/s/AKfycbyM5mUlz5SeMZ_oPJCo2FgLkPEcodAQ7wPl5wxAdrvfqLvsZLaHxiOtS02L1Q3ZRA3D/exec";
 
@@ -368,6 +406,7 @@ let syncBusy=false;
 let currentRequest=null;
 let pendingDailyCashRequests=[];
 let currentDailyCashCollectionRequest=null;
+let vaultBalance={usd:0,khr:0};
 let receivablePendingDeposits=[];
 let receivableDepositHistory=[];
 let currentReceivableDeposit=null;
@@ -769,6 +808,7 @@ function renderPendingDeposit(){
 }
 
 async function loadPendingDeposit(force=false){
+  await loadVaultBalance();
   if(!sessionToken)throw new Error("Admin session required.");
   const btn=$("pdRefreshBtn");
   if(force&&btn){btn.disabled=true;btn.textContent="Refreshing…"}
@@ -999,9 +1039,21 @@ function openPendingDailyCashReview(requestId){
     `<strong>Groups:</strong> ${num(r.groupCount)}`+
     `${r.note?`<br><strong>Note:</strong> ${esc(r.note)}`:""}`;
 
-  $("dcBankReview").innerHTML=r.alreadyDepositedBank
-    ? `<strong>Already Deposited to Bank:</strong> YES<br><strong>Bank:</strong> ${esc(r.bankAccount||"-")}<br><strong>Bank Transaction ID:</strong> ${esc(r.transactionId||r.bankReference||"-")}<br><span style="color:#198754;font-weight:700">Staff already deposited this money. Admin only reviews. Accept → automatically goes to Deposit History.</span>`
-    : `<strong>Already Deposited to Bank:</strong> NO<br><span style="color:#966200;font-weight:700">Staff gives real cash to Accountant. Admin checks received cash. Accept → moves to Pending Deposit.</span>`;
+  $("dcBankReview").innerHTML=`
+    <strong>Close Method:</strong> ${esc(r.closeMethod||"-")}<br>
+    <strong>Expected Selected Invoice Value:</strong> ${money(r.expectedUSD,"USD")}<br>
+    <strong>Actual Physical Cash:</strong> ${money(r.actualCashUSD,"USD")} + ${money(r.actualCashKHR,"KHR")}<br>
+    <strong>Closing Exchange Rate:</strong> ${num(r.closingRate).toLocaleString()}<br>
+    <strong>Actual Equivalent:</strong> ${money(r.actualEquivalentUSD,"USD")}<br>
+    <strong>Close Difference:</strong> ${money(r.differenceUSD,"USD")}
+    ${r.closeMethod==="Deposit to Company Bank"
+      ? `<br><strong>Company Bank:</strong> ${esc(r.bankAccount||"-")}
+         <br><strong>Bank Transaction ID:</strong> ${esc(r.transactionId||"-")}
+         <br><strong>Deposit Exchange Rate:</strong> ${num(r.depositRate).toLocaleString()}
+         <br><strong>Final Bank Deposit USD:</strong> ${money(r.bankDepositUSD,"USD")}
+         <br><span style="color:#198754;font-weight:700">Accept → Deposit History.</span>`
+      : `<br><span style="color:#966200;font-weight:700">Accept → add the physical USD/KHR to Cash Vault.</span>`}
+  `;
 
   $("dcRejectReason").value="";
   $("dcReviewError").textContent="";
@@ -1038,9 +1090,9 @@ async function acceptPendingDailyCash(){
     await loadPendingDailyCash(true);
 
     alert(
-      d.alreadyDepositedBank
-        ? "Daily Cash accepted. It was already deposited to bank and is now in Deposit History."
-        : "Daily Cash accepted and moved to Pending Deposit."
+      d.nextStage==="Deposit History"
+        ? "Daily Cash accepted and recorded in Deposit History."
+        : "Daily Cash accepted. Physical USD/KHR has been added to Cash Vault."
     );
   }catch(e){
     $("dcReviewError").textContent=e.message||"Could not accept Daily Cash Request.";
@@ -1084,6 +1136,128 @@ async function rejectPendingDailyCash(){
 function closePendingDailyCashReview(){
   $("dailyCashRequestReviewOverlay").classList.add("hidden");
   currentDailyCashCollectionRequest=null;
+}
+
+
+async function loadVaultBalance(){
+  if(!sessionToken)return;
+
+  try{
+    const d=await apiGet({
+      action:"vaultBalance",
+      sessionToken,
+      _ts:Date.now()
+    });
+
+    vaultBalance={
+      usd:num(d.usd),
+      khr:num(d.khr)
+    };
+
+    if($("vaultUSD"))$("vaultUSD").textContent=money(vaultBalance.usd,"USD");
+    if($("vaultKHR"))$("vaultKHR").textContent=money(vaultBalance.khr,"KHR");
+    if($("vaultStatus")){
+      $("vaultStatus").textContent=(vaultBalance.usd>0||vaultBalance.khr>0)
+        ? "Cash On Hold"
+        : "Empty";
+    }
+  }catch(e){
+    console.warn("Cash Vault:",e);
+  }
+}
+
+function openVaultDeposit(){
+  if(vaultBalance.usd<=0&&vaultBalance.khr<=0){
+    alert("Cash Vault is empty.");
+    return;
+  }
+
+  $("vaultModalUSD").textContent=money(vaultBalance.usd,"USD");
+  $("vaultModalKHR").textContent=money(vaultBalance.khr,"KHR");
+
+  $("vaultOutUSD").value=vaultBalance.usd.toFixed(2);
+  $("vaultOutKHR").value=Math.round(vaultBalance.khr);
+  $("vaultDepositRate").value="";
+  $("vaultExpectedUSD").value="";
+  $("vaultBankUSD").value="";
+  $("vaultBankAccount").value="";
+  $("vaultTransactionId").value="";
+  $("vaultDepositNote").value="";
+  $("vaultDepositError").textContent="";
+  $("vaultDepositError").classList.remove("show");
+
+  $("vaultDepositOverlay").classList.remove("hidden");
+}
+
+function closeVaultDeposit(){
+  $("vaultDepositOverlay").classList.add("hidden");
+}
+
+function calcVaultDeposit(){
+  const usdOut=num($("vaultOutUSD").value);
+  const khrOut=num($("vaultOutKHR").value);
+  const rate=num($("vaultDepositRate").value);
+
+  const expected=usdOut+(khrOut>0&&rate>0?khrOut/rate:0);
+  $("vaultExpectedUSD").value=expected>0?expected.toFixed(2):"";
+
+  return expected;
+}
+
+async function completeVaultDeposit(){
+  const usdOut=num($("vaultOutUSD").value);
+  const khrOut=num($("vaultOutKHR").value);
+  const rate=num($("vaultDepositRate").value);
+  const expected=calcVaultDeposit();
+  const bankUsd=num($("vaultBankUSD").value);
+  const bank=$("vaultBankAccount").value.trim();
+  const tx=$("vaultTransactionId").value.trim();
+
+  const showVaultError=msg=>{
+    $("vaultDepositError").textContent=msg;
+    $("vaultDepositError").classList.add("show");
+  };
+
+  if(usdOut<0||khrOut<0)return showVaultError("Deposit amount cannot be negative.");
+  if(usdOut>vaultBalance.usd+0.001)return showVaultError("USD is greater than Cash Vault balance.");
+  if(khrOut>vaultBalance.khr+1)return showVaultError("KHR is greater than Cash Vault balance.");
+  if(khrOut>0&&rate<=0)return showVaultError("Deposit Exchange Rate is required.");
+  if(!bank||!tx)return showVaultError("Company Bank Account and Transaction ID are required.");
+
+  if(bankUsd<=0||Math.abs(bankUsd-expected)>0.05){
+    return showVaultError("Actual Bank Deposit USD does not match the selected Vault cash.");
+  }
+
+  const btn=$("vaultDepositBtn");
+  btn.disabled=true;
+  btn.textContent="Depositing…";
+
+  try{
+    const d=await apiPost({
+      action:"vaultDeposit",
+      requestData:JSON.stringify({
+        sessionToken,
+        usdAmount:usdOut,
+        khrAmount:khrOut,
+        exchangeRate:rate,
+        bankDepositUSD:bankUsd,
+        bankAccount:bank,
+        transactionId:tx,
+        note:$("vaultDepositNote").value.trim()
+      })
+    });
+
+    closeVaultDeposit();
+    await loadVaultBalance();
+    await loadDepositHistory(true);
+
+    alert(`Cash Vault deposit completed.\nDeposit ID: ${d.depositId}`);
+  }catch(e){
+    showVaultError(e.message||"Could not complete Cash Vault deposit.");
+  }finally{
+    btn.disabled=false;
+    btn.textContent="Complete Vault Deposit";
+  }
 }
 
 async function restoreAccess(){
