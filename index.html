@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG BROTHER — Admin Work V3.2 Daily Cash Approve Reject</title>
+<title>BIG BROTHER — Admin Work V3.3 Daily Cash Deposit Workflow</title>
 <style>
 :root{
   --bg:#f4f7fb;--card:#fff;--line:#dfe6ef;--text:#17304f;--muted:#6d7d91;
@@ -187,6 +187,71 @@ tbody tr:hover{background:#f9fbfe}
     </div>
   </div>
 
+
+  <div id="pendingDepositView" style="display:none">
+    <div class="cards">
+      <div class="card"><small>Pending Deposit</small><strong id="pdCount">0</strong></div>
+      <div class="card"><small>Cash USD</small><strong id="pdUSD">$0.00</strong></div>
+      <div class="card"><small>Cash KHR</small><strong id="pdKHR">៛0</strong></div>
+      <div class="card"><small>Daily Cash in USD</small><strong id="pdDailyUSD">$0.00</strong></div>
+    </div>
+    <div class="panel">
+      <div class="view-banner">Approved Daily Cash Requests waiting for physical/bank deposit completion.</div>
+      <div class="filters">
+        <input id="pdSearch" placeholder="Search Request ID, Salesperson or Location" oninput="renderPendingDeposit()">
+        <input id="pdSalesman" placeholder="Filter Salesperson" oninput="renderPendingDeposit()">
+        <span></span>
+        <button class="btn secondary" onclick="clearPendingDepositFilters()">Clear</button>
+        <button class="btn primary" id="pdRefreshBtn" onclick="loadPendingDeposit(true)">↻ Refresh</button>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Request ID</th><th>Approved Date</th><th>Salesperson</th><th class="center">Cash Groups</th>
+              <th class="money">Cash USD</th><th class="money">Cash KHR</th><th class="money">Daily Cash in USD</th>
+              <th>Status</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="pendingDepositBody"><tr><td colspan="9" class="empty">Loading Pending Deposit...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="foot"><span id="pdRowCount">0 requests</span><span id="pdSyncStatus">Secure Admin Work</span></div>
+    </div>
+  </div>
+
+  <div id="depositHistoryView" style="display:none">
+    <div class="cards">
+      <div class="card"><small>Deposits</small><strong id="dhCount">0</strong></div>
+      <div class="card"><small>Cash USD</small><strong id="dhUSD">$0.00</strong></div>
+      <div class="card"><small>Cash KHR</small><strong id="dhKHR">៛0</strong></div>
+      <div class="card"><small>Daily Cash in USD</small><strong id="dhDailyUSD">$0.00</strong></div>
+    </div>
+    <div class="panel">
+      <div class="view-banner">Completed deposits moved from Pending Deposit.</div>
+      <div class="filters">
+        <input id="dhSearch" placeholder="Search Request ID, Salesperson or Location" oninput="renderDepositHistory()">
+        <input id="dhSalesman" placeholder="Filter Salesperson" oninput="renderDepositHistory()">
+        <span></span>
+        <button class="btn secondary" onclick="clearDepositHistoryFilters()">Clear</button>
+        <button class="btn primary" id="dhRefreshBtn" onclick="loadDepositHistory(true)">↻ Refresh</button>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Request ID</th><th>Deposited At</th><th>Salesperson</th><th class="center">Cash Groups</th>
+              <th class="money">Cash USD</th><th class="money">Cash KHR</th><th class="money">Daily Cash in USD</th>
+              <th>Deposited By</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="depositHistoryBody"><tr><td colspan="9" class="empty">Loading Deposit History...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="foot"><span id="dhRowCount">0 deposits</span><span id="dhSyncStatus">Secure Admin Work</span></div>
+    </div>
+  </div>
+
   <div id="placeholderView" class="panel" style="display:none">
     <div class="placeholder">
       <h2 id="placeholderTitle">Admin Work</h2>
@@ -269,6 +334,20 @@ tbody tr:hover{background:#f9fbfe}
   </div>
 </div>
 
+
+<div class="overlay hidden" id="completeDepositOverlay">
+  <div class="requestbox">
+    <h2>Complete Deposit</h2>
+    <p id="completeDepositInfo"></p>
+    <div class="field"><label>Deposit Note <span style="font-weight:400;color:#7a8798">(optional)</span></label>
+      <textarea id="completeDepositNote" rows="3" placeholder="Example: Deposited to ABA account, cash handed to cashier"></textarea>
+    </div>
+    <div class="formerror" id="completeDepositError"></div>
+    <button class="btn success" id="completeDepositBtn" style="width:100%" onclick="completeDeposit()">✓ Complete Deposit</button>
+    <button class="btn secondary" style="width:100%;margin-top:8px" onclick="closeCompleteDeposit()">Cancel</button>
+  </div>
+</div>
+
 <script>
 const SALES_API="https://script.google.com/macros/s/AKfycbyM5mUlz5SeMZ_oPJCo2FgLkPEcodAQ7wPl5wxAdrvfqLvsZLaHxiOtS02L1Q3ZRA3D/exec";
 
@@ -291,6 +370,9 @@ let currentRequest=null;
 let dailyCashRequests=[];
 let dailyCashRevision="";
 let currentDailyCashRequest=null;
+let pendingDepositRows=[];
+let depositHistoryRows=[];
+let currentDepositRequest=null;
 
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
@@ -318,6 +400,8 @@ async function apiGet(params){
 function configureView(){
   $("pendingReceivableView").style.display="none";
   $("pendingDailyCashView").style.display="none";
+  $("pendingDepositView").style.display="none";
+  $("depositHistoryView").style.display="none";
   $("placeholderView").style.display="none";
 
   if(VIEW==="pending-receivable"){
@@ -334,9 +418,21 @@ function configureView(){
     return true;
   }
 
+  if(VIEW==="pending-deposit"){
+    $("pendingDepositView").style.display="";
+    $("pageTitle").textContent="Pending Deposit";
+    $("pageSubtitle").textContent="Approved Daily Cash waiting for Deposit completion.";
+    return true;
+  }
+
+  if(VIEW==="deposit-history"){
+    $("depositHistoryView").style.display="";
+    $("pageTitle").textContent="Deposit History";
+    $("pageSubtitle").textContent="Completed Daily Cash deposits.";
+    return true;
+  }
+
   const names={
-    "pending-deposit":"Pending Deposit",
-    "deposit-history":"Deposit History",
     "staff-request":"Staff Request",
     "admin-request":"Admin Request"
   };
@@ -693,7 +789,7 @@ async function loadPendingDailyCash(force=false){
   $("dcSyncStatus").textContent=force?"Syncing…":"Loading…";
 
   try{
-    const d=await apiGet({
+    const d=await apiPost({
       action:"adminPendingDailyCashRequests",
       sessionToken,
       _ts:Date.now()
@@ -726,7 +822,7 @@ async function openDailyCashReview(requestId){
   $("dcReviewMeta").innerHTML="";
 
   try{
-    const d=await apiGet({
+    const d=await apiPost({
       action:"adminDailyCashRequestDetail",
       sessionToken,
       requestId,
@@ -838,6 +934,152 @@ async function rejectDailyCashRequest(){
 function closeDailyCashReview(){
   $("dailyCashReviewOverlay").classList.add("hidden");
   currentDailyCashRequest=null;
+}
+
+
+function depositRowText(r){
+  return norm([
+    r.depositRequestId,r.salesman,
+    ...(Array.isArray(r.allocations)?r.allocations.map(a=>a.locationCode):[])
+  ].join(" "));
+}
+
+function renderPendingDeposit(){
+  if(VIEW!=="pending-deposit")return;
+  const q=norm($("pdSearch")?.value);
+  const salesman=norm($("pdSalesman")?.value);
+  const visible=pendingDepositRows.filter(r=>
+    (!q||depositRowText(r).includes(q)) &&
+    (!salesman||norm(r.salesman).includes(salesman))
+  );
+
+  $("pdRowCount").textContent=`${visible.length} request${visible.length===1?"":"s"}`;
+  $("pdCount").textContent=visible.length;
+  $("pdUSD").textContent=money(visible.reduce((s,r)=>s+num(r.cashUSD),0),"USD");
+  $("pdKHR").textContent=money(visible.reduce((s,r)=>s+num(r.cashKHR),0),"KHR");
+  $("pdDailyUSD").textContent=money(visible.reduce((s,r)=>s+num(r.dailyCashUSD),0),"USD");
+
+  $("pendingDepositBody").innerHTML=visible.length?visible.map(r=>`
+    <tr>
+      <td><strong>${esc(r.depositRequestId)}</strong></td>
+      <td>${esc(r.reviewedAt||r.requestDate||"-")}</td>
+      <td>${esc(r.salesman||"-")}</td>
+      <td class="center">${num(r.groupCount)||(r.allocations||[]).length}</td>
+      <td class="money">${money(r.cashUSD,"USD")}</td>
+      <td class="money">${money(r.cashKHR,"KHR")}</td>
+      <td class="money"><strong>${money(r.dailyCashUSD,"USD")}</strong></td>
+      <td><span class="status processing">Approved</span></td>
+      <td><button class="btn success" onclick='openCompleteDeposit(${JSON.stringify(r.depositRequestId)})'>Deposit</button></td>
+    </tr>`).join("")
+  :'<tr><td colspan="9" class="empty">No Pending Deposit.</td></tr>';
+}
+
+async function loadPendingDeposit(force=false){
+  if(!sessionToken)throw new Error("Admin session required.");
+  const btn=$("pdRefreshBtn");
+  if(force&&btn){btn.disabled=true;btn.textContent="Refreshing…"}
+  $("pdSyncStatus").textContent=force?"Syncing…":"Loading…";
+  try{
+    const d=await apiPost({action:"adminPendingDepositRequests",sessionToken,_ts:Date.now()});
+    pendingDepositRows=Array.isArray(d.requests)?d.requests:[];
+    renderPendingDeposit();
+    $("pdSyncStatus").textContent="Up to date · smart sync 20s";
+  }finally{
+    if(force&&btn){btn.disabled=false;btn.textContent="↻ Refresh"}
+  }
+}
+
+function clearPendingDepositFilters(){
+  $("pdSearch").value="";$("pdSalesman").value="";renderPendingDeposit();
+}
+
+function openCompleteDeposit(requestId){
+  currentDepositRequest=pendingDepositRows.find(r=>r.depositRequestId===requestId)||null;
+  if(!currentDepositRequest)return;
+  $("completeDepositInfo").textContent=
+    `${currentDepositRequest.depositRequestId} · ${currentDepositRequest.salesman} · ${money(currentDepositRequest.dailyCashUSD,"USD")}`;
+  $("completeDepositNote").value="";
+  $("completeDepositError").textContent="";
+  $("completeDepositError").classList.remove("show");
+  $("completeDepositOverlay").classList.remove("hidden");
+}
+
+function closeCompleteDeposit(){
+  $("completeDepositOverlay").classList.add("hidden");
+  currentDepositRequest=null;
+}
+
+async function completeDeposit(){
+  if(!currentDepositRequest)return;
+  const btn=$("completeDepositBtn");
+  btn.disabled=true;btn.textContent="Completing…";
+  try{
+    const d=await apiPost({
+      action:"completeDailyCashDeposit",
+      requestData:JSON.stringify({
+        sessionToken,
+        requestId:currentDepositRequest.depositRequestId,
+        note:$("completeDepositNote").value.trim()
+      })
+    });
+    closeCompleteDeposit();
+    await loadPendingDeposit(true);
+    alert(`Deposit completed.\nRequest ID: ${d.requestId||""}\nDeposited by: ${d.depositedBy||"Admin"}`);
+  }catch(e){
+    $("completeDepositError").textContent=e.message||"Could not complete deposit.";
+    $("completeDepositError").classList.add("show");
+  }finally{
+    btn.disabled=false;btn.textContent="✓ Complete Deposit";
+  }
+}
+
+function renderDepositHistory(){
+  if(VIEW!=="deposit-history")return;
+  const q=norm($("dhSearch")?.value);
+  const salesman=norm($("dhSalesman")?.value);
+  const visible=depositHistoryRows.filter(r=>
+    (!q||depositRowText(r).includes(q)) &&
+    (!salesman||norm(r.salesman).includes(salesman))
+  );
+
+  $("dhRowCount").textContent=`${visible.length} deposit${visible.length===1?"":"s"}`;
+  $("dhCount").textContent=visible.length;
+  $("dhUSD").textContent=money(visible.reduce((s,r)=>s+num(r.cashUSD),0),"USD");
+  $("dhKHR").textContent=money(visible.reduce((s,r)=>s+num(r.cashKHR),0),"KHR");
+  $("dhDailyUSD").textContent=money(visible.reduce((s,r)=>s+num(r.dailyCashUSD),0),"USD");
+
+  $("depositHistoryBody").innerHTML=visible.length?visible.map(r=>`
+    <tr>
+      <td><strong>${esc(r.depositRequestId)}</strong></td>
+      <td>${esc(r.depositedAt||"-")}</td>
+      <td>${esc(r.salesman||"-")}</td>
+      <td class="center">${num(r.groupCount)||(r.allocations||[]).length}</td>
+      <td class="money">${money(r.cashUSD,"USD")}</td>
+      <td class="money">${money(r.cashKHR,"KHR")}</td>
+      <td class="money"><strong>${money(r.dailyCashUSD,"USD")}</strong></td>
+      <td>${esc(r.depositedBy||"-")}</td>
+      <td><button class="btn primary" onclick='alert(${JSON.stringify("Deposit "+r.depositRequestId+" completed.")})'>View</button></td>
+    </tr>`).join("")
+  :'<tr><td colspan="9" class="empty">No Deposit History.</td></tr>';
+}
+
+async function loadDepositHistory(force=false){
+  if(!sessionToken)throw new Error("Admin session required.");
+  const btn=$("dhRefreshBtn");
+  if(force&&btn){btn.disabled=true;btn.textContent="Refreshing…"}
+  $("dhSyncStatus").textContent=force?"Syncing…":"Loading…";
+  try{
+    const d=await apiPost({action:"adminDepositHistory",sessionToken,_ts:Date.now()});
+    depositHistoryRows=Array.isArray(d.requests)?d.requests:[];
+    renderDepositHistory();
+    $("dhSyncStatus").textContent="Up to date · smart sync 20s";
+  }finally{
+    if(force&&btn){btn.disabled=false;btn.textContent="↻ Refresh"}
+  }
+}
+
+function clearDepositHistoryFilters(){
+  $("dhSearch").value="";$("dhSalesman").value="";renderDepositHistory();
 }
 
 async function restoreAccess(){
