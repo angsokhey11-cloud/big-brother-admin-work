@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG BROTHER — Admin Work V5.2 Reset Daily Cash Workflow</title>
+<title>BIG BROTHER — Admin Work V5.3 Receivable Deposit Flow</title>
 <style>
 :root{
   --bg:#f4f7fb;--card:#fff;--line:#dfe6ef;--text:#17304f;--muted:#6d7d91;
@@ -162,51 +162,69 @@ tbody tr:hover{background:#f9fbfe}
 
 
   
+  
   <div id="pendingDepositView" style="display:none">
     <div class="cards">
-      <div class="card"><small>Pending Deposit</small><strong>0</strong></div>
-      <div class="card"><small>Cash USD</small><strong>$0.00</strong></div>
-      <div class="card"><small>Cash KHR</small><strong>៛0</strong></div>
-      <div class="card"><small>Total</small><strong>0</strong></div>
+      <div class="card"><small>Pending Deposit</small><strong id="pdCount">0</strong></div>
+      <div class="card"><small>Cash USD</small><strong id="pdUSD">$0.00</strong></div>
+      <div class="card"><small>Cash KHR</small><strong id="pdKHR">៛0</strong></div>
+      <div class="card"><small>Source</small><strong style="font-size:18px">Receivable Cash</strong></div>
     </div>
     <div class="panel">
-      <div class="view-banner">Pending Deposit reset. We will rebuild this stage after the new Daily Cash Collection approval flow is confirmed.</div>
+      <div class="view-banner">Approved Receivable requests paid in Cash appear here until deposited to a company bank account.</div>
+      <div class="filters">
+        <input id="pdSearch" placeholder="Search Deposit ID, Payment ID, Customer, Salesperson" oninput="renderPendingDeposit()">
+        <input id="pdSalesman" placeholder="Filter Salesperson" oninput="renderPendingDeposit()">
+        <span></span>
+        <button class="btn secondary" onclick="clearPendingDepositFilters()">Clear</button>
+        <button class="btn primary" id="pdRefreshBtn" onclick="loadPendingDeposit(true)">↻ Refresh</button>
+      </div>
       <div class="tablewrap">
         <table>
           <thead><tr>
-            <th>Request ID</th><th>Approved Date</th><th>Salesperson</th><th>Location</th>
-            <th class="money">Cash USD</th><th class="money">Cash KHR</th><th>Status</th><th>Action</th>
+            <th>Deposit ID</th><th>Payment Date</th><th>Payment ID</th><th>Customer</th><th>Salesperson</th>
+            <th>Location</th><th class="money">Amount</th><th>Status</th><th>Action</th>
           </tr></thead>
-          <tbody><tr><td colspan="8" class="empty">No Pending Deposit.</td></tr></tbody>
+          <tbody id="pendingDepositBody"><tr><td colspan="9" class="empty">Loading Pending Deposit...</td></tr></tbody>
         </table>
       </div>
-      <div class="foot"><span>0 deposits</span><span>Reset · ready for rebuild</span></div>
+      <div class="foot"><span id="pdRowCount">0 deposits</span><span id="pdSyncStatus">Secure Admin Work</span></div>
     </div>
   </div>
+
 
 
   
+  
   <div id="depositHistoryView" style="display:none">
     <div class="cards">
-      <div class="card"><small>Deposit History</small><strong>0</strong></div>
-      <div class="card"><small>Cash USD</small><strong>$0.00</strong></div>
-      <div class="card"><small>Cash KHR</small><strong>៛0</strong></div>
-      <div class="card"><small>Total</small><strong>0</strong></div>
+      <div class="card"><small>Deposited Payments</small><strong id="dhCount">0</strong></div>
+      <div class="card"><small>USD</small><strong id="dhUSD">$0.00</strong></div>
+      <div class="card"><small>KHR</small><strong id="dhKHR">៛0</strong></div>
+      <div class="card"><small>Source</small><strong style="font-size:18px">Receivable</strong></div>
     </div>
     <div class="panel">
-      <div class="view-banner">Deposit History reset. Completed deposits from the new workflow will appear here later.</div>
+      <div class="view-banner">Receivable Bank payments appear here automatically after approval. Completed Cash deposits also move here.</div>
+      <div class="filters">
+        <input id="dhSearch" placeholder="Search Deposit ID, Payment ID, Customer, Bank or Transaction ID" oninput="renderDepositHistory()">
+        <input id="dhSalesman" placeholder="Filter Salesperson" oninput="renderDepositHistory()">
+        <span></span>
+        <button class="btn secondary" onclick="clearDepositHistoryFilters()">Clear</button>
+        <button class="btn primary" id="dhRefreshBtn" onclick="loadDepositHistory(true)">↻ Refresh</button>
+      </div>
       <div class="tablewrap">
         <table>
           <thead><tr>
-            <th>Deposit ID</th><th>Deposited At</th><th>Salesperson</th><th>Location</th>
-            <th class="money">Cash USD</th><th class="money">Cash KHR</th><th>Deposited By</th><th>Status</th>
+            <th>Deposit ID</th><th>Deposited At</th><th>Payment ID</th><th>Customer</th><th>Method</th>
+            <th>Company Bank</th><th>Reference</th><th class="money">Amount</th><th>Deposited By</th>
           </tr></thead>
-          <tbody><tr><td colspan="8" class="empty">No Deposit History.</td></tr></tbody>
+          <tbody id="depositHistoryBody"><tr><td colspan="9" class="empty">Loading Deposit History...</td></tr></tbody>
         </table>
       </div>
-      <div class="foot"><span>0 deposits</span><span>Reset · ready for rebuild</span></div>
+      <div class="foot"><span id="dhRowCount">0 deposits</span><span id="dhSyncStatus">Secure Admin Work</span></div>
     </div>
   </div>
+
 
 
   <div id="placeholderView" class="panel" style="display:none">
@@ -267,6 +285,30 @@ tbody tr:hover{background:#f9fbfe}
 
 
 
+
+<div class="overlay hidden" id="receivableDepositOverlay">
+  <div class="modalbox" style="width:min(540px,96vw)">
+    <div class="modalhead">
+      <div><h2>Deposit Receivable Cash</h2><p id="rdInfo"></p></div>
+      <button class="close" onclick="closeReceivableDeposit()">×</button>
+    </div>
+    <div class="field">
+      <label>Company Bank Account</label>
+      <input id="rdBank" placeholder="Example: ABA USD / ACLEDA KHR">
+    </div>
+    <div class="field">
+      <label>Deposit Reference <span style="font-weight:400;color:#7a8798">(optional)</span></label>
+      <input id="rdReference" placeholder="Bank slip / transaction reference">
+    </div>
+    <div class="field">
+      <label>Deposit Note <span style="font-weight:400;color:#7a8798">(optional)</span></label>
+      <textarea id="rdNote" rows="3" placeholder="Optional note"></textarea>
+    </div>
+    <div class="formerror" id="rdError"></div>
+    <button class="btn success" id="rdCompleteBtn" style="width:100%" onclick="completeReceivableDeposit()">✓ Complete Deposit</button>
+  </div>
+</div>
+
 <script>
 const SALES_API="https://script.google.com/macros/s/AKfycbyM5mUlz5SeMZ_oPJCo2FgLkPEcodAQ7wPl5wxAdrvfqLvsZLaHxiOtS02L1Q3ZRA3D/exec";
 
@@ -286,6 +328,9 @@ let revision="";
 let syncTimer=null;
 let syncBusy=false;
 let currentRequest=null;
+let receivablePendingDeposits=[];
+let receivableDepositHistory=[];
+let currentReceivableDeposit=null;
 
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
@@ -334,15 +379,15 @@ function configureView(){
   if(VIEW==="pending-deposit"){
     $("pendingDepositView").style.display="";
     $("pageTitle").textContent="Pending Deposit";
-    $("pageSubtitle").textContent="Reset to zero — ready for rebuild.";
-    return false;
+    $("pageSubtitle").textContent="Approved Receivable Cash waiting for company bank deposit.";
+    return true;
   }
 
   if(VIEW==="deposit-history"){
     $("depositHistoryView").style.display="";
     $("pageTitle").textContent="Deposit History";
-    $("pageSubtitle").textContent="Reset to zero — ready for rebuild.";
-    return false;
+    $("pageSubtitle").textContent="Deposited Receivable payments.";
+    return true;
   }
 
   const names={"staff-request":"Staff Request","admin-request":"Admin Request"};
@@ -529,11 +574,13 @@ async function fetchRevision(){
 }
 
 async function smartSync(force=false){
-  if(VIEW!=="pending-receivable"||!sessionToken||syncBusy)return;
+  if(!sessionToken||syncBusy)return;
   if(document.hidden&&!force)return;
   syncBusy=true;
   try{
-    await loadPending(false);
+    if(VIEW==="pending-receivable")await loadPending(false);
+    else if(VIEW==="pending-deposit")await loadPendingDeposit(false);
+    else if(VIEW==="deposit-history")await loadDepositHistory(false);
   }catch(e){
     console.warn("Admin Work sync:",e);
   }finally{
@@ -641,6 +688,184 @@ async function login(){
 
 
 
+
+function depositSearchText(r){
+  return norm([
+    r.depositId,r.paymentId,r.requestId,r.customer,r.salesman,
+    r.locationCode,r.collectionBank,r.collectionTransactionId,
+    r.companyBankAccount,r.depositReference
+  ].join(" "));
+}
+
+function renderPendingDeposit(){
+  if(VIEW!=="pending-deposit")return;
+  const q=norm($("pdSearch")?.value);
+  const salesman=norm($("pdSalesman")?.value);
+  const visible=receivablePendingDeposits.filter(r=>
+    (!q||depositSearchText(r).includes(q)) &&
+    (!salesman||norm(r.salesman).includes(salesman))
+  );
+
+  $("pdCount").textContent=visible.length;
+  $("pdUSD").textContent=money(visible.filter(r=>String(r.currency).toUpperCase()==="USD").reduce((s,r)=>s+num(r.amount),0),"USD");
+  $("pdKHR").textContent=money(visible.filter(r=>String(r.currency).toUpperCase()==="KHR").reduce((s,r)=>s+num(r.amount),0),"KHR");
+  $("pdRowCount").textContent=`${visible.length} deposit${visible.length===1?"":"s"}`;
+
+  $("pendingDepositBody").innerHTML=visible.length?visible.map(r=>`
+    <tr>
+      <td><strong>${esc(r.depositId)}</strong></td>
+      <td>${esc(r.paymentDate||"-")}</td>
+      <td>${esc(r.paymentId||"-")}</td>
+      <td>${esc(r.customer||"-")}</td>
+      <td>${esc(r.salesman||"-")}</td>
+      <td>${esc(r.locationCode||"-")}</td>
+      <td class="money"><strong>${money(r.amount,r.currency)}</strong></td>
+      <td><span class="status processing">Pending Deposit</span></td>
+      <td><button class="btn success" onclick='openReceivableDeposit(${JSON.stringify(r.depositId)})'>Deposit</button></td>
+    </tr>`).join("")
+  :'<tr><td colspan="9" class="empty">No Pending Deposit.</td></tr>';
+}
+
+async function loadPendingDeposit(force=false){
+  if(!sessionToken)throw new Error("Admin session required.");
+  const btn=$("pdRefreshBtn");
+  if(force&&btn){btn.disabled=true;btn.textContent="Refreshing…"}
+  $("pdSyncStatus").textContent=force?"Syncing…":"Loading…";
+  try{
+    const d=await apiGet({
+      action:"adminPendingReceivableDeposits",
+      sessionToken,
+      _ts:Date.now()
+    });
+    receivablePendingDeposits=Array.isArray(d.deposits)?d.deposits:[];
+    renderPendingDeposit();
+    $("pdSyncStatus").textContent="Up to date · smart sync";
+  }finally{
+    if(force&&btn){btn.disabled=false;btn.textContent="↻ Refresh"}
+  }
+}
+
+function clearPendingDepositFilters(){
+  $("pdSearch").value="";
+  $("pdSalesman").value="";
+  renderPendingDeposit();
+}
+
+function openReceivableDeposit(depositId){
+  currentReceivableDeposit=receivablePendingDeposits.find(r=>r.depositId===depositId)||null;
+  if(!currentReceivableDeposit)return;
+
+  $("rdInfo").textContent=
+    `${currentReceivableDeposit.depositId} · ${currentReceivableDeposit.customer} · ${money(currentReceivableDeposit.amount,currentReceivableDeposit.currency)}`;
+
+  $("rdBank").value="";
+  $("rdReference").value="";
+  $("rdNote").value="";
+  $("rdError").textContent="";
+  $("rdError").classList.remove("show");
+  $("receivableDepositOverlay").classList.remove("hidden");
+}
+
+function closeReceivableDeposit(){
+  $("receivableDepositOverlay").classList.add("hidden");
+  currentReceivableDeposit=null;
+}
+
+async function completeReceivableDeposit(){
+  if(!currentReceivableDeposit)return;
+
+  const bank=$("rdBank").value.trim();
+  if(!bank){
+    $("rdError").textContent="Company Bank Account is required.";
+    $("rdError").classList.add("show");
+    return;
+  }
+
+  const btn=$("rdCompleteBtn");
+  btn.disabled=true;
+  btn.textContent="Depositing…";
+  $("rdError").textContent="";
+  $("rdError").classList.remove("show");
+
+  try{
+    await apiPost({
+      action:"completeReceivableCashDeposit",
+      requestData:JSON.stringify({
+        sessionToken,
+        depositId:currentReceivableDeposit.depositId,
+        companyBankAccount:bank,
+        depositReference:$("rdReference").value.trim(),
+        note:$("rdNote").value.trim()
+      })
+    });
+
+    closeReceivableDeposit();
+    await loadPendingDeposit(true);
+    alert("Receivable Cash deposited successfully and moved to Deposit History.");
+
+  }catch(e){
+    $("rdError").textContent=e.message||"Could not complete deposit.";
+    $("rdError").classList.add("show");
+  }finally{
+    btn.disabled=false;
+    btn.textContent="✓ Complete Deposit";
+  }
+}
+
+function renderDepositHistory(){
+  if(VIEW!=="deposit-history")return;
+  const q=norm($("dhSearch")?.value);
+  const salesman=norm($("dhSalesman")?.value);
+  const visible=receivableDepositHistory.filter(r=>
+    (!q||depositSearchText(r).includes(q)) &&
+    (!salesman||norm(r.salesman).includes(salesman))
+  );
+
+  $("dhCount").textContent=visible.length;
+  $("dhUSD").textContent=money(visible.filter(r=>String(r.currency).toUpperCase()==="USD").reduce((s,r)=>s+num(r.amount),0),"USD");
+  $("dhKHR").textContent=money(visible.filter(r=>String(r.currency).toUpperCase()==="KHR").reduce((s,r)=>s+num(r.amount),0),"KHR");
+  $("dhRowCount").textContent=`${visible.length} deposit${visible.length===1?"":"s"}`;
+
+  $("depositHistoryBody").innerHTML=visible.length?visible.map(r=>`
+    <tr>
+      <td><strong>${esc(r.depositId)}</strong></td>
+      <td>${esc(r.depositedAt||"-")}</td>
+      <td>${esc(r.paymentId||"-")}</td>
+      <td>${esc(r.customer||"-")}</td>
+      <td>${esc(r.paymentMethod||"-")}</td>
+      <td>${esc(r.companyBankAccount||r.collectionBank||"-")}</td>
+      <td>${esc(r.depositReference||r.collectionTransactionId||"-")}</td>
+      <td class="money"><strong>${money(r.amount,r.currency)}</strong></td>
+      <td>${esc(r.depositedBy||r.approvedBy||"-")}</td>
+    </tr>`).join("")
+  :'<tr><td colspan="9" class="empty">No Deposit History.</td></tr>';
+}
+
+async function loadDepositHistory(force=false){
+  if(!sessionToken)throw new Error("Admin session required.");
+  const btn=$("dhRefreshBtn");
+  if(force&&btn){btn.disabled=true;btn.textContent="Refreshing…"}
+  $("dhSyncStatus").textContent=force?"Syncing…":"Loading…";
+  try{
+    const d=await apiGet({
+      action:"adminReceivableDepositHistory",
+      sessionToken,
+      _ts:Date.now()
+    });
+    receivableDepositHistory=Array.isArray(d.deposits)?d.deposits:[];
+    renderDepositHistory();
+    $("dhSyncStatus").textContent="Up to date · smart sync";
+  }finally{
+    if(force&&btn){btn.disabled=false;btn.textContent="↻ Refresh"}
+  }
+}
+
+function clearDepositHistoryFilters(){
+  $("dhSearch").value="";
+  $("dhSalesman").value="";
+  renderDepositHistory();
+}
+
 async function restoreAccess(){
   const needsSecureLoad=configureView();
   if(!needsSecureLoad)return;
@@ -654,7 +879,9 @@ async function restoreAccess(){
   if(sessionToken){
     try{
       $("logoutBtn").hidden=false;
-      await loadPending(true);
+      if(VIEW==="pending-receivable")await loadPending(true);
+      else if(VIEW==="pending-deposit")await loadPendingDeposit(true);
+      else if(VIEW==="deposit-history")await loadDepositHistory(true);
       startSync();
       return;
     }catch(_){
@@ -671,7 +898,9 @@ async function restoreAccess(){
       sessionStorage.setItem(SESSION_KEY,sessionToken);
       $("accessPill").textContent="🛡️ "+(data.adminName||"Admin");
       $("logoutBtn").hidden=false;
-      await loadPending(true);
+      if(VIEW==="pending-receivable")await loadPending(true);
+      else if(VIEW==="pending-deposit")await loadPendingDeposit(true);
+      else if(VIEW==="deposit-history")await loadDepositHistory(true);
       startSync();
       return;
     }catch(_){
