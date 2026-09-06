@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG BROTHER — Admin Work V5.3 Receivable Deposit Flow</title>
+<title>BIG BROTHER — Admin Work V5.4 Pending Daily Cash Collection</title>
 <style>
 :root{
   --bg:#f4f7fb;--card:#fff;--line:#dfe6ef;--text:#17304f;--muted:#6d7d91;
@@ -137,27 +137,38 @@ tbody tr:hover{background:#f9fbfe}
 
 
   
+  
   <div id="pendingDailyCashView" style="display:none">
     <div class="cards">
-      <div class="card"><small>Pending Daily Cash Requests</small><strong>0</strong></div>
-      <div class="card"><small>Cash USD</small><strong>$0.00</strong></div>
-      <div class="card"><small>Cash KHR</small><strong>៛0</strong></div>
-      <div class="card"><small>Total</small><strong>0</strong></div>
+      <div class="card"><small>Pending Daily Cash Requests</small><strong id="dcCount">0</strong></div>
+      <div class="card"><small>Cash USD</small><strong id="dcUSD">$0.00</strong></div>
+      <div class="card"><small>Cash KHR</small><strong id="dcKHR">៛0</strong></div>
+      <div class="card"><small>Cash Invoices</small><strong id="dcInvoices">0</strong></div>
     </div>
     <div class="panel">
-      <div class="view-banner">Daily Cash Collection workflow reset. New Pending Daily Cash Request flow will be rebuilt from zero.</div>
+      <div class="view-banner">Daily Cash Collection requests sent by Salesmen. Status shown here is Processing.</div>
+      <div class="filters">
+        <input id="dcSearch" placeholder="Search Request ID, Salesperson, Invoice or Location" oninput="renderPendingDailyCash()">
+        <input id="dcSalesman" placeholder="Filter Salesperson" oninput="renderPendingDailyCash()">
+        <span></span>
+        <button class="btn secondary" onclick="clearPendingDailyCashFilters()">Clear</button>
+        <button class="btn primary" id="dcRefreshBtn" onclick="loadPendingDailyCash(true)">↻ Refresh</button>
+      </div>
       <div class="tablewrap">
         <table>
           <thead><tr>
-            <th>Request ID</th><th>Request Date</th><th>Requested By</th><th>Location</th>
-            <th class="money">Cash USD</th><th class="money">Cash KHR</th><th>Status</th><th>Action</th>
+            <th>Request ID</th><th>Request Date</th><th>Requested By</th>
+            <th class="center">Groups</th><th class="center">Invoices</th>
+            <th class="money">Cash USD</th><th class="money">Cash KHR</th>
+            <th>Status</th><th>Action</th>
           </tr></thead>
-          <tbody><tr><td colspan="8" class="empty">No Pending Daily Cash Requests.</td></tr></tbody>
+          <tbody id="pendingDailyCashBody"><tr><td colspan="9" class="empty">Loading Pending Daily Cash Requests...</td></tr></tbody>
         </table>
       </div>
-      <div class="foot"><span>0 requests</span><span>Reset · ready for rebuild</span></div>
+      <div class="foot"><span id="dcRowCount">0 requests</span><span id="dcSyncStatus">Secure Admin Work</span></div>
     </div>
   </div>
+
 
 
 
@@ -309,6 +320,24 @@ tbody tr:hover{background:#f9fbfe}
   </div>
 </div>
 
+
+<div class="overlay hidden" id="dailyCashRequestReviewOverlay">
+  <div class="modalbox" style="width:min(820px,96vw)">
+    <div class="modalhead">
+      <div><h2>Pending Daily Cash Request</h2><p id="dcReviewInfo"></p></div>
+      <button class="close" onclick="closePendingDailyCashReview()">×</button>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Invoice No</th><th>Date</th><th>Customer</th><th>Location</th><th>Currency</th><th class="money">Cash Amount</th></tr></thead>
+        <tbody id="dcReviewBody"></tbody>
+      </table>
+    </div>
+    <div class="note" id="dcReviewTotals"></div>
+    <button class="btn secondary" style="width:100%;margin-top:12px" onclick="closePendingDailyCashReview()">Close</button>
+  </div>
+</div>
+
 <script>
 const SALES_API="https://script.google.com/macros/s/AKfycbyM5mUlz5SeMZ_oPJCo2FgLkPEcodAQ7wPl5wxAdrvfqLvsZLaHxiOtS02L1Q3ZRA3D/exec";
 
@@ -328,6 +357,8 @@ let revision="";
 let syncTimer=null;
 let syncBusy=false;
 let currentRequest=null;
+let pendingDailyCashRequests=[];
+let currentDailyCashCollectionRequest=null;
 let receivablePendingDeposits=[];
 let receivableDepositHistory=[];
 let currentReceivableDeposit=null;
@@ -372,8 +403,8 @@ function configureView(){
   if(VIEW==="pending-daily-cash"){
     $("pendingDailyCashView").style.display="";
     $("pageTitle").textContent="Pending Daily Cash Request";
-    $("pageSubtitle").textContent="Reset to zero — ready for the new Daily Cash Collection workflow.";
-    return false;
+    $("pageSubtitle").textContent="Daily Cash Collection requests waiting for Admin review.";
+    return true;
   }
 
   if(VIEW==="pending-deposit"){
@@ -579,6 +610,7 @@ async function smartSync(force=false){
   syncBusy=true;
   try{
     if(VIEW==="pending-receivable")await loadPending(false);
+    else if(VIEW==="pending-daily-cash")await loadPendingDailyCash(false);
     else if(VIEW==="pending-deposit")await loadPendingDeposit(false);
     else if(VIEW==="deposit-history")await loadDepositHistory(false);
   }catch(e){
@@ -866,6 +898,104 @@ function clearDepositHistoryFilters(){
   renderDepositHistory();
 }
 
+
+function pendingDailyCashSearchText(r){
+  return norm([
+    r.requestId,r.salesman,r.note,
+    ...(Array.isArray(r.invoices)?r.invoices.flatMap(x=>[x.invoiceNo,x.customer,x.locationCode]):[])
+  ].join(" "));
+}
+
+function renderPendingDailyCash(){
+  if(VIEW!=="pending-daily-cash")return;
+  const q=norm($("dcSearch")?.value);
+  const salesman=norm($("dcSalesman")?.value);
+
+  const visible=pendingDailyCashRequests.filter(r=>
+    (!q||pendingDailyCashSearchText(r).includes(q)) &&
+    (!salesman||norm(r.salesman).includes(salesman))
+  );
+
+  $("dcCount").textContent=visible.length;
+  $("dcUSD").textContent=money(visible.reduce((s,r)=>s+num(r.cashUSD),0),"USD");
+  $("dcKHR").textContent=money(visible.reduce((s,r)=>s+num(r.cashKHR),0),"KHR");
+  $("dcInvoices").textContent=visible.reduce((s,r)=>s+num(r.invoiceCount),0);
+  $("dcRowCount").textContent=`${visible.length} request${visible.length===1?"":"s"}`;
+
+  $("pendingDailyCashBody").innerHTML=visible.length?visible.map(r=>`
+    <tr>
+      <td><strong>${esc(r.requestId)}</strong></td>
+      <td>${esc(r.requestDate||"-")}</td>
+      <td>${esc(r.salesman||"-")}</td>
+      <td class="center">${num(r.groupCount)}</td>
+      <td class="center">${num(r.invoiceCount)}</td>
+      <td class="money">${money(r.cashUSD,"USD")}</td>
+      <td class="money">${money(r.cashKHR,"KHR")}</td>
+      <td><span class="status processing">Processing</span></td>
+      <td><button class="btn primary" onclick='openPendingDailyCashReview(${JSON.stringify(r.requestId)})'>Review</button></td>
+    </tr>`).join("")
+  :'<tr><td colspan="9" class="empty">No Pending Daily Cash Requests.</td></tr>';
+}
+
+async function loadPendingDailyCash(force=false){
+  if(!sessionToken)throw new Error("Admin session required.");
+  const btn=$("dcRefreshBtn");
+  if(force&&btn){btn.disabled=true;btn.textContent="Refreshing…"}
+  $("dcSyncStatus").textContent=force?"Syncing…":"Loading…";
+
+  try{
+    const d=await apiGet({
+      action:"adminPendingDailyCashCollectionRequests",
+      sessionToken,
+      _ts:Date.now()
+    });
+
+    pendingDailyCashRequests=Array.isArray(d.requests)?d.requests:[];
+    renderPendingDailyCash();
+    $("dcSyncStatus").textContent="Up to date · smart sync";
+  }finally{
+    if(force&&btn){btn.disabled=false;btn.textContent="↻ Refresh"}
+  }
+}
+
+function clearPendingDailyCashFilters(){
+  $("dcSearch").value="";
+  $("dcSalesman").value="";
+  renderPendingDailyCash();
+}
+
+function openPendingDailyCashReview(requestId){
+  currentDailyCashCollectionRequest=pendingDailyCashRequests.find(r=>r.requestId===requestId)||null;
+  if(!currentDailyCashCollectionRequest)return;
+
+  const r=currentDailyCashCollectionRequest;
+  $("dcReviewInfo").textContent=
+    `${r.requestId} · ${r.salesman} · ${r.invoiceCount} Cash invoices`;
+
+  $("dcReviewBody").innerHTML=(r.invoices||[]).map(x=>`
+    <tr>
+      <td><strong>${esc(x.invoiceNo||x.invoiceId||"-")}</strong></td>
+      <td>${esc(x.invoiceDate||"-")}</td>
+      <td>${esc(x.customer||"-")}</td>
+      <td>${esc(x.locationCode||"-")}</td>
+      <td>${esc(x.currency||"-")}</td>
+      <td class="money">${money(x.amount,x.currency)}</td>
+    </tr>`).join("");
+
+  $("dcReviewTotals").innerHTML=
+    `<strong>Cash USD:</strong> ${money(r.cashUSD,"USD")} &nbsp; · &nbsp; `+
+    `<strong>Cash KHR:</strong> ${money(r.cashKHR,"KHR")} &nbsp; · &nbsp; `+
+    `<strong>Groups:</strong> ${num(r.groupCount)}`+
+    `${r.note?`<br><strong>Note:</strong> ${esc(r.note)}`:""}`;
+
+  $("dailyCashRequestReviewOverlay").classList.remove("hidden");
+}
+
+function closePendingDailyCashReview(){
+  $("dailyCashRequestReviewOverlay").classList.add("hidden");
+  currentDailyCashCollectionRequest=null;
+}
+
 async function restoreAccess(){
   const needsSecureLoad=configureView();
   if(!needsSecureLoad)return;
@@ -880,6 +1010,7 @@ async function restoreAccess(){
     try{
       $("logoutBtn").hidden=false;
       if(VIEW==="pending-receivable")await loadPending(true);
+      else if(VIEW==="pending-daily-cash")await loadPendingDailyCash(true);
       else if(VIEW==="pending-deposit")await loadPendingDeposit(true);
       else if(VIEW==="deposit-history")await loadDepositHistory(true);
       startSync();
@@ -899,6 +1030,7 @@ async function restoreAccess(){
       $("accessPill").textContent="🛡️ "+(data.adminName||"Admin");
       $("logoutBtn").hidden=false;
       if(VIEW==="pending-receivable")await loadPending(true);
+      else if(VIEW==="pending-daily-cash")await loadPendingDailyCash(true);
       else if(VIEW==="pending-deposit")await loadPendingDeposit(true);
       else if(VIEW==="deposit-history")await loadDepositHistory(true);
       startSync();
