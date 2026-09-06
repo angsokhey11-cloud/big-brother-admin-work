@@ -2106,11 +2106,11 @@ function renderVaultReport(){
     <tr>
       <td>${i+1}</td>
       <td>${vrEsc(x.date||"-")}</td>
-      <td>${vrEsc(x.receivedFrom||"-")}</td>
+      <td>${vrEsc(x.salesperson||"-")}</td>
       <td>${vrUsd(x.usd)}</td>
       <td>${vrKhr(x.khr)}</td>
-      <td>${vrEsc(x.referenceId||"-")}</td>
-      <td>${vrEsc(x.note||"-")}</td>
+      <td>${vrEsc(x.invoiceDate||"-")}</td>
+      <td>${vrEsc(x.customerName||"-")}</td>
     </tr>
   `).join(""):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#7a8798">No Receivable Cash currently in Vault.</td></tr>';
   $("vrReceivableFootUSD").textContent=vrUsd(d.receivableUSD);
@@ -2254,11 +2254,11 @@ async function shareVaultReportTelegram(){
               <colgroup>
                 <col style="width:6%">
                 <col style="width:14%">
-                <col style="width:23%">
-                <col style="width:12%">
-                <col style="width:14%">
-                <col style="width:18%">
+                <col style="width:22%">
                 <col style="width:13%">
+                <col style="width:14%">
+                <col style="width:14%">
+                <col style="width:17%">
               </colgroup>
               <thead>
                 <tr>
@@ -2267,8 +2267,8 @@ async function shareVaultReportTelegram(){
                   <th>Salesman Name</th>
                   <th>Cash Received USD</th>
                   <th>Cash Received KHR</th>
-                  <th>Reference</th>
-                  <th>Note</th>
+                  <th>Invoice Date</th>
+                  <th>Customer Name</th>
                 </tr>
               </thead>
               <tbody id="vrReceivableBody"></tbody>
