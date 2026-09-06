@@ -1,1 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIG BROTHER — Admin Work V1</title>
+<style>
+:root{
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --line:#dfe6ef;
+  --text:#17304f;
+  --muted:#6d7d91;
+  --blue:#1f5fbf;
+  --blue2:#174b98;
+  --shadow:0 10px 28px rgba(20,48,82,.08);
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  min-height:100%;
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+body{padding:20px}
+.wrap{max-width:1500px;margin:0 auto}
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  margin-bottom:16px;
+}
+.topbar h1{
+  margin:0 0 5px;
+  font-size:28px;
+  color:#12365f;
+}
+.subtitle{
+  margin:0;
+  color:var(--muted);
+  font-size:14px;
+}
+.pill{
+  display:inline-flex;
+  align-items:center;
+  padding:8px 12px;
+  border:1px solid #c9d8ec;
+  border-radius:999px;
+  background:#edf5ff;
+  color:#245da8;
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.panel{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  min-height:560px;
+  overflow:hidden;
+}
+.panel-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:15px 16px;
+  border-bottom:1px solid var(--line);
+  background:#fbfcfe;
+}
+.panel-head h2{
+  margin:0;
+  font-size:18px;
+}
+.panel-head span{
+  color:var(--muted);
+  font-size:12px;
+}
+.empty{
+  min-height:500px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:30px;
+  text-align:center;
+}
+.empty-box{
+  max-width:620px;
+  padding:36px 28px;
+  border:1px dashed #cbd7e6;
+  border-radius:14px;
+  background:#fafcff;
+}
+.empty-icon{
+  font-size:44px;
+  margin-bottom:12px;
+}
+.empty-box h3{
+  margin:0 0 10px;
+  font-size:22px;
+  color:#153d70;
+}
+.empty-box p{
+  margin:0;
+  color:var(--muted);
+  line-height:1.6;
+  font-size:14px;
+}
+@media(max-width:700px){
+  body{padding:10px}
+  .topbar{align-items:flex-start;flex-direction:column}
+  .panel-head{align-items:flex-start;flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <h1>Admin Work</h1>
+      <p class="subtitle">BIG BROTHER — Administration Workspace</p>
+    </div>
+    <span class="pill">Admin Work</span>
+  </div>
 
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Administration Workspace</h2>
+      <span>Foundation Page V1</span>
+    </div>
+
+    <div class="empty">
+      <div class="empty-box">
+        <div class="empty-icon">🛠️</div>
+        <h3>Admin Work Page Ready</h3>
+        <p>
+          This page is intentionally left clean for the next step.
+          We can add the exact elements, request types, tables, filters,
+          buttons, approval workflow, and security rules you want.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
