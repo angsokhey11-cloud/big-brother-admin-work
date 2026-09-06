@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG BROTHER — Admin Work V3.4 Fast Daily Cash Workflow</title>
+<title>BIG BROTHER — Admin Work V4 Clean Daily Cash Deposit Workflow</title>
 <style>
 :root{
   --bg:#f4f7fb;--card:#fff;--line:#dfe6ef;--text:#17304f;--muted:#6d7d91;
@@ -404,7 +404,7 @@ async function apiPost(params,timeoutMs=15000){
     return data;
 
   }catch(e){
-    if(e?.name==="AbortError")throw new Error("Sales Database took too long to respond. Please confirm the latest Apps Script version is deployed.");
+    if(e?.name==="AbortError")throw new Error("Sales Database took too long to respond. Deploy Daily Cash Workflow V3 and try again.");
     throw e;
   }finally{
     clearTimeout(timer);
@@ -811,7 +811,7 @@ async function loadPendingDailyCash(force=false){
 
   try{
     const d=await apiPost({
-      action:"adminPendingDailyCashFast",
+      action:"dcwfAdminPending",
       sessionToken,
       _ts:Date.now()
     },15000);
@@ -852,7 +852,7 @@ async function openDailyCashReview(requestId){
 
   try{
     const d=await apiPost({
-      action:"adminDailyCashRequestDetail",
+      action:"dcwfAdminDetail",
       sessionToken,
       requestId,
       _ts:Date.now()
@@ -910,7 +910,7 @@ async function approveDailyCashRequest(){
 
   try{
     const d=await apiPost({
-      action:"approveDailyCashDepositRequest",
+      action:"dcwfAdminApprove",
       requestData:JSON.stringify({
         sessionToken,
         requestId:currentDailyCashRequest.depositRequestId
@@ -940,7 +940,7 @@ async function rejectDailyCashRequest(){
 
   try{
     await apiPost({
-      action:"rejectDailyCashDepositRequest",
+      action:"dcwfAdminReject",
       requestData:JSON.stringify({
         sessionToken,
         requestId:currentDailyCashRequest.depositRequestId,
@@ -1009,7 +1009,7 @@ async function loadPendingDeposit(force=false){
   if(force&&btn){btn.disabled=true;btn.textContent="Refreshing…"}
   $("pdSyncStatus").textContent=force?"Syncing…":"Loading…";
   try{
-    const d=await apiPost({action:"adminPendingDepositFast",sessionToken,_ts:Date.now()});
+    const d=await apiPost({action:"dcwfAdminPendingDeposit",sessionToken,_ts:Date.now()});
     pendingDepositRows=Array.isArray(d.requests)?d.requests:[];
     renderPendingDeposit();
     $("pdSyncStatus").textContent="Up to date · smart sync 20s";
@@ -1044,7 +1044,7 @@ async function completeDeposit(){
   btn.disabled=true;btn.textContent="Completing…";
   try{
     const d=await apiPost({
-      action:"completeDailyCashDeposit",
+      action:"dcwfAdminCompleteDeposit",
       requestData:JSON.stringify({
         sessionToken,
         requestId:currentDepositRequest.depositRequestId,
@@ -1098,7 +1098,7 @@ async function loadDepositHistory(force=false){
   if(force&&btn){btn.disabled=true;btn.textContent="Refreshing…"}
   $("dhSyncStatus").textContent=force?"Syncing…":"Loading…";
   try{
-    const d=await apiPost({action:"adminDepositHistoryFast",sessionToken,_ts:Date.now()});
+    const d=await apiPost({action:"dcwfAdminHistory",sessionToken,_ts:Date.now()});
     depositHistoryRows=Array.isArray(d.requests)?d.requests:[];
     renderDepositHistory();
     $("dhSyncStatus").textContent="Up to date · smart sync 20s";
@@ -1109,6 +1109,16 @@ async function loadDepositHistory(force=false){
 
 function clearDepositHistoryFilters(){
   $("dhSearch").value="";$("dhSalesman").value="";renderDepositHistory();
+}
+
+
+async function verifyDailyCashWorkflow(){
+  if(!sessionToken)return null;
+  const d=await apiPost({action:"dcwfHealth",sessionToken},12000);
+  if(!d||d.workflowVersion!=="3.0"){
+    throw new Error("Daily Cash Workflow V3 is not deployed in Sales Database.");
+  }
+  return d;
 }
 
 async function restoreAccess(){
