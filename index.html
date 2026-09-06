@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG BROTHER — Admin Work V6 Daily Cash Vault Flow</title>
+<title>BIG BROTHER — Admin Work V6.1 Vault Includes Receivable Cash</title>
 <style>
 :root{
   --bg:#f4f7fb;--card:#fff;--line:#dfe6ef;--text:#17304f;--muted:#6d7d91;
@@ -180,6 +180,12 @@ tbody tr:hover{background:#f9fbfe}
       <div class="card"><small>Cash Vault KHR</small><strong id="vaultKHR">៛0</strong></div>
       <div class="card"><small>Vault Status</small><strong id="vaultStatus" style="font-size:16px">Loading…</strong></div>
       <div class="card"><small>Vault Deposit</small><button class="btn success" onclick="openVaultDeposit()">Deposit Vault Cash</button></div>
+    </div>
+    <div class="cards">
+      <div class="card"><small>Daily Cash in Vault — USD</small><strong id="vaultDailyUSD">$0.00</strong></div>
+      <div class="card"><small>Daily Cash in Vault — KHR</small><strong id="vaultDailyKHR">៛0</strong></div>
+      <div class="card"><small>Receivable Cash — USD</small><strong id="vaultReceivableUSD">$0.00</strong></div>
+      <div class="card"><small>Receivable Cash — KHR</small><strong id="vaultReceivableKHR">៛0</strong></div>
     </div>
 
     <div class="cards">
@@ -406,7 +412,7 @@ let syncBusy=false;
 let currentRequest=null;
 let pendingDailyCashRequests=[];
 let currentDailyCashCollectionRequest=null;
-let vaultBalance={usd:0,khr:0};
+let vaultBalance={usd:0,khr:0,dailyCashUSD:0,dailyCashKHR:0,receivableCashUSD:0,receivableCashKHR:0};
 let receivablePendingDeposits=[];
 let receivableDepositHistory=[];
 let currentReceivableDeposit=null;
@@ -1151,11 +1157,19 @@ async function loadVaultBalance(){
 
     vaultBalance={
       usd:num(d.usd),
-      khr:num(d.khr)
+      khr:num(d.khr),
+      dailyCashUSD:num(d.dailyCashUSD),
+      dailyCashKHR:num(d.dailyCashKHR),
+      receivableCashUSD:num(d.receivableCashUSD),
+      receivableCashKHR:num(d.receivableCashKHR)
     };
 
     if($("vaultUSD"))$("vaultUSD").textContent=money(vaultBalance.usd,"USD");
     if($("vaultKHR"))$("vaultKHR").textContent=money(vaultBalance.khr,"KHR");
+    if($("vaultDailyUSD"))$("vaultDailyUSD").textContent=money(vaultBalance.dailyCashUSD,"USD");
+    if($("vaultDailyKHR"))$("vaultDailyKHR").textContent=money(vaultBalance.dailyCashKHR,"KHR");
+    if($("vaultReceivableUSD"))$("vaultReceivableUSD").textContent=money(vaultBalance.receivableCashUSD,"USD");
+    if($("vaultReceivableKHR"))$("vaultReceivableKHR").textContent=money(vaultBalance.receivableCashKHR,"KHR");
     if($("vaultStatus")){
       $("vaultStatus").textContent=(vaultBalance.usd>0||vaultBalance.khr>0)
         ? "Cash On Hold"
