@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG BROTHER — Admin Work V3 Pending Daily Cash Request</title>
+<title>BIG BROTHER — Admin Work V3.2 Daily Cash Approve Reject</title>
 <style>
 :root{
   --bg:#f4f7fb;--card:#fff;--line:#dfe6ef;--text:#17304f;--muted:#6d7d91;
@@ -254,8 +254,17 @@ tbody tr:hover{background:#f9fbfe}
     <div class="batch-total"><span>Total Daily Cash in USD</span><span id="dcReviewTotal">$0.00</span></div>
     <div class="meta" id="dcReviewMeta"></div>
 
+    <div class="field" style="margin-top:12px">
+      <label>Reject Reason <span style="font-weight:400;color:#7a8798">(optional)</span></label>
+      <textarea id="dcRejectReason" rows="2" placeholder="Example: Cash amount is incorrect, missing cash, wrong location"></textarea>
+    </div>
+    <div class="formerror" id="dcReviewError"></div>
+    <div class="actions">
+      <button class="btn danger" id="dcRejectBtn" onclick="rejectDailyCashRequest()">✕ Reject Request</button>
+      <button class="btn success" id="dcApproveBtn" onclick="approveDailyCashRequest()">✓ Approve Daily Cash</button>
+    </div>
     <div class="secure-note">
-      This page currently reviews the Daily Cash request only. Approval / Reject workflow can be added next.
+      Approved Daily Cash becomes Approved in Daily Cash Summary. Rejected Daily Cash returns to Not Yet Approved.
     </div>
   </div>
 </div>
@@ -318,7 +327,7 @@ function configureView(){
     return true;
   }
 
-  if(VIEW==="pending-deposit"){
+  if(VIEW==="pending-daily-cash"){
     $("pendingDailyCashView").style.display="";
     $("pageTitle").textContent="Pending Daily Cash Request";
     $("pageSubtitle").textContent="Daily Cash Deposit Requests sent by Salespersons for Admin review.";
@@ -326,6 +335,7 @@ function configureView(){
   }
 
   const names={
+    "pending-deposit":"Pending Deposit",
     "deposit-history":"Deposit History",
     "staff-request":"Staff Request",
     "admin-request":"Admin Request"
@@ -531,7 +541,7 @@ async function smartSync(force=false){
       return;
     }
 
-    if(VIEW==="pending-deposit"){
+    if(VIEW==="pending-daily-cash"){
       if(dailyCashRevision&&r===dailyCashRevision){
         $("dcSyncStatus").textContent="Up to date · smart sync 20s";
         return;
@@ -544,7 +554,7 @@ async function smartSync(force=false){
   }catch(e){
     console.warn("Admin Work sync:",e);
     if(VIEW==="pending-receivable"&&rows.length)$("syncStatus").textContent="Cached data · sync will retry";
-    if(VIEW==="pending-deposit"&&dailyCashRequests.length)$("dcSyncStatus").textContent="Current data · sync will retry";
+    if(VIEW==="pending-daily-cash"&&dailyCashRequests.length)$("dcSyncStatus").textContent="Current data · sync will retry";
   }finally{
     syncBusy=false;
   }
@@ -597,7 +607,7 @@ async function login(){
       const cached=restoreCache();
       if(cached)await smartSync(true);
       else await loadPending(true);
-    }else if(VIEW==="pending-deposit"){
+    }else if(VIEW==="pending-daily-cash"){
       await loadPendingDailyCash(true);
     }
 
@@ -707,6 +717,9 @@ async function openDailyCashReview(requestId){
   if(!sessionToken||!requestId)return;
 
   currentDailyCashRequest=null;
+  $("dcRejectReason").value="";
+  $("dcReviewError").textContent="";
+  $("dcReviewError").classList.remove("show");
   $("dailyCashReviewOverlay").classList.remove("hidden");
   $("dcReviewInfo").textContent="Loading request…";
   $("dcReviewList").innerHTML="";
@@ -755,6 +768,73 @@ async function openDailyCashReview(requestId){
   }
 }
 
+
+function setDailyCashReviewError(msg){
+  $("dcReviewError").textContent=msg||"";
+  $("dcReviewError").classList.toggle("show",!!msg);
+}
+
+async function approveDailyCashRequest(){
+  if(!currentDailyCashRequest)return;
+  if(!confirm(`Approve ${currentDailyCashRequest.depositRequestId}?`))return;
+
+  const btn=$("dcApproveBtn");
+  btn.disabled=true;
+  btn.textContent="Approving…";
+  setDailyCashReviewError("");
+
+  try{
+    const d=await apiPost({
+      action:"approveDailyCashDepositRequest",
+      requestData:JSON.stringify({
+        sessionToken,
+        requestId:currentDailyCashRequest.depositRequestId
+      })
+    });
+
+    closeDailyCashReview();
+    await loadPendingDailyCash(true);
+    alert(`Daily Cash Request approved.\nRequest ID: ${d.requestId||""}\nApproved by: ${d.approvedBy||"Admin"}`);
+
+  }catch(e){
+    setDailyCashReviewError(e.message||"Could not approve request.");
+  }finally{
+    btn.disabled=false;
+    btn.textContent="✓ Approve Daily Cash";
+  }
+}
+
+async function rejectDailyCashRequest(){
+  if(!currentDailyCashRequest)return;
+  if(!confirm(`Reject ${currentDailyCashRequest.depositRequestId}?`))return;
+
+  const btn=$("dcRejectBtn");
+  btn.disabled=true;
+  btn.textContent="Rejecting…";
+  setDailyCashReviewError("");
+
+  try{
+    await apiPost({
+      action:"rejectDailyCashDepositRequest",
+      requestData:JSON.stringify({
+        sessionToken,
+        requestId:currentDailyCashRequest.depositRequestId,
+        reason:$("dcRejectReason").value.trim()
+      })
+    });
+
+    closeDailyCashReview();
+    await loadPendingDailyCash(true);
+    alert("Daily Cash Request rejected.");
+
+  }catch(e){
+    setDailyCashReviewError(e.message||"Could not reject request.");
+  }finally{
+    btn.disabled=false;
+    btn.textContent="✕ Reject Request";
+  }
+}
+
 function closeDailyCashReview(){
   $("dailyCashReviewOverlay").classList.add("hidden");
   currentDailyCashRequest=null;
@@ -779,7 +859,7 @@ async function restoreAccess(){
         const cached=restoreCache();
         if(cached)await smartSync(true);
         else await loadPending(true);
-      }else if(VIEW==="pending-deposit"){
+      }else if(VIEW==="pending-daily-cash"){
         await loadPendingDailyCash(true);
       }
       startSync();
@@ -811,7 +891,7 @@ async function restoreAccess(){
         const cached=restoreCache();
         if(cached)await smartSync(true);
         else await loadPending(true);
-      }else if(VIEW==="pending-deposit"){
+      }else if(VIEW==="pending-daily-cash"){
         await loadPendingDailyCash(true);
       }
 
@@ -974,7 +1054,7 @@ async function rejectRequest(){
 }
 
 document.addEventListener("visibilitychange",()=>{
-  if(!document.hidden&&sessionToken&&(VIEW==="pending-receivable"||VIEW==="pending-deposit"))smartSync(true);
+  if(!document.hidden&&sessionToken&&(VIEW==="pending-receivable"||VIEW==="pending-daily-cash"))smartSync(true);
 });
 
 restoreAccess();
