@@ -1340,13 +1340,27 @@ function currentVaultPendingEntries(entries){
   return out;
 }
 function renderVaultCards(){
+  const isEmpty=Math.abs(num(vaultBalance.usd))<0.000001 && Math.abs(num(vaultBalance.khr))<0.5;
+
+  /* If the full Vault has been deposited, never show stale source
+     contribution cards from the previous deposit cycle. */
+  if(isEmpty){
+    vaultBalance.usd=0;
+    vaultBalance.khr=0;
+    vaultBalance.dailyCashUSD=0;
+    vaultBalance.dailyCashKHR=0;
+    vaultBalance.receivableCashUSD=0;
+    vaultBalance.receivableCashKHR=0;
+    vaultPendingEntries=[];
+  }
+
   if($("vaultUSD"))$("vaultUSD").textContent=money(vaultBalance.usd,"USD");
   if($("vaultKHR"))$("vaultKHR").textContent=money(vaultBalance.khr,"KHR");
   if($("vaultDailyUSD"))$("vaultDailyUSD").textContent=money(vaultBalance.dailyCashUSD,"USD");
   if($("vaultDailyKHR"))$("vaultDailyKHR").textContent=money(vaultBalance.dailyCashKHR,"KHR");
   if($("vaultReceivableUSD"))$("vaultReceivableUSD").textContent=money(vaultBalance.receivableCashUSD,"USD");
   if($("vaultReceivableKHR"))$("vaultReceivableKHR").textContent=money(vaultBalance.receivableCashKHR,"KHR");
-  if($("vaultStatus"))$("vaultStatus").textContent=(vaultBalance.usd>0||vaultBalance.khr>0)?"Cash On Hold":"Empty";
+  if($("vaultStatus"))$("vaultStatus").textContent=isEmpty?"Empty":"Cash On Hold";
 }
 function depositSearchText(r){
   return norm([r.date,r.source,r.referenceId,r.closeId,r.depositId,r.customer,r.customerName,r.salesperson,r.locationCode,r.entryId,r.invoiceDate].join(" "));
