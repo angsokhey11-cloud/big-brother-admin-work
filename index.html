@@ -494,6 +494,45 @@ tbody tr:hover{background:#f9fbfe}
 .vault-source.daily{background:#eaf3ff;color:#185ea8}.vault-source.receivable{background:#f2edff;color:#5b38a0}
 .vault-money-usd{font-weight:900;color:#12623d}.vault-money-khr{font-weight:900;color:#7d5900}
 
+
+/* ===== V7.1 RECEIVABLE DIRECT REQUEST REVIEW ===== */
+.ar-decision{
+  border:1px solid #d8e3ef;
+  background:#f8fbff;
+  border-radius:11px;
+  padding:12px;
+  margin:12px 0;
+}
+.ar-decision-title{
+  font-size:13px;
+  font-weight:900;
+  color:#17365d;
+  margin-bottom:9px;
+}
+.ar-decision-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.ar-method-box{
+  display:none;
+  border:1px solid #dbe5ef;
+  background:#fff;
+  border-radius:10px;
+  padding:10px;
+  margin-top:10px;
+}
+.ar-method-box.show{display:block}
+.ar-help{
+  font-size:11px;
+  color:#60758d;
+  line-height:1.45;
+  margin-top:5px;
+}
+@media(max-width:700px){
+  .ar-decision-grid{grid-template-columns:1fr}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
@@ -728,6 +767,51 @@ tbody tr:hover{background:#f9fbfe}
     <div class="batch-list" id="reviewList"></div>
     <div class="batch-total"><span>Requested Total</span><span id="reviewTotal">$0.00</span></div>
     <div class="meta" id="reviewMeta"></div>
+
+    <div class="ar-decision" id="reviewPaymentDecision">
+      <div class="ar-decision-title">Admin Payment Decision</div>
+
+      <div class="field" style="margin-bottom:0">
+        <label>Final Payment Method <span style="color:#c93c46">*</span></label>
+        <select id="reviewPaymentMethod" onchange="togglePendingReceivableMethod()">
+          <option value="">Select Payment Method</option>
+          <option value="Cash">Cash</option>
+          <option value="Bank">Bank</option>
+        </select>
+      </div>
+
+      <div class="ar-method-box" id="reviewCashBox">
+        <div class="ar-decision-grid">
+          <div class="field" style="margin-bottom:0">
+            <label>Physical Cash USD</label>
+            <input id="reviewCashUSD" type="number" min="0" step="0.01" value="0">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Physical Cash KHR</label>
+            <input id="reviewCashKHR" type="number" min="0" step="100" value="0">
+          </div>
+        </div>
+        <div class="ar-help">Enter the real cash received. No exchange rate is required here.</div>
+      </div>
+
+      <div class="ar-method-box" id="reviewBankBox">
+        <div class="ar-decision-grid">
+          <div class="field" style="margin-bottom:0">
+            <label>Bank Name <span style="color:#c93c46">*</span></label>
+            <input id="reviewBankName" placeholder="Example: ABA">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Transaction ID <span style="color:#c93c46">*</span></label>
+            <input id="reviewTransactionId" autocomplete="off" placeholder="Enter from bank slip">
+          </div>
+        </div>
+        <div class="field" style="margin:10px 0 0">
+          <label>Bank Reference / Note</label>
+          <input id="reviewBankReference" placeholder="Optional">
+        </div>
+        <div class="ar-help">Admin verifies the bank slip with the salesman before clearing.</div>
+      </div>
+    </div>
 
     <div class="field">
       <label>Reject Reason <span style="font-weight:400;color:#7a8798">(optional)</span></label>
@@ -1958,6 +2042,13 @@ async function logout(){
   $("sumInvoices").textContent="0";
 }
 
+
+function togglePendingReceivableMethod(){
+  const method=$("reviewPaymentMethod")?.value||"";
+  $("reviewCashBox")?.classList.toggle("show",method==="Cash");
+  $("reviewBankBox")?.classList.toggle("show",method==="Bank");
+}
+
 async function openReview(requestId){
   if(!sessionToken||!requestId)return;
 
@@ -1967,6 +2058,15 @@ async function openReview(requestId){
   $("reviewInfo").textContent="Loading request…";
   $("reviewList").innerHTML="";
   $("reviewMeta").innerHTML="";
+
+  $("reviewPaymentMethod").value="";
+  $("reviewCashUSD").value="0";
+  $("reviewCashKHR").value="0";
+  $("reviewBankName").value="";
+  $("reviewTransactionId").value="";
+  $("reviewBankReference").value="";
+  togglePendingReceivableMethod();
+
   $("reviewOverlay").classList.remove("hidden");
 
   try{
@@ -1975,6 +2075,8 @@ async function openReview(requestId){
       sessionToken,
       requestId
     });
+
+    if(!d||!d.success)throw new Error(d?.error||"Could not load request.");
 
     currentRequest=d.request;
     const r=currentRequest;
@@ -1990,13 +2092,26 @@ async function openReview(requestId){
 
     $("reviewTotal").textContent=money(total,r.currency);
 
+    const isDirect=(r.requestType==="Direct Request"||r.paymentMethod==="Direct Request"||!r.paymentMethod);
+
     $("reviewMeta").innerHTML=
       `<strong>Request Date:</strong> ${esc(r.requestDate||"-")}<br>`+
-      `<strong>Payment Method:</strong> ${esc(r.paymentMethod||"-")}`+
-      `${r.bankPayment?`<br><strong>Bank:</strong> ${esc(r.bankPayment)}`:""}`+
-      `${r.transactionId?`<br><strong>Transaction ID:</strong> ${esc(r.transactionId)}`:""}`+
-      `${r.bankReference?`<br><strong>Bank Reference:</strong> ${esc(r.bankReference)}`:""}`+
-      `${r.note?`<br><strong>Note:</strong> ${esc(r.note)}`:""}`;
+      `<strong>Request Type:</strong> ${esc(isDirect?"Direct Request":(r.requestType||r.paymentMethod||"-"))}`+
+      `${r.note?`<br><strong>Salesman Note:</strong> ${esc(r.note)}`:""}`+
+      `<br><strong>Admin Action:</strong> Choose the final Payment Method below before clearing.`;
+
+    /* Backward compatibility for older Bank/Cash requests. */
+    if(r.paymentMethod==="Bank"||r.paymentMethod==="Cash"){
+      $("reviewPaymentMethod").value=r.paymentMethod;
+
+      if(r.paymentMethod==="Bank"){
+        $("reviewBankName").value=r.bankPayment||"";
+        $("reviewTransactionId").value=r.transactionId||"";
+        $("reviewBankReference").value=r.bankReference||"";
+      }
+    }
+
+    togglePendingReceivableMethod();
 
   }catch(e){
     setReviewError(e.message||"Could not load request.");
@@ -2011,25 +2126,71 @@ function closeReview(){
 async function clearRequest(){
   if(!currentRequest)return;
 
-  if(!confirm(`Clear ${currentRequest.requestId} and save the Receivable payment?`))return;
+  const method=$("reviewPaymentMethod").value;
+  const physicalCashUSD=num($("reviewCashUSD").value);
+  const physicalCashKHR=num($("reviewCashKHR").value);
+  const bankName=$("reviewBankName").value.trim();
+  const transactionId=$("reviewTransactionId").value.trim();
+  const bankReference=$("reviewBankReference").value.trim();
+
+  setReviewError("");
+
+  if(!method){
+    setReviewError("Please choose the final Payment Method: Cash or Bank.");
+    return;
+  }
+
+  if(method==="Cash"&&physicalCashUSD<=0&&physicalCashKHR<=0){
+    setReviewError("Enter the physical cash received in USD and/or KHR.");
+    return;
+  }
+
+  if(method==="Bank"&&!bankName){
+    setReviewError("Bank Name is required.");
+    return;
+  }
+
+  if(method==="Bank"&&!transactionId){
+    setReviewError("Transaction ID is required before clearing a Bank payment.");
+    return;
+  }
+
+  if(!confirm(`Clear ${currentRequest.requestId} as ${method} and save the Receivable payment?`))return;
 
   const btn=$("clearBtn");
   btn.disabled=true;
   btn.textContent="Clearing…";
-  setReviewError("");
 
   try{
     const d=await apiPost({
       action:"arClearRequest",
       requestData:JSON.stringify({
         sessionToken,
-        requestId:currentRequest.requestId
+        requestId:currentRequest.requestId,
+        paymentMethod:method,
+        bankPayment:method==="Bank"?bankName:"",
+        transactionId:method==="Bank"?transactionId:"",
+        bankReference:method==="Bank"?bankReference:"",
+        physicalCashUSD:method==="Cash"?physicalCashUSD:0,
+        physicalCashKHR:method==="Cash"?physicalCashKHR:0
       })
     });
 
+    if(!d||!d.success)throw new Error(d?.error||"Could not clear request.");
+
     closeReview();
     await loadPending(true);
-    alert(`Receivable request cleared successfully.\nPayment ID: ${d.paymentId||""}\nApproved by: ${d.approvedBy||"Admin"}`);
+
+    /* Refresh Vault immediately if Admin later opens Pending Deposit. */
+    try{await loadVaultBalance()}catch(_){}
+
+    alert(
+      `Receivable request cleared successfully.\n`+
+      `Payment Method: ${d.paymentMethod||method}\n`+
+      `Payment ID: ${d.paymentId||""}\n`+
+      `Approved by: ${d.approvedBy||"Admin"}`+
+      (method==="Cash"?"\nReceivable Cash added to Vault.":"")
+    );
 
   }catch(e){
     setReviewError(e.message||"Could not clear request.");
