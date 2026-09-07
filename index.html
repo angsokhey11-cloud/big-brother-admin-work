@@ -2109,7 +2109,7 @@ function renderVaultReport(){
       <td>${vrEsc(x.salesperson||"-")}</td>
       <td>${vrUsd(x.usd)}</td>
       <td>${vrKhr(x.khr)}</td>
-      <td>${vrEsc(x.invoiceDate||"-")}</td>
+      <td title="${vrEsc((x.paymentId||"")+(x.invoiceNos&&x.invoiceNos.length?" · "+x.invoiceNos.join(", "):""))}">${vrEsc(x.invoiceDate||"-")}</td>
       <td>${vrEsc(x.customerName||"-")}</td>
     </tr>
   `).join(""):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#7a8798">No Receivable Cash currently in Vault.</td></tr>';
