@@ -485,7 +485,16 @@ tbody tr:hover{background:#f9fbfe}
   .vr-sheets{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
   .vr-page{break-inside:avoid;margin:0!important}
   .vr-final{break-inside:avoid}
-}</style>
+}
+/* ===== V7.0 PENDING DEPOSIT — FULL VAULT DATA ===== */
+.vault-live-note{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:9px 12px;background:#eef6ff;border-bottom:1px solid #d7e6f8;color:#1a5698;font-size:12px;font-weight:700}
+.vault-fresh{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:999px;background:#eaf8ef;color:#198754;font-size:10px;font-weight:900}
+.vault-table td,.vault-table th{white-space:nowrap}
+.vault-source{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}
+.vault-source.daily{background:#eaf3ff;color:#185ea8}.vault-source.receivable{background:#f2edff;color:#5b38a0}
+.vault-money-usd{font-weight:900;color:#12623d}.vault-money-khr{font-weight:900;color:#7d5900}
+
+</style>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
@@ -598,9 +607,12 @@ tbody tr:hover{background:#f9fbfe}
       <div class="card"><small>Cash Vault USD</small><strong id="vaultUSD">$0.00</strong></div>
       <div class="card"><small>Cash Vault KHR</small><strong id="vaultKHR">៛0</strong></div>
       <div class="card"><small>Vault Status</small><strong id="vaultStatus" style="font-size:16px">Loading…</strong></div>
-      <div class="card"><small>Vault Deposit</small><button class="btn success" onclick="openVaultDeposit()">Deposit Vault Cash</button>
-<button class="btn primary" onclick="openVaultReport()">📊 Vault Report</button></div>
+      <div class="card"><small>Vault Deposit</small>
+        <button class="btn success" onclick="openVaultDeposit()">Deposit Vault Cash</button>
+        <button class="btn primary" onclick="openVaultReport()">📊 Vault Report</button>
+      </div>
     </div>
+
     <div class="cards">
       <div class="card"><small>Daily Cash in Vault — USD</small><strong id="vaultDailyUSD">$0.00</strong></div>
       <div class="card"><small>Daily Cash in Vault — KHR</small><strong id="vaultDailyKHR">៛0</strong></div>
@@ -609,30 +621,40 @@ tbody tr:hover{background:#f9fbfe}
     </div>
 
     <div class="cards">
-      <div class="card"><small>Pending Deposit</small><strong id="pdCount">0</strong></div>
-      <div class="card"><small>Cash USD</small><strong id="pdUSD">$0.00</strong></div>
-      <div class="card"><small>Cash KHR</small><strong id="pdKHR">៛0</strong></div>
-      <div class="card"><small>Source</small><strong style="font-size:18px">Receivable Cash</strong></div>
+      <div class="card"><small>Vault Pending Entries</small><strong id="pdCount">0</strong></div>
+      <div class="card"><small>Pending Vault USD</small><strong id="pdUSD">$0.00</strong></div>
+      <div class="card"><small>Pending Vault KHR</small><strong id="pdKHR">៛0</strong></div>
+      <div class="card"><small>Sources</small><strong style="font-size:16px">Daily Cash + Receivable Cash</strong></div>
     </div>
+
     <div class="panel">
-      <div class="view-banner">Approved Cash awaiting company bank deposit. Includes Receivable Cash and Daily Cash Collection.</div>
+      <div class="vault-live-note">
+        <span>All physical cash currently inside Vault and waiting for the next full company bank deposit.</span>
+        <span class="vault-fresh" id="vaultFreshState">● Live Vault</span>
+      </div>
+
       <div class="filters">
-        <input id="pdSearch" placeholder="Search Deposit ID, Payment ID, Customer, Salesperson" oninput="renderPendingDeposit()">
+        <input id="pdSearch" placeholder="Search Date, Source, Payment/Close ID, Customer, Salesperson, Location" oninput="renderPendingDeposit()">
         <input id="pdSalesman" placeholder="Filter Salesperson" oninput="renderPendingDeposit()">
-        <span></span>
+        <select id="pdSource" onchange="renderPendingDeposit()">
+          <option value="">All Sources</option>
+          <option value="Daily Cash">Daily Cash</option>
+          <option value="Receivable Cash">Receivable Cash</option>
+        </select>
         <button class="btn secondary" onclick="clearPendingDepositFilters()">Clear</button>
         <button class="btn primary" id="pdRefreshBtn" onclick="loadPendingDeposit(true)">↻ Refresh</button>
       </div>
+
       <div class="tablewrap">
-        <table>
+        <table class="vault-table">
           <thead><tr>
-            <th>Deposit ID</th><th>Source</th><th>Payment Date</th><th>Payment ID</th><th>Customer</th><th>Salesperson</th>
-            <th>Location</th><th class="money">Amount</th><th>Status</th><th>Action</th>
+            <th>No.</th><th>Entry Date</th><th>Source</th><th>Reference</th><th>Customer</th><th>Salesperson</th>
+            <th>Location</th><th class="center">Invoices</th><th class="money">Cash USD</th><th class="money">Cash KHR</th><th>Status</th>
           </tr></thead>
-          <tbody id="pendingDepositBody"><tr><td colspan="10" class="empty">Loading Pending Deposit...</td></tr></tbody>
+          <tbody id="pendingDepositBody"><tr><td colspan="11" class="empty">Loading Vault Pending Data...</td></tr></tbody>
         </table>
       </div>
-      <div class="foot"><span id="pdRowCount">0 deposits</span><span id="pdSyncStatus">Secure Admin Work</span></div>
+      <div class="foot"><span id="pdRowCount">0 vault entries</span><span id="pdSyncStatus">Fast Vault Sync</span></div>
     </div>
   </div>
 
@@ -904,6 +926,9 @@ const SESSION_KEY="bb_ar_admin_session";
 const DEVICE_KEY="bb_ar_admin_device";
 const CACHE_KEY="BB_ADMIN_WORK_PENDING_RECEIVABLE_CACHE_V1";
 const SYNC_MS=20000;
+const VAULT_CACHE_KEY="BB_ADMIN_VAULT_PENDING_CACHE_V7";
+const VAULT_REPORT_CACHE_KEY="BB_ADMIN_VAULT_REPORT_CACHE_V7";
+const VAULT_FAST_SYNC_MS=8000;
 
 const $=id=>document.getElementById(id);
 const VIEW=(new URLSearchParams(location.search).get("view")||"pending-receivable").toLowerCase();
@@ -918,7 +943,9 @@ let syncBusy=false;
 let currentRequest=null;
 let pendingDailyCashRequests=[];
 let currentDailyCashCollectionRequest=null;
-let vaultBalance={usd:0,khr:0,dailyCashUSD:0,dailyCashKHR:0,receivableCashUSD:0,receivableCashKHR:0};
+let vaultBalance={usd:0,khr:0,dailyCashUSD:0,dailyCashKHR:0,receivableCashUSD:0,receivableCashKHR:0,entries:[]};
+let vaultPendingEntries=[];
+let vaultFastTimer=null;
 let receivablePendingDeposits=[];
 let receivableDepositHistory=[];
 let currentReceivableDeposit=null;
@@ -1181,7 +1208,11 @@ async function smartSync(force=false){
 }
 function startSync(){
   if(syncTimer)clearInterval(syncTimer);
+  if(vaultFastTimer)clearInterval(vaultFastTimer);
   syncTimer=setInterval(()=>smartSync(false),SYNC_MS);
+  if(VIEW==="pending-deposit"){
+    vaultFastTimer=setInterval(()=>{if(!document.hidden&&sessionToken)loadPendingDeposit(false).catch(()=>{})},VAULT_FAST_SYNC_MS);
+  }
 }
 
 async function login(){
@@ -1281,69 +1312,84 @@ async function login(){
 
 
 
-function depositSearchText(r){
-  return norm([
-    r.depositId,r.source,r.paymentId,r.requestId,r.customer,r.salesman,
-    r.locationCode,r.collectionBank,r.collectionTransactionId,
-    r.companyBankAccount,r.depositReference
-  ].join(" "));
+function vaultCacheSave(){
+  try{localStorage.setItem(VAULT_CACHE_KEY,JSON.stringify({balance:vaultBalance,entries:vaultPendingEntries,savedAt:Date.now()}))}catch(_){}
 }
-
+function vaultCacheRestore(){
+  try{
+    const raw=localStorage.getItem(VAULT_CACHE_KEY);if(!raw)return false;
+    const d=JSON.parse(raw);if(!d||!d.balance)return false;
+    vaultBalance={usd:num(d.balance.usd),khr:num(d.balance.khr),dailyCashUSD:num(d.balance.dailyCashUSD),dailyCashKHR:num(d.balance.dailyCashKHR),receivableCashUSD:num(d.balance.receivableCashUSD),receivableCashKHR:num(d.balance.receivableCashKHR),entries:Array.isArray(d.balance.entries)?d.balance.entries:[]};
+    vaultPendingEntries=Array.isArray(d.entries)?d.entries:[];
+    renderVaultCards();renderPendingDeposit();
+    const age=Math.max(0,Math.round((Date.now()-num(d.savedAt))/1000));
+    if($("pdSyncStatus"))$("pdSyncStatus").textContent=`Cached ${age}s ago · checking live data…`;
+    if($("vaultFreshState"))$("vaultFreshState").textContent="● Cached Vault";
+    return true;
+  }catch(_){return false}
+}
+function currentVaultPendingEntries(entries){
+  const list=Array.isArray(entries)?entries:[],out=[];
+  for(const x of list){
+    if(String(x.type||"").toUpperCase()==="OUT")break;
+    if(String(x.type||"").toUpperCase()!=="IN")continue;
+    const source=String(x.source||"").trim();
+    if(source!=="Daily Cash"&&source!=="Receivable Cash")continue;
+    out.push(x);
+  }
+  return out;
+}
+function renderVaultCards(){
+  if($("vaultUSD"))$("vaultUSD").textContent=money(vaultBalance.usd,"USD");
+  if($("vaultKHR"))$("vaultKHR").textContent=money(vaultBalance.khr,"KHR");
+  if($("vaultDailyUSD"))$("vaultDailyUSD").textContent=money(vaultBalance.dailyCashUSD,"USD");
+  if($("vaultDailyKHR"))$("vaultDailyKHR").textContent=money(vaultBalance.dailyCashKHR,"KHR");
+  if($("vaultReceivableUSD"))$("vaultReceivableUSD").textContent=money(vaultBalance.receivableCashUSD,"USD");
+  if($("vaultReceivableKHR"))$("vaultReceivableKHR").textContent=money(vaultBalance.receivableCashKHR,"KHR");
+  if($("vaultStatus"))$("vaultStatus").textContent=(vaultBalance.usd>0||vaultBalance.khr>0)?"Cash On Hold":"Empty";
+}
+function depositSearchText(r){
+  return norm([r.date,r.source,r.referenceId,r.closeId,r.depositId,r.customer,r.customerName,r.salesperson,r.locationCode,r.entryId,r.invoiceDate].join(" "));
+}
 function renderPendingDeposit(){
   if(VIEW!=="pending-deposit")return;
-  const q=norm($("pdSearch")?.value);
-  const salesman=norm($("pdSalesman")?.value);
-  const visible=receivablePendingDeposits.filter(r=>
-    (!q||depositSearchText(r).includes(q)) &&
-    (!salesman||norm(r.salesman).includes(salesman))
-  );
-
+  const q=norm($("pdSearch")?.value),salesman=norm($("pdSalesman")?.value),source=$("pdSource")?.value||"";
+  const visible=vaultPendingEntries.filter(r=>(!q||depositSearchText(r).includes(q))&&(!salesman||norm(r.salesperson).includes(salesman))&&(!source||String(r.source)===source));
   $("pdCount").textContent=visible.length;
-  $("pdUSD").textContent=money(visible.filter(r=>String(r.currency).toUpperCase()==="USD").reduce((s,r)=>s+num(r.amount),0),"USD");
-  $("pdKHR").textContent=money(visible.filter(r=>String(r.currency).toUpperCase()==="KHR").reduce((s,r)=>s+num(r.amount),0),"KHR");
-  $("pdRowCount").textContent=`${visible.length} deposit${visible.length===1?"":"s"}`;
-
-  $("pendingDepositBody").innerHTML=visible.length?visible.map(r=>`
-    <tr>
-      <td><strong>${esc(r.depositId)}</strong></td>
-      <td>${esc(r.source||"-")}</td>
-      <td>${esc(r.paymentDate||"-")}</td>
-      <td>${esc(r.paymentId||"-")}</td>
-      <td>${esc(r.customer||"-")}</td>
-      <td>${esc(r.salesman||"-")}</td>
-      <td>${esc(r.locationCode||"-")}</td>
-      <td class="money"><strong>${money(r.amount,r.currency)}</strong></td>
-      <td><span class="status processing">Pending Deposit</span></td>
-      <td><button class="btn success" onclick='openReceivableDeposit(${JSON.stringify(r.depositId)})'>Deposit</button></td>
-    </tr>`).join("")
-  :'<tr><td colspan="10" class="empty">No Pending Deposit.</td></tr>';
+  $("pdUSD").textContent=money(visible.reduce((s,r)=>s+num(r.usd),0),"USD");
+  $("pdKHR").textContent=money(visible.reduce((s,r)=>s+num(r.khr),0),"KHR");
+  $("pdRowCount").textContent=`${visible.length} vault entr${visible.length===1?"y":"ies"}`;
+  $("pendingDepositBody").innerHTML=visible.length?visible.map((r,i)=>{
+    const sourceClass=String(r.source)==="Receivable Cash"?"receivable":"daily";
+    const ref=r.referenceId||r.closeId||r.entryId||"-";
+    const customer=r.customerName||r.customer||"-";
+    return `<tr>
+      <td>${i+1}</td><td>${esc(r.date||"-")}</td>
+      <td><span class="vault-source ${sourceClass}">${esc(r.source||"-")}</span></td>
+      <td><strong>${esc(ref)}</strong></td><td>${esc(customer)}</td><td>${esc(r.salesperson||"-")}</td>
+      <td>${esc(r.locationCode||"-")}</td><td class="center">${num(r.invoiceCount).toLocaleString()}</td>
+      <td class="money vault-money-usd">${money(r.usd,"USD")}</td><td class="money vault-money-khr">${money(r.khr,"KHR")}</td>
+      <td><span class="status processing">In Vault</span></td>
+    </tr>`;
+  }).join(""):'<tr><td colspan="11" class="empty">No cash is currently waiting inside Vault.</td></tr>';
 }
-
 async function loadPendingDeposit(force=false){
-  await loadVaultBalance();
   if(!sessionToken)throw new Error("Admin session required.");
   const btn=$("pdRefreshBtn");
   if(force&&btn){btn.disabled=true;btn.textContent="Refreshing…"}
-  $("pdSyncStatus").textContent=force?"Syncing…":"Loading…";
+  if($("pdSyncStatus"))$("pdSyncStatus").textContent=force?"Refreshing Vault…":"Checking Vault…";
   try{
-    const d=await apiGet({
-      action:"adminPendingCompanyDeposits",
-      sessionToken,
-      _ts:Date.now()
-    });
-    receivablePendingDeposits=Array.isArray(d.deposits)?d.deposits:[];
-    renderPendingDeposit();
-    $("pdSyncStatus").textContent="Up to date · smart sync";
+    await loadVaultBalance();
+    if($("pdSyncStatus"))$("pdSyncStatus").textContent="Up to date · fast smart sync";
+    if($("vaultFreshState"))$("vaultFreshState").textContent="● Live Vault";
   }finally{
     if(force&&btn){btn.disabled=false;btn.textContent="↻ Refresh"}
   }
 }
-
 function clearPendingDepositFilters(){
-  $("pdSearch").value="";
-  $("pdSalesman").value="";
-  renderPendingDeposit();
+  $("pdSearch").value="";$("pdSalesman").value="";if($("pdSource"))$("pdSource").value="";renderPendingDeposit();
 }
+
 
 function openReceivableDeposit(depositId){
   currentReceivableDeposit=receivablePendingDeposits.find(r=>r.depositId===depositId)||null;
@@ -1712,36 +1758,16 @@ function closePendingDailyCashReview(){
 
 async function loadVaultBalance(){
   if(!sessionToken)return;
-
   try{
-    const d=await apiGet({
-      action:"vaultBalance",
-      sessionToken,
-      _ts:Date.now()
-    });
-
-    vaultBalance={
-      usd:num(d.usd),
-      khr:num(d.khr),
-      dailyCashUSD:num(d.dailyCashUSD),
-      dailyCashKHR:num(d.dailyCashKHR),
-      receivableCashUSD:num(d.receivableCashUSD),
-      receivableCashKHR:num(d.receivableCashKHR)
-    };
-
-    if($("vaultUSD"))$("vaultUSD").textContent=money(vaultBalance.usd,"USD");
-    if($("vaultKHR"))$("vaultKHR").textContent=money(vaultBalance.khr,"KHR");
-    if($("vaultDailyUSD"))$("vaultDailyUSD").textContent=money(vaultBalance.dailyCashUSD,"USD");
-    if($("vaultDailyKHR"))$("vaultDailyKHR").textContent=money(vaultBalance.dailyCashKHR,"KHR");
-    if($("vaultReceivableUSD"))$("vaultReceivableUSD").textContent=money(vaultBalance.receivableCashUSD,"USD");
-    if($("vaultReceivableKHR"))$("vaultReceivableKHR").textContent=money(vaultBalance.receivableCashKHR,"KHR");
-    if($("vaultStatus")){
-      $("vaultStatus").textContent=(vaultBalance.usd>0||vaultBalance.khr>0)
-        ? "Cash On Hold"
-        : "Empty";
-    }
+    const d=await apiGet({action:"vaultBalance",sessionToken,_ts:Date.now()});
+    vaultBalance={usd:num(d.usd),khr:num(d.khr),dailyCashUSD:num(d.dailyCashUSD),dailyCashKHR:num(d.dailyCashKHR),receivableCashUSD:num(d.receivableCashUSD),receivableCashKHR:num(d.receivableCashKHR),entries:Array.isArray(d.entries)?d.entries:[]};
+    vaultPendingEntries=currentVaultPendingEntries(vaultBalance.entries);
+    renderVaultCards();
+    if(VIEW==="pending-deposit")renderPendingDeposit();
+    vaultCacheSave();
   }catch(e){
     console.warn("Cash Vault:",e);
+    if(!vaultPendingEntries.length)vaultCacheRestore();
   }
 }
 
@@ -2032,9 +2058,13 @@ async function rejectRequest(){
 }
 
 document.addEventListener("visibilitychange",()=>{
-  if(!document.hidden&&sessionToken&&(VIEW==="pending-receivable"||VIEW==="pending-daily-cash"))smartSync(true);
+  if(!document.hidden&&sessionToken){
+    if(VIEW==="pending-deposit")loadPendingDeposit(false).catch(()=>{});
+    else if(VIEW==="pending-receivable"||VIEW==="pending-daily-cash")smartSync(true);
+  }
 });
 
+if(VIEW==="pending-deposit")vaultCacheRestore();
 restoreAccess();
 
 let vaultReportData=null;
@@ -2043,15 +2073,27 @@ function vrUsd(v){return "$"+Number(v||0).toLocaleString(undefined,{minimumFract
 function vrKhr(v){return "៛"+Math.round(Number(v||0)).toLocaleString();}
 function vrEsc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m];});}
 
+function vaultReportCacheSave(){
+  try{localStorage.setItem(VAULT_REPORT_CACHE_KEY,JSON.stringify({data:vaultReportData,savedAt:Date.now()}))}catch(_){}
+}
+function vaultReportCacheRestore(){
+  try{
+    const raw=localStorage.getItem(VAULT_REPORT_CACHE_KEY);if(!raw)return false;
+    const d=JSON.parse(raw);if(!d||!d.data)return false;
+    vaultReportData=d.data;renderVaultReport();return true;
+  }catch(_){return false}
+}
+
 function closeVaultReport(){$("vaultReportOverlay").classList.add("hidden");}
 
 function openVaultReport(){
   $("vaultReportOverlay").classList.remove("hidden");
   if(!$("vaultReportDate").value)$("vaultReportDate").value=new Date().toISOString().slice(0,10);
-  loadVaultReport();
+  vaultReportCacheRestore();
+  loadVaultReport(false);
 }
 
-async function loadVaultReport(){
+async function loadVaultReport(force=true){
   try{
     const rate=Number($("vaultReportRate").value||0);
     const qs=new URLSearchParams({
@@ -2064,7 +2106,10 @@ async function loadVaultReport(){
     if(!d.ok)throw new Error(d.error||"Could not load Vault Report");
     vaultReportData=d;
     renderVaultReport();
-  }catch(e){alert("Vault Report: "+e.message);}
+    vaultReportCacheSave();
+  }catch(e){
+    if(force||!vaultReportData)alert("Vault Report: "+e.message);
+  }
 }
 
 function recalcVaultReportValue(){
