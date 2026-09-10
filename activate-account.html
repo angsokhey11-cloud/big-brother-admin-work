@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BIG BROTHER — Activate Account</title>
+<style>*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#eef3f8;font-family:Arial,Helvetica,sans-serif;color:#26384b;padding:18px}.card{width:min(460px,100%);background:#fff;border:1px solid #d9e2ef;border-radius:16px;padding:24px;box-shadow:0 16px 45px #173a6618}.brand{font-size:25px;font-weight:900;color:#174a91}.sub{margin:6px 0 20px;color:#718196;font-size:12px;line-height:1.5}label{display:block;font-size:10px;font-weight:900;color:#506a84;text-transform:uppercase;margin:10px 0 5px}input{width:100%;border:1px solid #cbd7e4;border-radius:9px;padding:11px;font:inherit}button{width:100%;border:0;border-radius:9px;padding:11px;margin-top:15px;background:#174a91;color:#fff;font-weight:900;cursor:pointer}button:disabled{opacity:.55}.msg{margin-top:12px;font-size:11px;color:#60758b;line-height:1.45}.err{color:#b42318}.ok{color:#157a51}</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+<div class="card"><div class="brand">BIG BROTHER</div><div class="sub">Activate your Accounting System account. Create your password once, then sign in from the BIG BROTHER Dashboard.</div><form id="form"><label>New Password</label><input id="p1" type="password" minlength="8" autocomplete="new-password" required><label>Confirm Password</label><input id="p2" type="password" minlength="8" autocomplete="new-password" required><button id="btn" type="submit">Activate Account</button><div id="msg" class="msg">Checking invitation…</div></form></div>
+<script>
+'use strict';
+const URL='https://sjfhlaclgmkwwofzstok.supabase.co';
+const KEY='sb_publishable_w762jR65CWwlO30fKQsYOw_6L9grx8S';
+const SHARED='BB_SUPABASE_DEV_SESSION_V1';
+const ACTIVATE='BB_ACTIVATE_SESSION_V1';
+const client=window.supabase.createClient(URL,KEY,{auth:{detectSessionInUrl:true,persistSession:true,storageKey:ACTIVATE}});
+const msg=document.getElementById('msg'),form=document.getElementById('form'),btn=document.getElementById('btn');
+let ready=false;
+async function check(){try{await new Promise(r=>setTimeout(r,250));const {data,error}=await client.auth.getSession();if(error)throw error;if(!data.session)throw new Error('Invitation link is missing, invalid, or expired. Ask your Admin to send a new invitation.');ready=true;msg.textContent='Invitation verified. Enter your new password.';msg.className='msg ok'}catch(e){msg.textContent=e.message||String(e);msg.className='msg err';btn.disabled=true}}
+form.addEventListener('submit',async e=>{e.preventDefault();if(!ready)return;const p1=document.getElementById('p1').value,p2=document.getElementById('p2').value;if(p1!==p2){msg.textContent='Passwords do not match.';msg.className='msg err';return}if(p1.length<8){msg.textContent='Password must be at least 8 characters.';msg.className='msg err';return}btn.disabled=true;btn.textContent='Activating…';try{const {error}=await client.auth.updateUser({password:p1});if(error)throw error;const {data}=await client.auth.getSession();if(data.session)localStorage.setItem(SHARED,JSON.stringify(data.session));localStorage.removeItem(ACTIVATE);msg.textContent='Account activated. Redirecting to BIG BROTHER Dashboard…';msg.className='msg ok';setTimeout(()=>location.href='https://angsokhey11-cloud.github.io/big-brother-dashboard/',900)}catch(e){msg.textContent=e.message||String(e);msg.className='msg err';btn.disabled=false;btn.textContent='Activate Account'}});
+check();
+</script>
+</body></html>
