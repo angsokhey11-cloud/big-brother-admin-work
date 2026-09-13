@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BIG BROTHER — Staff Request</title><style>html,body{margin:0;height:100%;background:#eef3f8;font-family:Arial,Helvetica,sans-serif}.loading{height:100%;display:flex;align-items:center;justify-content:center;color:#173f77;font-weight:900}.error{margin:30px;padding:20px;border:1px solid #f1c2bd;background:#fff0ef;color:#b42318;border-radius:12px}</style></head>
+<body><div id="state" class="loading">Loading Staff Request…</div>
+<script>
+(async()=>{
+  const u=new URL('./staff-request.html',location.href);u.search=new URLSearchParams(location.search);u.searchParams.set('accounting','v2');u.searchParams.set('_src','20260913-2');
+  const r=await fetch(u.toString(),{cache:'no-store'});if(!r.ok)throw new Error('Could not load Staff Request source.');
+  let h=await r.text();
+  h=h.replace('Approving a Staff Payment or Salary Advance creates a PAID Staff Expense automatically. Rejecting a payment returns its earnings to Available. Existing decisions cannot be approved twice.','Approving a Staff Payment creates separate PAID Operating Expenses by earning type: Sale Incentive, Driver Allowance, Staff (Leave Allowance), and Salary Expense. Salary Advance creates NO Expense; it only reduces Remaining Salary until the final monthly salary payment is completed. Payment method/reference on an advance are stored only as advance details. Rejecting a payment returns its earnings to Available. Existing decisions cannot be approved twice.');
+  h=h.replace('<strong>Salary Advance Requests</strong><span>Approve full or smaller amount</span>','<strong>Salary Advance Requests</strong><span>Calculation only · No Expense until final salary payment</span>');
+  h=h.replace("if(kind==='special')$('modalInfo').innerHTML=info('Salary Month',month(r.salaryMonth))+info('Gross Salary',money(r.grossSalary,r.currency))+info('Requested',money(r.requestedAmount,r.currency))+info('Approved Before',money(r.approvedBefore,r.currency))+info('Remaining Before',money(r.remainingBeforeApproval,r.currency))+info('Reason',r.reason||'-');","if(kind==='special')$('modalInfo').innerHTML=info('Salary Month',month(r.salaryMonth))+info('Gross Salary',money(r.grossSalary,r.currency))+info('Requested',money(r.requestedAmount,r.currency))+info('Approved Before',money(r.approvedBefore,r.currency))+info('Remaining Before',money(r.remainingBeforeApproval,r.currency))+info('Reason',r.reason||'-')+info('Accounting','No Expense · reduces remaining salary only');");
+  document.open();document.write(h);document.close();
+})().catch(e=>{document.getElementById('state').className='error';document.getElementById('state').textContent=e.message||String(e)});
+</script></body></html>
