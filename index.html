@@ -10,6 +10,17 @@
 <script>
 (async function(){
   try{
+    const params=new URLSearchParams(location.search);
+    const requestedView=params.get('view')||'';
+
+    if(requestedView==='staff-request'){
+      const staffResponse=await fetch('staff-request.html?v=20260913-1',{cache:'no-store'});
+      if(!staffResponse.ok)throw new Error('Could not load Staff Request workspace.');
+      const staffHtml=await staffResponse.text();
+      document.open();document.write(staffHtml);document.close();
+      return;
+    }
+
     const response=await fetch('legacy-google-v6.5.html?v=20260910-1',{cache:'no-store'});
     if(!response.ok)throw new Error('Could not load Admin Work source.');
     let html=await response.text();
