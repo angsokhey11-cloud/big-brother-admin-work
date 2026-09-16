@@ -92,8 +92,8 @@
 
   async function handle(params={},result={}){
     const action=clean(params?.action);
-    if(action==='arList'&&result?.success)rememberList(result);
-    if(action==='arRequestDetail'&&result?.success)rememberRequest(result);
+    if(action==='arList'&&Array.isArray(result?.receivables))rememberList(result);
+    if(action==='arRequestDetail'&&result?.request)rememberRequest(result);
     if(action==='arClearRequest'&&result?.success){
       const payload=parsePayload(params?.requestData);
       const req=requestCache.get(clean(payload?.requestId))||null;
