@@ -105,6 +105,17 @@
     return response;
   };
 
+  function loadCurrencyUi(){
+    if(window.BBReceivableApprovalCurrencyV1)return;
+    if(document.querySelector('script[data-bb-approval-currency="1"]'))return;
+    const script=document.createElement('script');
+    script.src='receivable-approval-currency-v1.js?v=20260916-1';
+    script.async=false;
+    script.dataset.bbApprovalCurrency='1';
+    (document.head||document.documentElement).appendChild(script);
+  }
+
   retryQueue().catch(()=>{});
+  setTimeout(loadCurrencyUi,0);
   window.BBReceivableApprovalBackupV1={retry:retryQueue,endpoint:ENDPOINT};
 })();
