@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BIG BROTHER — Pending Receivable Request Mobile</title>
+<style>html,body{margin:0;min-height:100%;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif}.boot{min-height:100vh;display:flex;align-items:center;justify-content:center;color:#17457a;font-weight:800;font-size:13px}</style>
+</head>
+<body>
+<div class="boot">Loading Pending Receivable Request…</div>
+<script>
+(async function(){
+  try{
+    const r=await fetch('pending-receivable-mobile.html?v=20260916-approval-backup-1',{cache:'no-store'});
+    if(!r.ok)throw new Error('Could not load Pending Receivable Request.');
+    let html=await r.text();
+    const hook='<scr'+'ipt src="receivable-approval-backup-v1.js?v=20260916-1"></scr'+'ipt>';
+    const head=html.toLowerCase().indexOf('</head>');
+    if(head<0)throw new Error('Pending Receivable Request source is missing </head>.');
+    html=html.slice(0,head)+hook+'\n'+html.slice(head);
+    document.open();document.write(html);document.close();
+  }catch(error){
+    document.body.innerHTML='<div class="boot">Could not open Pending Receivable Request · '+String(error&&error.message||error)+'</div>';
+  }
+})();
+</script>
+</body>
+</html>
