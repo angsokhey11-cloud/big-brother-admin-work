@@ -25,7 +25,8 @@
     if(!response.ok)throw new Error('Could not load Admin Work source.');
     let html=await response.text();
 
-    const adapter='<scr'+'ipt src="supabase-admin-work-adapter.js?v=20260910-1"></scr'+'ipt>';
+    const adapter='<scr'+'ipt src="supabase-admin-work-adapter.js?v=20260910-1"></scr'+'ipt>\n'
+      +'<scr'+'ipt src="receivable-approval-backup-v1.js?v=20260916-1"></scr'+'ipt>';
     const headClose=html.toLowerCase().indexOf('</head>');
     if(headClose<0)throw new Error('Admin Work source is missing </head>.');
     html=html.slice(0,headClose)+adapter+'\n'+html.slice(headClose);
