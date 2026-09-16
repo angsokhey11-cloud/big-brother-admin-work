@@ -1,26 +1,73 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>BIG BROTHER — Pending Receivable Request Mobile</title>
-<style>html,body{margin:0;min-height:100%;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif}.boot{min-height:100vh;display:flex;align-items:center;justify-content:center;color:#17457a;font-weight:800;font-size:13px}</style>
+<style>html,body{margin:0;min-height:100%;background:#f4f7fb;font-family:Arial,sans-serif}.bb-loader{min-height:100vh;display:flex;align-items:center;justify-content:center;color:#17457a;font-weight:800}</style>
 </head>
 <body>
-<div class="boot">Loading Pending Receivable Request…</div>
+<div class="bb-loader">Loading Pending Receivable Request…</div>
 <script>
 (async function(){
   try{
-    const r=await fetch('pending-receivable-mobile.html?v=20260916-approval-backup-1',{cache:'no-store'});
-    if(!r.ok)throw new Error('Could not load Pending Receivable Request.');
-    let html=await r.text();
-    const hook='<scr'+'ipt src="receivable-approval-backup-v1.js?v=20260916-1"></scr'+'ipt>';
-    const head=html.toLowerCase().indexOf('</head>');
-    if(head<0)throw new Error('Pending Receivable Request source is missing </head>.');
-    html=html.slice(0,head)+hook+'\n'+html.slice(head);
+    const response=await fetch('pending-receivable-mobile.html?v=20260916-approval-base-2',{cache:'no-store'});
+    if(!response.ok)throw new Error('Could not load Pending Receivable Request.');
+    let html=await response.text();
+
+    const helper='<scr'+'ipt src="receivable-approval-backup-v2.js?v=20260916-1"></scr'+'ipt>';
+    const headClose=html.toLowerCase().indexOf('</head>');
+    if(headClose<0)throw new Error('Pending Receivable source is missing </head>.');
+    html=html.slice(0,headClose)+helper+'\n'+html.slice(headClose);
+
+    const start=html.indexOf('async function clearRequest(){');
+    const end=html.indexOf('async function rejectRequest(){',start);
+    if(start<0||end<0)throw new Error('Pending Receivable clearRequest function was not found.');
+
+    const replacement=`async function clearRequest(){
+  if(!current||!canApprove)return;
+  const method=$('reviewMethod').value,
+        cashUSD=num($('reviewCashUSD').value),
+        cashKHR=num($('reviewCashKHR').value),
+        bank=$('reviewBank').value.trim(),
+        txn=$('reviewTxn').value.trim(),
+        ref=$('reviewRef').value.trim();
+  showError('');
+  if(!method)return showError('Please choose the final Payment Method: Cash or Bank.');
+  if(method==='Cash'&&cashUSD<=0&&cashKHR<=0)return showError('Enter the physical cash received in USD and/or KHR.');
+  if(method==='Bank'&&!bank)return showError('Please enter the bank name.');
+  if(method==='Bank'&&!txn)return showError('Please enter the Transaction ID.');
+  const b=$('clearBtn');b.disabled=true;b.textContent='Clearing…';
+  try{
+    const payload={
+      requestId:current.requestId,
+      paymentMethod:method,
+      bankPayment:method==='Bank'?bank:'',
+      transactionId:method==='Bank'?txn:'',
+      bankReference:method==='Bank'?ref:'',
+      physicalCashUSD:method==='Cash'?cashUSD:0,
+      physicalCashKHR:method==='Cash'?cashKHR:0
+    };
+    const requestSnapshot=current;
+    const d=await rpc('bb_ar_clear_request',{p_payload:payload});
+    if(!d?.success)throw new Error(d?.error||'Could not clear request.');
+    try{
+      const backup=window.BBReceivableApprovalBackupV2;
+      if(backup&&typeof backup.backupRequest==='function'){
+        backup.backupRequest(requestSnapshot,payload,d).catch(error=>console.warn('BIG BROTHER request backup:',error));
+      }
+    }catch(error){console.warn('BIG BROTHER request backup:',error)}
+    $('reviewModal').classList.remove('show');
+    await load();
+  }catch(e){showError(e?.message||e)}
+  finally{b.disabled=false;b.textContent='Clear Request'}
+}
+`;
+
+    html=html.slice(0,start)+replacement+html.slice(end);
     document.open();document.write(html);document.close();
   }catch(error){
-    document.body.innerHTML='<div class="boot">Could not open Pending Receivable Request · '+String(error&&error.message||error)+'</div>';
+    console.error(error);
+    document.body.innerHTML='<div class="bb-loader">Could not open Pending Receivable Request · '+String(error&&error.message||error)+'</div>';
   }
 })();
 </script>
