@@ -116,11 +116,22 @@
     return true;
   }
 
+  function loadCurrencyUi(){
+    if(window.BBReceivableApprovalCurrencyV1)return;
+    if(document.querySelector('script[data-bb-approval-currency="1"]'))return;
+    const script=document.createElement('script');
+    script.src='receivable-approval-currency-v1.js?v=20260916-1';
+    script.async=false;
+    script.dataset.bbApprovalCurrency='1';
+    (document.head||document.documentElement).appendChild(script);
+  }
+
   if(!wrapAdminAdapter()){
     let tries=0;
     const timer=setInterval(()=>{tries++;if(wrapAdminAdapter()||tries>=50)clearInterval(timer)},100);
   }
 
   retryQueue().catch(()=>{});
+  setTimeout(loadCurrencyUi,0);
   window.BBReceivableApprovalBackupV2={backupRequest,handle,retry:retryQueue,rememberRequest,rememberList,endpoint:ENDPOINT};
 })();
