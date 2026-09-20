@@ -372,10 +372,6 @@ tbody tr:hover{background:#f9fbfe}
   align-items:center;
 }
 .vr-banner.receivable{background:#56319a}
-.vr-banner.withdrawal{background:#b46612}
-.vr-page.withdrawal{grid-column:1/-1}
-.vr-table.withdrawal th{background:#b46612}
-.vr-table.withdrawal tfoot td{background:#fff3e6}
 .vr-summary{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
@@ -444,24 +440,72 @@ tbody tr:hover{background:#f9fbfe}
   display:flex;
   justify-content:space-between;
 }
-.vr-final{
-  display:grid;
-  grid-template-columns:1.2fr 1fr 1fr 1fr 1.15fr;
-  gap:8px;
+.vr-reconcile{
   margin-top:10px;
-  padding:9px;
-  border:1px solid #d6eadb;
+  padding:10px;
+  border:1px solid #d6e5ef;
   border-radius:12px;
-  background:#effaf2;
+  background:#f7fbff;
 }
-.vr-final .vr-card{background:rgba(255,255,255,.88)}
-.vr-final .total-value{
+.vr-reconcile-title{
+  color:#244d78;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.35px;
+  margin-bottom:8px;
+}
+.vr-calc-row{
+  display:grid;
+  grid-template-columns:1fr auto 1fr auto 1.15fr;
+  gap:8px;
+  align-items:stretch;
+  margin-top:8px;
+}
+.vr-calc-op{
+  display:grid;
+  place-items:center;
+  min-width:28px;
+  color:#58708a;
+  font-size:22px;
+  font-weight:900;
+}
+.vr-calc-card{
+  border:1px solid #dce6f1;
+  background:#fff;
+  border-radius:9px;
+  padding:9px 10px;
+  min-width:0;
+}
+.vr-calc-card small{
+  display:block;
+  color:#66788f;
+  font-size:10px;
+  font-weight:800;
+  margin-bottom:4px;
+}
+.vr-calc-card strong{
+  color:#183a66;
+  font-size:17px;
+  white-space:nowrap;
+}
+.vr-calc-card.outflow{
+  background:#fff8ef;
+  border-color:#f0d4b1;
+}
+.vr-calc-card.outflow strong{color:#a9540a}
+.vr-calc-card.remaining{
   background:#0d7b42;
-  color:#fff;
   border-color:#0d7b42;
 }
-.vr-final .total-value small,
-.vr-final .total-value strong{color:#fff}
+.vr-calc-card.remaining small,
+.vr-calc-card.remaining strong{color:#fff}
+.vr-reconcile-foot{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:8px;
+}
+.vr-reconcile-foot .vr-card{background:#fff}
 .vr-empty{
   text-align:center;
   padding:16px!important;
@@ -477,7 +521,9 @@ tbody tr:hover{background:#f9fbfe}
   .vr-head{flex-direction:column}
   .vr-toolbar{grid-template-columns:1fr 1fr}
   .vr-summary{grid-template-columns:1fr 1fr}
-  .vr-final{grid-template-columns:1fr 1fr}
+  .vr-calc-row{grid-template-columns:1fr}
+  .vr-calc-op{min-height:20px}
+  .vr-reconcile-foot{grid-template-columns:1fr}
 }
 @media print{
   body *{visibility:hidden!important}
@@ -488,16 +534,20 @@ tbody tr:hover{background:#f9fbfe}
   .vr-body{overflow:visible!important;background:#fff!important;padding:0!important}
   .vr-sheets{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
   .vr-page{break-inside:avoid;margin:0!important}
-  .vr-page.withdrawal{grid-column:1/-1!important}
-  .vr-final{break-inside:avoid}
+  .vr-reconcile{break-inside:avoid}
 }
 /* ===== V7.0 PENDING DEPOSIT — FULL VAULT DATA ===== */
 .vault-live-note{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:9px 12px;background:#eef6ff;border-bottom:1px solid #d7e6f8;color:#1a5698;font-size:12px;font-weight:700}
 .vault-fresh{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:999px;background:#eaf8ef;color:#198754;font-size:10px;font-weight:900}
 .vault-table td,.vault-table th{white-space:nowrap}
 .vault-source{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}
-.vault-source.daily{background:#eaf3ff;color:#185ea8}.vault-source.receivable{background:#f2edff;color:#5b38a0}
-.vault-money-usd{font-weight:900;color:#12623d}.vault-money-khr{font-weight:900;color:#7d5900}
+.vault-source.daily{background:#eaf3ff;color:#185ea8}
+.vault-source.receivable{background:#f2edff;color:#5b38a0}
+.vault-source.wallet{background:#fff2e3;color:#a45408}
+.vault-money-usd{font-weight:900;color:#12623d}
+.vault-money-khr{font-weight:900;color:#7d5900}
+.vault-money-out{color:#b64a2b!important}
+.status.vault-out{background:#fff0eb;color:#a83e22}
 
 
 /* ===== V7.1 RECEIVABLE DIRECT REQUEST REVIEW ===== */
@@ -665,15 +715,15 @@ tbody tr:hover{background:#f9fbfe}
     </div>
 
     <div class="cards">
-      <div class="card"><small>Vault Pending Entries</small><strong id="pdCount">0</strong></div>
-      <div class="card"><small>Pending Vault USD</small><strong id="pdUSD">$0.00</strong></div>
-      <div class="card"><small>Pending Vault KHR</small><strong id="pdKHR">៛0</strong></div>
-      <div class="card"><small>Sources</small><strong style="font-size:16px">Daily Cash + Receivable Cash</strong></div>
+      <div class="card"><small>Vault Transactions</small><strong id="pdCount">0</strong></div>
+      <div class="card"><small>Visible Net USD</small><strong id="pdUSD">$0.00</strong></div>
+      <div class="card"><small>Visible Net KHR</small><strong id="pdKHR">៛0</strong></div>
+      <div class="card"><small>Flow</small><strong style="font-size:16px">Cash IN + Daily Cash OUT</strong></div>
     </div>
 
     <div class="panel">
       <div class="vault-live-note">
-        <span>All physical cash currently inside Vault and waiting for the next full company bank deposit.</span>
+        <span>Vault transaction history for the current bank-deposit cycle. Daily Cash Wallet transfers are shown as OUT.</span>
         <span class="vault-fresh" id="vaultFreshState">● Live Vault</span>
       </div>
 
@@ -682,8 +732,9 @@ tbody tr:hover{background:#f9fbfe}
         <input id="pdSalesman" placeholder="Filter Salesperson" oninput="renderPendingDeposit()">
         <select id="pdSource" onchange="renderPendingDeposit()">
           <option value="">All Sources</option>
-          <option value="Daily Cash">Daily Cash</option>
+          <option value="Daily Cash">Daily Cash Collection</option>
           <option value="Receivable Cash">Receivable Cash</option>
+          <option value="Daily Cash Wallet">Daily Cash Wallet OUT</option>
         </select>
         <button class="btn secondary" onclick="clearPendingDepositFilters()">Clear</button>
         <button class="btn primary" id="pdRefreshBtn" onclick="loadPendingDeposit(true)">↻ Refresh</button>
@@ -1085,8 +1136,8 @@ function configureView(){
 
   if(VIEW==="pending-deposit"){
     $("pendingDepositView").style.display="";
-    $("pageTitle").textContent="Pending Deposit";
-    $("pageSubtitle").textContent="Approved real cash waiting for company bank deposit. Includes Receivable and Daily Cash Collection.";
+    $("pageTitle").textContent="Vault Transactions";
+    $("pageSubtitle").textContent="Live Cash Vault inflow and Daily Cash Wallet outflow before the next company bank deposit.";
     return true;
   }
 
@@ -1419,18 +1470,29 @@ function vaultCacheRestore(){
 }
 function currentVaultPendingEntries(entries){
   const list=Array.isArray(entries)?entries:[],out=[];
+
   for(const x of list){
     const type=String(x.type||"").toUpperCase();
     const source=String(x.source||"").trim();
 
-    /* Only a real company-bank Vault Deposit closes the pending-deposit
-       cycle. A transfer OUT to the new Daily Cash Wallet must not reset it. */
+    /* A real bank deposit closes the current Vault cycle. */
     if(type==="OUT"&&source==="Vault Deposit")break;
 
-    if(type!=="IN")continue;
-    if(source!=="Daily Cash"&&source!=="Receivable Cash")continue;
-    out.push(x);
+    /* Cash received into Vault. */
+    if(
+      type==="IN" &&
+      (source==="Daily Cash"||source==="Receivable Cash")
+    ){
+      out.push(x);
+      continue;
+    }
+
+    /* Operating-cash transfer stays visible as an OUT transaction. */
+    if(type==="OUT"&&source==="Daily Cash Wallet"){
+      out.push(x);
+    }
   }
+
   return out;
 }
 function renderVaultCards(){
@@ -1461,25 +1523,68 @@ function depositSearchText(r){
 }
 function renderPendingDeposit(){
   if(VIEW!=="pending-deposit")return;
-  const q=norm($("pdSearch")?.value),salesman=norm($("pdSalesman")?.value),source=$("pdSource")?.value||"";
-  const visible=vaultPendingEntries.filter(r=>(!q||depositSearchText(r).includes(q))&&(!salesman||norm(r.salesperson).includes(salesman))&&(!source||String(r.source)===source));
+
+  const q=norm($("pdSearch")?.value);
+  const salesman=norm($("pdSalesman")?.value);
+  const source=$("pdSource")?.value||"";
+
+  const visible=vaultPendingEntries.filter(r=>
+    (!q||depositSearchText(r).includes(q)) &&
+    (!salesman||norm(r.salesperson).includes(salesman)) &&
+    (!source||String(r.source)===source)
+  );
+
+  const signed=(r,value)=>
+    String(r.type||"").toUpperCase()==="OUT"
+      ? -num(value)
+      : num(value);
+
   $("pdCount").textContent=visible.length;
-  $("pdUSD").textContent=money(visible.reduce((s,r)=>s+num(r.usd),0),"USD");
-  $("pdKHR").textContent=money(visible.reduce((s,r)=>s+num(r.khr),0),"KHR");
-  $("pdRowCount").textContent=`${visible.length} vault entr${visible.length===1?"y":"ies"}`;
-  $("pendingDepositBody").innerHTML=visible.length?visible.map((r,i)=>{
-    const sourceClass=String(r.source)==="Receivable Cash"?"receivable":"daily";
-    const ref=r.referenceId||r.closeId||r.entryId||"-";
-    const customer=r.customerName||r.customer||"-";
-    return `<tr>
-      <td>${i+1}</td><td>${esc(r.date||"-")}</td>
-      <td><span class="vault-source ${sourceClass}">${esc(r.source||"-")}</span></td>
-      <td><strong>${esc(ref)}</strong></td><td>${esc(customer)}</td><td>${esc(r.salesperson||"-")}</td>
-      <td>${esc(r.locationCode||"-")}</td><td class="center">${num(r.invoiceCount).toLocaleString()}</td>
-      <td class="money vault-money-usd">${money(r.usd,"USD")}</td><td class="money vault-money-khr">${money(r.khr,"KHR")}</td>
-      <td><span class="status processing">In Vault</span></td>
-    </tr>`;
-  }).join(""):'<tr><td colspan="11" class="empty">No cash is currently waiting inside Vault.</td></tr>';
+  $("pdUSD").textContent=money(
+    visible.reduce((sum,row)=>sum+signed(row,row.usd),0),
+    "USD"
+  );
+  $("pdKHR").textContent=money(
+    visible.reduce((sum,row)=>sum+signed(row,row.khr),0),
+    "KHR"
+  );
+  $("pdRowCount").textContent=`${visible.length} vault transaction${visible.length===1?"":"s"}`;
+
+  $("pendingDepositBody").innerHTML=visible.length
+    ? visible.map((r,i)=>{
+        const isOut=String(r.type||"").toUpperCase()==="OUT";
+        const source=String(r.source||"");
+        const sourceClass=
+          source==="Receivable Cash"
+            ?"receivable"
+            : source==="Daily Cash Wallet"
+              ?"wallet"
+              :"daily";
+
+        const ref=r.referenceId||r.closeId||r.entryId||"-";
+        const customer=r.customerName||r.customer||"-";
+        const usdText=(isOut?"− ":"")+money(r.usd,"USD");
+        const khrText=(isOut?"− ":"")+money(r.khr,"KHR");
+
+        return `<tr>
+          <td>${i+1}</td>
+          <td>${esc(r.date||"-")}</td>
+          <td><span class="vault-source ${sourceClass}">${esc(source||"-")}</span></td>
+          <td><strong>${esc(ref)}</strong></td>
+          <td>${esc(customer)}</td>
+          <td>${esc(r.salesperson||"-")}</td>
+          <td>${esc(r.locationCode||"-")}</td>
+          <td class="center">${num(r.invoiceCount).toLocaleString()}</td>
+          <td class="money vault-money-usd ${isOut?"vault-money-out":""}">${usdText}</td>
+          <td class="money vault-money-khr ${isOut?"vault-money-out":""}">${khrText}</td>
+          <td>
+            <span class="status ${isOut?"vault-out":"processing"}">
+              ${isOut?"OUT · Transferred":"IN · In Vault"}
+            </span>
+          </td>
+        </tr>`;
+      }).join("")
+    : '<tr><td colspan="11" class="empty">No Vault transactions in the current cycle.</td></tr>';
 }
 async function loadPendingDeposit(force=false){
   if(!sessionToken)throw new Error("Admin session required.");
@@ -2310,11 +2415,9 @@ function renderVaultReport(){
   const reportDate=$("vaultReportDate").value||d.reportDate||"";
   $("vrDailyDate").textContent="Report Date: "+reportDate;
   $("vrReceivableDate").textContent="Report Date: "+reportDate;
-  $("vrWithdrawalDate").textContent="Report Date: "+reportDate;
 
   const daily=Array.isArray(d.dailyRows)?d.dailyRows:[];
   const recv=Array.isArray(d.receivableRows)?d.receivableRows:[];
-  const withdrawals=Array.isArray(d.withdrawalRows)?d.withdrawalRows:[];
 
   $("vrDailyInvoiceCount").textContent=Number(d.totalClosedInvoices||0).toLocaleString();
   $("vrDailyUSD").textContent=vrUsd(d.dailyUSD);
@@ -2349,26 +2452,12 @@ function renderVaultReport(){
   $("vrReceivableFootKHR").textContent=vrKhr(d.receivableKHR);
   $("vrReceivablePageInfo").innerHTML=`<span>${recv.length} receipt(s)</span><span>Showing up to 20 rows.</span>`;
 
-  $("vrWithdrawalUSD").textContent=vrUsd(d.withdrawalUSD);
-  $("vrWithdrawalKHR").textContent=vrKhr(d.withdrawalKHR);
-  $("vrWithdrawalCount").textContent=Number(d.withdrawalCount||withdrawals.length).toLocaleString();
-  $("vrWithdrawalBody").innerHTML=withdrawals.length?withdrawals.slice(0,20).map((x,i)=>`
-    <tr>
-      <td>${i+1}</td>
-      <td>${vrEsc(x.date||"-")}</td>
-      <td>${vrEsc(x.transferId||x.vaultEntryId||"-")}</td>
-      <td>${vrEsc(x.createdBy||"-")}</td>
-      <td>${vrUsd(x.usd)}</td>
-      <td>${vrKhr(x.khr)}</td>
-      <td>${Number(x.exchangeRate||0)>0?Number(x.exchangeRate||0).toLocaleString():"-"}</td>
-      <td title="${vrEsc(x.note||"")}">${vrEsc(x.note||"-")}</td>
-    </tr>
-  `).join(""):'<tr><td colspan="8" style="text-align:center;padding:20px;color:#7a8798">No Cash Vault withdrawal to Daily Cash in this vault cycle.</td></tr>';
-  $("vrWithdrawalFootUSD").textContent=vrUsd(d.withdrawalUSD);
-  $("vrWithdrawalFootKHR").textContent=vrKhr(d.withdrawalKHR);
-  $("vrWithdrawalPageInfo").innerHTML=`<span>${withdrawals.length} transfer(s)</span><span>Cash moved from Vault to Daily Cash Wallet.</span>`;
-
+  $("vrTotalBeforeUSD").textContent=vrUsd(d.cashInUSD);
+  $("vrDailyCashOutUSD").textContent=vrUsd(d.withdrawalUSD);
   $("vrVaultUSD").textContent=vrUsd(d.vaultUSD);
+
+  $("vrTotalBeforeKHR").textContent=vrKhr(d.cashInKHR);
+  $("vrDailyCashOutKHR").textContent=vrKhr(d.withdrawalKHR);
   $("vrVaultKHR").textContent=vrKhr(d.vaultKHR);
   $("vrCurrentRate").textContent=Number(d.currentRate||0).toLocaleString();
   $("vrTotalVaultUSD").textContent=d.totalVaultUSD==null?"Enter Rate":vrUsd(d.totalVaultUSD);
@@ -2413,7 +2502,7 @@ async function shareVaultReportTelegram(){
     <div class="vr-head">
       <div>
         <h2>Vault Cash Detail Report</h2>
-        <p>Cash received into Vault, transfers to Daily Cash Wallet, and the current balance before bank deposit.</p>
+        <p>Vault cash received, Daily Cash deduction, and highlighted remaining balance before bank deposit.</p>
       </div>
       <div class="vr-actions">
         <button class="btn secondary" onclick="saveVaultReportPicture()">Save as Picture</button>
@@ -2536,64 +2625,56 @@ async function shareVaultReportTelegram(){
           <div class="vr-page-count" id="vrReceivablePageInfo"></div>
         </section>
 
-        <section class="vr-page withdrawal">
-          <div class="vr-banner withdrawal">
-            <span>DAILY CASH WALLET WITHDRAWAL — VAULT CASH DETAIL REPORT</span>
-            <span id="vrWithdrawalDate"></span>
-          </div>
 
-          <div class="vr-summary">
-            <div class="vr-card"><small>Total Withdrawn USD</small><strong id="vrWithdrawalUSD">$0.00</strong></div>
-            <div class="vr-card"><small>Total Withdrawn KHR</small><strong id="vrWithdrawalKHR">៛0</strong></div>
-            <div class="vr-card"><small>Total Transfers</small><strong id="vrWithdrawalCount">0</strong></div>
-            <div class="vr-card"><small>Report Type</small><strong>Vault → Daily Cash</strong></div>
-          </div>
-
-          <div class="vr-table-wrap">
-            <table class="vr-table withdrawal">
-              <colgroup>
-                <col style="width:5%">
-                <col style="width:11%">
-                <col style="width:13%">
-                <col style="width:14%">
-                <col style="width:11%">
-                <col style="width:11%">
-                <col style="width:10%">
-                <col style="width:25%">
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>No.</th>
-                  <th>Date</th>
-                  <th>Transfer ID</th>
-                  <th>Created By</th>
-                  <th>Withdraw USD</th>
-                  <th>Withdraw KHR</th>
-                  <th>Rate</th>
-                  <th>Note</th>
-                </tr>
-              </thead>
-              <tbody id="vrWithdrawalBody"></tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="4">Total Withdrawn to Daily Cash</td>
-                  <td id="vrWithdrawalFootUSD">$0.00</td>
-                  <td id="vrWithdrawalFootKHR">៛0</td>
-                  <td colspan="2"></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-          <div class="vr-page-count" id="vrWithdrawalPageInfo"></div>
-        </section>
       </div>
 
-      <div class="vr-final">
-        <div class="vr-card"><small>Vault Cash Total</small><strong>Cash In − Daily Cash Withdrawals</strong></div>
-        <div class="vr-card"><small>Total Vault USD</small><strong id="vrVaultUSD">$0.00</strong></div>
-        <div class="vr-card"><small>Total Vault KHR</small><strong id="vrVaultKHR">៛0</strong></div>
-        <div class="vr-card"><small>Current Day Exchange Rate</small><strong id="vrCurrentRate">0</strong></div>
-        <div class="vr-card total-value"><small>Total Vault Value in USD</small><strong id="vrTotalVaultUSD">$0.00</strong></div>
+      <div class="vr-reconcile">
+        <div class="vr-reconcile-title">VAULT BALANCE RECONCILIATION</div>
+
+        <div class="vr-calc-row">
+          <div class="vr-calc-card">
+            <small>Total Vault USD</small>
+            <strong id="vrTotalBeforeUSD">$0.00</strong>
+          </div>
+          <div class="vr-calc-op">−</div>
+          <div class="vr-calc-card outflow">
+            <small>Daily Cash USD</small>
+            <strong id="vrDailyCashOutUSD">$0.00</strong>
+          </div>
+          <div class="vr-calc-op">=</div>
+          <div class="vr-calc-card remaining">
+            <small>Remaining USD</small>
+            <strong id="vrVaultUSD">$0.00</strong>
+          </div>
+        </div>
+
+        <div class="vr-calc-row">
+          <div class="vr-calc-card">
+            <small>Total Vault KHR</small>
+            <strong id="vrTotalBeforeKHR">៛0</strong>
+          </div>
+          <div class="vr-calc-op">−</div>
+          <div class="vr-calc-card outflow">
+            <small>Daily Cash KHR</small>
+            <strong id="vrDailyCashOutKHR">៛0</strong>
+          </div>
+          <div class="vr-calc-op">=</div>
+          <div class="vr-calc-card remaining">
+            <small>Remaining KHR</small>
+            <strong id="vrVaultKHR">៛0</strong>
+          </div>
+        </div>
+
+        <div class="vr-reconcile-foot">
+          <div class="vr-card">
+            <small>Current Day Exchange Rate</small>
+            <strong id="vrCurrentRate">0</strong>
+          </div>
+          <div class="vr-card total-value">
+            <small>Remaining Vault Value in USD</small>
+            <strong id="vrTotalVaultUSD">$0.00</strong>
+          </div>
+        </div>
       </div>
     </div>
   </div>
