@@ -706,7 +706,11 @@ tbody tr:hover{background:#f9fbfe}
     <div class="cards">
       <div class="card"><small>Cash Vault USD</small><strong id="vaultUSD">$0.00</strong></div>
       <div class="card"><small>Cash Vault KHR</small><strong id="vaultKHR">៛0</strong></div>
-      <div class="card"><small>Vault Status</small><strong id="vaultStatus" style="font-size:16px">Loading…</strong></div>
+      <div class="card">
+        <small>Vault KHR Average Rate</small>
+        <strong id="vaultAvgRate" style="font-size:18px">0</strong>
+        <div id="vaultStatus" style="margin-top:4px;font-size:10px;color:#718399">Loading…</div>
+      </div>
       <div class="card"><small>Vault Deposit</small>
         <button class="btn success" onclick="openVaultDeposit()">Deposit Vault Cash</button>
         <button class="btn primary" onclick="openVaultReport()">📊 Vault Report</button>
@@ -1049,12 +1053,23 @@ tbody tr:hover{background:#f9fbfe}
       <div class="card"><small>Available USD</small><strong id="vaultModalUSD">$0.00</strong></div>
       <div class="card"><small>Available KHR</small><strong id="vaultModalKHR">៛0</strong></div>
     </div>
+    <div class="card" style="margin-bottom:10px">
+      <small>Current Vault KHR Average Rate</small>
+      <strong id="vaultModalAvgRate">0</strong>
+    </div>
 
     <div class="field"><label>USD Taken From Vault</label><input id="vaultOutUSD" type="number" min="0" step="0.01" value="0" oninput="calcVaultDeposit()"></div>
     <div class="field"><label>KHR Taken From Vault</label><input id="vaultOutKHR" type="number" min="0" step="100" value="0" oninput="calcVaultDeposit()"></div>
     <div class="field"><label>Deposit Exchange Rate</label><input id="vaultDepositRate" type="number" min="0" step="1" placeholder="Example: 4050" oninput="calcVaultDeposit()"></div>
-    <div class="field"><label>Expected Bank USD</label><input id="vaultExpectedUSD" disabled></div>
-    <div class="field"><label>Actual Bank Deposit USD</label><input id="vaultBankUSD" type="number" min="0" step="0.01" oninput="calcVaultDeposit()"></div>
+
+    <div class="dc-info-list" style="margin:10px 0">
+      <div class="dc-info-row"><span>KHR Carrying Value at Vault Average</span><strong id="vaultFxCarrying">$0.00</strong></div>
+      <div class="dc-info-row"><span>KHR Value at Deposit Rate</span><strong id="vaultFxDepositValue">$0.00</strong></div>
+      <div class="dc-info-row"><span>Exchange Result</span><strong id="vaultFxResult">$0.00</strong></div>
+    </div>
+
+    <div class="field"><label>Final Bank Deposit USD</label><input id="vaultBankUSD" disabled></div>
+    <input id="vaultExpectedUSD" type="hidden">
     <div class="field"><label>Company Bank Account</label><input id="vaultBankAccount" placeholder="Example: ABA USD"></div>
     <div class="field"><label>Bank Transaction ID</label><input id="vaultTransactionId" placeholder="Fresh unique Transaction ID"></div>
     <div class="field"><label>Note</label><textarea id="vaultDepositNote" rows="2"></textarea></div>
@@ -1089,7 +1104,7 @@ let syncBusy=false;
 let currentRequest=null;
 let pendingDailyCashRequests=[];
 let currentDailyCashCollectionRequest=null;
-let vaultBalance={usd:0,khr:0,dailyCashUSD:0,dailyCashKHR:0,receivableCashUSD:0,receivableCashKHR:0,entries:[]};
+let vaultBalance={usd:0,khr:0,khrAverageRate:0,khrCarryingValueUSD:0,dailyCashUSD:0,dailyCashKHR:0,receivableCashUSD:0,receivableCashKHR:0,entries:[]};
 let vaultPendingEntries=[];
 let vaultFastTimer=null;
 let receivablePendingDeposits=[];
@@ -1465,7 +1480,7 @@ function vaultCacheRestore(){
   try{
     const raw=localStorage.getItem(VAULT_CACHE_KEY);if(!raw)return false;
     const d=JSON.parse(raw);if(!d||!d.balance)return false;
-    vaultBalance={usd:num(d.balance.usd),khr:num(d.balance.khr),dailyCashUSD:num(d.balance.dailyCashUSD),dailyCashKHR:num(d.balance.dailyCashKHR),receivableCashUSD:num(d.balance.receivableCashUSD),receivableCashKHR:num(d.balance.receivableCashKHR),entries:Array.isArray(d.balance.entries)?d.balance.entries:[]};
+    vaultBalance={usd:num(d.balance.usd),khr:num(d.balance.khr),khrAverageRate:num(d.balance.khrAverageRate),khrCarryingValueUSD:num(d.balance.khrCarryingValueUSD),dailyCashUSD:num(d.balance.dailyCashUSD),dailyCashKHR:num(d.balance.dailyCashKHR),receivableCashUSD:num(d.balance.receivableCashUSD),receivableCashKHR:num(d.balance.receivableCashKHR),entries:Array.isArray(d.balance.entries)?d.balance.entries:[]};
     vaultPendingEntries=Array.isArray(d.entries)?d.entries:[];
     renderVaultCards();renderPendingDeposit();
     const age=Math.max(0,Math.round((Date.now()-num(d.savedAt))/1000));
@@ -1522,6 +1537,7 @@ function renderVaultCards(){
   if($("vaultDailyKHR"))$("vaultDailyKHR").textContent=money(vaultBalance.dailyCashKHR,"KHR");
   if($("vaultReceivableUSD"))$("vaultReceivableUSD").textContent=money(vaultBalance.receivableCashUSD,"USD");
   if($("vaultReceivableKHR"))$("vaultReceivableKHR").textContent=money(vaultBalance.receivableCashKHR,"KHR");
+  if($("vaultAvgRate"))$("vaultAvgRate").textContent=vaultBalance.khrAverageRate>0?vaultBalance.khrAverageRate.toLocaleString(undefined,{maximumFractionDigits:2}):"0";
   if($("vaultStatus"))$("vaultStatus").textContent=isEmpty?"Empty":"Cash On Hold";
 }
 function depositSearchText(r){
@@ -1979,7 +1995,7 @@ async function loadVaultBalance(){
   if(!sessionToken)return;
   try{
     const d=await apiGet({action:"vaultBalance",sessionToken,_ts:Date.now()});
-    vaultBalance={usd:num(d.usd),khr:num(d.khr),dailyCashUSD:num(d.dailyCashUSD),dailyCashKHR:num(d.dailyCashKHR),receivableCashUSD:num(d.receivableCashUSD),receivableCashKHR:num(d.receivableCashKHR),entries:Array.isArray(d.entries)?d.entries:[]};
+    vaultBalance={usd:num(d.usd),khr:num(d.khr),khrAverageRate:num(d.khrAverageRate),khrCarryingValueUSD:num(d.khrCarryingValueUSD),dailyCashUSD:num(d.dailyCashUSD),dailyCashKHR:num(d.dailyCashKHR),receivableCashUSD:num(d.receivableCashUSD),receivableCashKHR:num(d.receivableCashKHR),entries:Array.isArray(d.entries)?d.entries:[]};
     vaultPendingEntries=currentVaultPendingEntries(vaultBalance.entries);
     renderVaultCards();
     if(VIEW==="pending-deposit")renderPendingDeposit();
@@ -1998,12 +2014,17 @@ function openVaultDeposit(){
 
   $("vaultModalUSD").textContent=money(vaultBalance.usd,"USD");
   $("vaultModalKHR").textContent=money(vaultBalance.khr,"KHR");
+  $("vaultModalAvgRate").textContent=vaultBalance.khrAverageRate>0?vaultBalance.khrAverageRate.toLocaleString(undefined,{maximumFractionDigits:2}):"0";
 
   $("vaultOutUSD").value=vaultBalance.usd.toFixed(2);
   $("vaultOutKHR").value=Math.round(vaultBalance.khr);
   $("vaultDepositRate").value="";
   $("vaultExpectedUSD").value="";
   $("vaultBankUSD").value="";
+  $("vaultFxCarrying").textContent="$0.00";
+  $("vaultFxDepositValue").textContent="$0.00";
+  $("vaultFxResult").textContent="$0.00";
+  $("vaultFxResult").style.color="#173f77";
   $("vaultBankAccount").value="";
   $("vaultTransactionId").value="";
   $("vaultDepositNote").value="";
@@ -2021,9 +2042,33 @@ function calcVaultDeposit(){
   const usdOut=num($("vaultOutUSD").value);
   const khrOut=num($("vaultOutKHR").value);
   const rate=num($("vaultDepositRate").value);
+  const avg=num(vaultBalance.khrAverageRate);
 
-  const expected=usdOut+(khrOut>0&&rate>0?khrOut/rate:0);
+  const carrying=khrOut>0&&avg>0?khrOut/avg:0;
+  const depositValue=khrOut>0&&rate>0?khrOut/rate:0;
+  const fx=depositValue-carrying;
+  const expected=usdOut+depositValue;
+
   $("vaultExpectedUSD").value=expected>0?expected.toFixed(2):"";
+  $("vaultBankUSD").value=expected>0?expected.toFixed(2):"";
+
+  $("vaultFxCarrying").textContent=money(carrying,"USD");
+  $("vaultFxDepositValue").textContent=money(depositValue,"USD");
+
+  const fxEl=$("vaultFxResult");
+  if(khrOut<=0||rate<=0||avg<=0){
+    fxEl.textContent="$0.00";
+    fxEl.style.color="#173f77";
+  }else if(fx>0.000001){
+    fxEl.textContent="GAIN +"+money(fx,"USD");
+    fxEl.style.color="#087a55";
+  }else if(fx<-0.000001){
+    fxEl.textContent="LOSS "+money(Math.abs(fx),"USD");
+    fxEl.style.color="#b93730";
+  }else{
+    fxEl.textContent="NO GAIN / LOSS";
+    fxEl.style.color="#526579";
+  }
 
   return expected;
 }
@@ -2075,7 +2120,18 @@ async function completeVaultDeposit(){
     await loadVaultBalance();
     await loadDepositHistory(true);
 
-    alert(`Cash Vault deposit completed.\nDeposit ID: ${d.depositId}`);
+    const fxGain=num(d.exchangeGainUSD);
+    const fxLoss=num(d.exchangeLossUSD);
+    const fxText=fxGain>0
+      ?"\nExchange Gain: +"+money(fxGain,"USD")
+      :fxLoss>0
+        ?"\nExchange Loss: -"+money(fxLoss,"USD")
+        :"\nExchange Gain/Loss: $0.00";
+
+    alert(
+      `Cash Vault deposit completed.\nDeposit ID: ${d.depositId}`+
+      fxText
+    );
   }catch(e){
     showVaultError(e.message||"Could not complete Cash Vault deposit.");
   }finally{
