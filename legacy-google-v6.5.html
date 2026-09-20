@@ -372,6 +372,10 @@ tbody tr:hover{background:#f9fbfe}
   align-items:center;
 }
 .vr-banner.receivable{background:#56319a}
+.vr-banner.withdrawal{background:#b46612}
+.vr-page.withdrawal{grid-column:1/-1}
+.vr-table.withdrawal th{background:#b46612}
+.vr-table.withdrawal tfoot td{background:#fff3e6}
 .vr-summary{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
@@ -484,6 +488,7 @@ tbody tr:hover{background:#f9fbfe}
   .vr-body{overflow:visible!important;background:#fff!important;padding:0!important}
   .vr-sheets{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
   .vr-page{break-inside:avoid;margin:0!important}
+  .vr-page.withdrawal{grid-column:1/-1!important}
   .vr-final{break-inside:avoid}
 }
 /* ===== V7.0 PENDING DEPOSIT — FULL VAULT DATA ===== */
@@ -2305,9 +2310,11 @@ function renderVaultReport(){
   const reportDate=$("vaultReportDate").value||d.reportDate||"";
   $("vrDailyDate").textContent="Report Date: "+reportDate;
   $("vrReceivableDate").textContent="Report Date: "+reportDate;
+  $("vrWithdrawalDate").textContent="Report Date: "+reportDate;
 
   const daily=Array.isArray(d.dailyRows)?d.dailyRows:[];
   const recv=Array.isArray(d.receivableRows)?d.receivableRows:[];
+  const withdrawals=Array.isArray(d.withdrawalRows)?d.withdrawalRows:[];
 
   $("vrDailyInvoiceCount").textContent=Number(d.totalClosedInvoices||0).toLocaleString();
   $("vrDailyUSD").textContent=vrUsd(d.dailyUSD);
@@ -2341,6 +2348,25 @@ function renderVaultReport(){
   $("vrReceivableFootUSD").textContent=vrUsd(d.receivableUSD);
   $("vrReceivableFootKHR").textContent=vrKhr(d.receivableKHR);
   $("vrReceivablePageInfo").innerHTML=`<span>${recv.length} receipt(s)</span><span>Showing up to 20 rows.</span>`;
+
+  $("vrWithdrawalUSD").textContent=vrUsd(d.withdrawalUSD);
+  $("vrWithdrawalKHR").textContent=vrKhr(d.withdrawalKHR);
+  $("vrWithdrawalCount").textContent=Number(d.withdrawalCount||withdrawals.length).toLocaleString();
+  $("vrWithdrawalBody").innerHTML=withdrawals.length?withdrawals.slice(0,20).map((x,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${vrEsc(x.date||"-")}</td>
+      <td>${vrEsc(x.transferId||x.vaultEntryId||"-")}</td>
+      <td>${vrEsc(x.createdBy||"-")}</td>
+      <td>${vrUsd(x.usd)}</td>
+      <td>${vrKhr(x.khr)}</td>
+      <td>${Number(x.exchangeRate||0)>0?Number(x.exchangeRate||0).toLocaleString():"-"}</td>
+      <td title="${vrEsc(x.note||"")}">${vrEsc(x.note||"-")}</td>
+    </tr>
+  `).join(""):'<tr><td colspan="8" style="text-align:center;padding:20px;color:#7a8798">No Cash Vault withdrawal to Daily Cash in this vault cycle.</td></tr>';
+  $("vrWithdrawalFootUSD").textContent=vrUsd(d.withdrawalUSD);
+  $("vrWithdrawalFootKHR").textContent=vrKhr(d.withdrawalKHR);
+  $("vrWithdrawalPageInfo").innerHTML=`<span>${withdrawals.length} transfer(s)</span><span>Cash moved from Vault to Daily Cash Wallet.</span>`;
 
   $("vrVaultUSD").textContent=vrUsd(d.vaultUSD);
   $("vrVaultKHR").textContent=vrKhr(d.vaultKHR);
@@ -2387,7 +2413,7 @@ async function shareVaultReportTelegram(){
     <div class="vr-head">
       <div>
         <h2>Vault Cash Detail Report</h2>
-        <p>Daily Cash Sale + Receivable Cash currently held before full bank deposit.</p>
+        <p>Cash received into Vault, transfers to Daily Cash Wallet, and the current balance before bank deposit.</p>
       </div>
       <div class="vr-actions">
         <button class="btn secondary" onclick="saveVaultReportPicture()">Save as Picture</button>
@@ -2509,10 +2535,61 @@ async function shareVaultReportTelegram(){
           </div>
           <div class="vr-page-count" id="vrReceivablePageInfo"></div>
         </section>
+
+        <section class="vr-page withdrawal">
+          <div class="vr-banner withdrawal">
+            <span>DAILY CASH WALLET WITHDRAWAL — VAULT CASH DETAIL REPORT</span>
+            <span id="vrWithdrawalDate"></span>
+          </div>
+
+          <div class="vr-summary">
+            <div class="vr-card"><small>Total Withdrawn USD</small><strong id="vrWithdrawalUSD">$0.00</strong></div>
+            <div class="vr-card"><small>Total Withdrawn KHR</small><strong id="vrWithdrawalKHR">៛0</strong></div>
+            <div class="vr-card"><small>Total Transfers</small><strong id="vrWithdrawalCount">0</strong></div>
+            <div class="vr-card"><small>Report Type</small><strong>Vault → Daily Cash</strong></div>
+          </div>
+
+          <div class="vr-table-wrap">
+            <table class="vr-table withdrawal">
+              <colgroup>
+                <col style="width:5%">
+                <col style="width:11%">
+                <col style="width:13%">
+                <col style="width:14%">
+                <col style="width:11%">
+                <col style="width:11%">
+                <col style="width:10%">
+                <col style="width:25%">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Date</th>
+                  <th>Transfer ID</th>
+                  <th>Created By</th>
+                  <th>Withdraw USD</th>
+                  <th>Withdraw KHR</th>
+                  <th>Rate</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody id="vrWithdrawalBody"></tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="4">Total Withdrawn to Daily Cash</td>
+                  <td id="vrWithdrawalFootUSD">$0.00</td>
+                  <td id="vrWithdrawalFootKHR">៛0</td>
+                  <td colspan="2"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="vr-page-count" id="vrWithdrawalPageInfo"></div>
+        </section>
       </div>
 
       <div class="vr-final">
-        <div class="vr-card"><small>Vault Cash Total</small><strong>Daily Cash + Receivable</strong></div>
+        <div class="vr-card"><small>Vault Cash Total</small><strong>Cash In − Daily Cash Withdrawals</strong></div>
         <div class="vr-card"><small>Total Vault USD</small><strong id="vrVaultUSD">$0.00</strong></div>
         <div class="vr-card"><small>Total Vault KHR</small><strong id="vrVaultKHR">៛0</strong></div>
         <div class="vr-card"><small>Current Day Exchange Rate</small><strong id="vrCurrentRate">0</strong></div>
