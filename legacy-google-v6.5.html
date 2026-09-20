@@ -1415,9 +1415,14 @@ function vaultCacheRestore(){
 function currentVaultPendingEntries(entries){
   const list=Array.isArray(entries)?entries:[],out=[];
   for(const x of list){
-    if(String(x.type||"").toUpperCase()==="OUT")break;
-    if(String(x.type||"").toUpperCase()!=="IN")continue;
+    const type=String(x.type||"").toUpperCase();
     const source=String(x.source||"").trim();
+
+    /* Only a real company-bank Vault Deposit closes the pending-deposit
+       cycle. A transfer OUT to the new Daily Cash Wallet must not reset it. */
+    if(type==="OUT"&&source==="Vault Deposit")break;
+
+    if(type!=="IN")continue;
     if(source!=="Daily Cash"&&source!=="Receivable Cash")continue;
     out.push(x);
   }
