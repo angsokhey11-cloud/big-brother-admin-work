@@ -14,10 +14,10 @@
     const requestedView=params.get('view')||'';
 
     if(requestedView==='staff-request'){
-      const staffResponse=await fetch('staff-request.html?v=20260918-1',{cache:'no-store'});
+      const staffResponse=await fetch('staff-request.html?v=20260924-pcrefresh1',{cache:'no-store'});
       if(!staffResponse.ok)throw new Error('Could not load Staff Request workspace.');
       let staffHtml=await staffResponse.text();
-      const batchEarningPatch='<scr'+'ipt src="batch-earning-review-v1.js?v=20260918-1"></scr'+'ipt>';
+      const batchEarningPatch='<scr'+'ipt src="batch-earning-review-v1.js?v=20260924-pcrefresh1"></scr'+'ipt>';
       const bodyClose=staffHtml.toLowerCase().lastIndexOf('</body>');
       if(bodyClose<0)throw new Error('Staff Request source is missing </body>.');
       staffHtml=staffHtml.slice(0,bodyClose)+batchEarningPatch+'\n'+staffHtml.slice(bodyClose);
