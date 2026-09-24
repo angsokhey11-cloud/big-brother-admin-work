@@ -144,6 +144,49 @@ async function approveReview(){
   }catch(e){$('bbBerStatus').textContent=e?.message||String(e);$('bbBerStatus').className='status error'}finally{btn.disabled=false}
 }
 
-function boot(){injectUI();load();const refresh=$('refreshBtn');if(refresh&&!refresh.dataset.bbBer){refresh.dataset.bbBer='1';refresh.addEventListener('click',()=>setTimeout(load,350))}}
+function boot(){
+  injectUI();
+  load();
+
+  const refresh=$('refreshBtn');
+  if(refresh&&!refresh.dataset.bbBer){
+    refresh.dataset.bbBer='1';
+    refresh.addEventListener('click',()=>setTimeout(load,350));
+  }
+
+  const desktop=
+    new URLSearchParams(location.search).get('desktop')==='1';
+
+  if(desktop&&!window.__bbBatchEarningDesktopRefresh){
+    window.__bbBatchEarningDesktopRefresh=true;
+    let busy=false;
+
+    async function refreshDesktop(){
+      if(busy||document.visibilityState==='hidden')return;
+      busy=true;
+      try{
+        await load();
+      }finally{
+        busy=false;
+      }
+    }
+
+    window.addEventListener(
+      'focus',
+      ()=>setTimeout(refreshDesktop,140)
+    );
+
+    document.addEventListener(
+      'visibilitychange',
+      ()=>{
+        if(document.visibilityState==='visible'){
+          setTimeout(refreshDesktop,140);
+        }
+      }
+    );
+
+    setInterval(refreshDesktop,10000);
+  }
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,30));else setTimeout(boot,30);
 })();
