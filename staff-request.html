@@ -101,9 +101,28 @@ function render(){
   document.querySelectorAll('.review').forEach(b=>b.onclick=()=>openReview(b.dataset.kind,Number(b.dataset.id)));
 }
 
-async function load(){
-  try{$('loading').hidden=false;$('main').hidden=true;$('errorBox').hidden=true;data=await rpc('bb_staff_relation_admin_requests',{p_limit:200});if(!data?.success)throw new Error('Could not load Staff Requests.');render();$('loading').hidden=true;$('main').hidden=false}
-  catch(e){$('loading').hidden=true;$('main').hidden=true;$('errorBox').textContent=e.message||e;$('errorBox').hidden=false}
+async function load(showLoader=true){
+  try{
+    if(showLoader){
+      $('loading').hidden=false;
+      $('main').hidden=true;
+    }
+    $('errorBox').hidden=true;
+    data=await rpc('bb_staff_relation_admin_requests',{p_limit:200});
+    if(!data?.success)throw new Error('Could not load Staff Requests.');
+    render();
+    $('loading').hidden=true;
+    $('main').hidden=false;
+  }catch(e){
+    if(showLoader){
+      $('loading').hidden=true;
+      $('main').hidden=true;
+      $('errorBox').textContent=e.message||e;
+      $('errorBox').hidden=false;
+    }else{
+      console.warn('Staff Request silent refresh:',e);
+    }
+  }
 }
 
 function paymentItemCard(x,currency){
@@ -165,9 +184,33 @@ async function decide(action){
   }catch(e){setStatus(e.message||e,true)}
   finally{busy(approve,false);busy(reject,false)}
 }
-$('refreshBtn').onclick=load;$('closeBtn').onclick=close;$('modal').onclick=e=>{if(e.target===$('modal'))close()};$('approveBtn').onclick=()=>decide('APPROVE');$('rejectBtn').onclick=()=>decide('REJECT');
+$('refreshBtn').onclick=()=>load(true);$('closeBtn').onclick=close;$('modal').onclick=e=>{if(e.target===$('modal'))close()};$('approveBtn').onclick=()=>decide('APPROVE');$('rejectBtn').onclick=()=>decide('REJECT');
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('tab-'+b.dataset.tab).classList.add('active')});
-load();
+
+const BB_STAFF_REQUEST_DESKTOP =
+  new URLSearchParams(location.search).get('desktop')==='1';
+
+if(BB_STAFF_REQUEST_DESKTOP){
+  let bbDesktopRefreshBusy=false;
+
+  async function bbDesktopStaffRequestRefresh(){
+    if(bbDesktopRefreshBusy||document.visibilityState==='hidden')return;
+    bbDesktopRefreshBusy=true;
+    try{
+      await load(false);
+    }finally{
+      bbDesktopRefreshBusy=false;
+    }
+  }
+
+  window.addEventListener('focus',()=>setTimeout(bbDesktopStaffRequestRefresh,80));
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')setTimeout(bbDesktopStaffRequestRefresh,80);
+  });
+  setInterval(bbDesktopStaffRequestRefresh,10000);
+}
+
+load(true);
 })();
 </script>
 </body>
