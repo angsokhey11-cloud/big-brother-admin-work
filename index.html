@@ -16,7 +16,11 @@
     if(requestedView==='staff-request'){
       const staffResponse=await fetch('staff-request.html?v=20260926-native1',{cache:'no-store'});
       if(!staffResponse.ok)throw new Error('Could not load Staff Request workspace.');
-      const staffHtml=await staffResponse.text();
+      let staffHtml=await staffResponse.text();
+      const cashPatch='<scr'+'ipt src="staff-request-cash-settlement-v1.js?v=20260926-v1"></scr'+'ipt>';
+      const bodyClose=staffHtml.toLowerCase().lastIndexOf('</body>');
+      if(bodyClose<0)throw new Error('Staff Request source is missing </body>.');
+      staffHtml=staffHtml.slice(0,bodyClose)+cashPatch+'\n'+staffHtml.slice(bodyClose);
       document.open();document.write(staffHtml);document.close();
       return;
     }
