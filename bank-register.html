@@ -8,11 +8,13 @@
 <div><label for="transaction">Actual bank transaction ID</label><input id="transaction" maxlength="160" placeholder="Enter ID from bank statement" autocapitalize="characters" autocomplete="off"></div>
 <div><label for="amount">Verified amount</label><input id="amount" inputmode="decimal" type="number" min=".0001" step="any" placeholder="0.00"></div>
 <div><label for="currency">Currency</label><select id="currency"><option value="USD">USD</option><option value="KHR">KHR</option></select></div>
-<div><label for="bank">Receiving bank name (optional)</label><input id="bank" placeholder="Exact bank name if applicable"></div></div>
-<div class="actions"><button id="verify">Register verified payment</button><button class="secondary" id="refresh">Refresh history</button></div>
+<div><label for="bank">Receiving bank name (optional)</label><input id="bank" placeholder="Exact bank name if applicable"></div>
+<div><label for="invoiceCurrency">Invoice currency</label><select id="invoiceCurrency"><option value="USD">USD</option><option value="KHR">KHR</option></select></div>
+<div id="rateWrap" style="display:none"><label for="rate">Admin-approved exchange rate (KHR per USD)</label><input id="rate" type="number" inputmode="decimal" min="1" step="any" placeholder="e.g. 4050"></div>
+<div style="grid-column:1/-1;background:#f2f7fd;border-radius:10px;padding:12px"><span style="font-size:12px;color:#60748b">Payment equivalent</span><div id="equivalent" style="font-size:22px;font-weight:900;margin-top:4px">—</div></div></div>
+<div class="actions"><button id="verify">Register verified payment</button><a class="secondary" style="display:inline-flex;align-items:center;padding:11px 17px;background:#e7eff8;border-radius:8px;text-decoration:none;font-weight:bold" href="bank-history.html">View Transaction History →</a></div>
 <p id="message" class="message" role="status"></p></section>
-<section class="card"><h2>Verified transactions</h2><p>AVAILABLE = not yet used; USED = already linked to a staff invoice; CANCELLED = registration voided without releasing the ID.</p>
-<div class="table-wrap"><table><thead><tr><th>Transaction ID</th><th>Customer</th><th>Amount</th><th>Bank</th><th>Status</th><th>Registered</th><th></th></tr></thead><tbody id="rows"><tr><td colspan="7">Loading…</td></tr></tbody></table></div></section></main>
+</main>
 <script src="supabase-admin-work-adapter.js?v=20261003-bank-register1"></script>
 <script>
 (function(){'use strict';
@@ -29,34 +31,34 @@ async function init(){
   customers=await adapter.rpc('bb_bank_register_customers');
   if(!Array.isArray(customers))throw Error('Cannot load authorized customer list');
   $('customerOptions').innerHTML=customers.map(c=>'<option value="'+esc(customerLabel(c))+'"></option>').join('');
-  await refresh();
- }catch(e){msg(e.message||String(e),true);$('rows').innerHTML='<tr><td colspan="7">Sign in as an Admin to use this page.</td></tr>'}
+  updateEquivalent();
+ }catch(e){msg(e.message||String(e),true)}
 }
-async function refresh(){
- const rows=await adapter.rpc('bb_bank_invoice_register_list');
- if(!Array.isArray(rows))throw Error('Could not load verified history');
- $('rows').innerHTML=rows.map(t=>'<tr><td><strong>'+esc(t.transaction_id)+'</strong></td><td>'+esc(t.customer_name||t.customer_id)+'</td><td>'+esc(t.currency)+' '+Number(t.amount).toLocaleString(undefined,{maximumFractionDigits:4})+'</td><td>'+esc(t.bank_name||'—')+'</td><td class="status '+esc(t.status)+'">'+esc(t.status)+'</td><td>'+esc(new Date(t.created_at).toLocaleString())+'</td><td>'+(t.status==='AVAILABLE'?'<button type="button" data-cancel="'+esc(t.transaction_id)+'">Cancel</button>':'')+'</td></tr>').join('')||'<tr><td colspan="7">No registered transactions yet.</td></tr>';
- $('rows').querySelectorAll('[data-cancel]').forEach(b=>b.onclick=async()=>{
-  if(!confirm('Cancel unused verification '+b.dataset.cancel+'? This ID will remain reserved.'))return;
-  try{b.disabled=true;await adapter.rpc('bb_bank_cancel_invoice_tx',{p_transaction_id:b.dataset.cancel});msg('Unused verification cancelled.');await refresh()}catch(e){msg(e.message||String(e),true);b.disabled=false}
- });
+function updateEquivalent(){
+ const bankCur=$('currency').value,invCur=$('invoiceCurrency').value;
+ $('rateWrap').style.display=bankCur===invCur?'none':'';
+ const n=Number($('amount').value),rate=Number($('rate').value);
+ const eq=bankCur===invCur?n:bankCur==='KHR'?n/rate:n*rate;
+ $('equivalent').textContent=n>0 && Number.isFinite(eq) && eq>0 ? (invCur==='USD'?'$':'៛')+eq.toLocaleString(undefined,{maximumFractionDigits:invCur==='USD'?2:0}) : '—';
 }
+['amount','currency','invoiceCurrency','rate'].forEach(id=>$(id).addEventListener('input',updateEquivalent));
 $('verify').onclick=async()=>{
  if(busy)return;
  const c=customers.find(x=>customerLabel(x)===$('customer').value.trim());
- const id=$('transaction').value.trim().toUpperCase(),amount=Number($('amount').value),currency=$('currency').value;
+ const id=$('transaction').value.trim().toUpperCase(),amount=Number($('amount').value),currency=$('currency').value,invoiceCurrency=$('invoiceCurrency').value,rate=currency===invoiceCurrency?1:Number($('rate').value);
  if(!c)return msg('Choose an exact customer from the list.',true);
  if(!id||!Number.isFinite(amount)||amount<=0)return msg('Enter a valid transaction ID and positive bank amount.',true);
- if(!confirm('I confirmed this transfer in my bank account:\n'+id+'\n'+customerLabel(c)+'\n'+currency+' '+amount+'\n\nRegister for staff Invoice Generator?'))return;
+ if(!Number.isFinite(rate)||rate<=0||(currency!==invoiceCurrency&&rate<=1))return msg('Enter the Admin-approved KHR per USD exchange rate.',true);
+ if(!confirm('I confirmed this transfer in my bank account:\n'+id+'\n'+customerLabel(c)+'\n'+currency+' '+amount+'\nInvoice currency: '+invoiceCurrency+'\nExchange rate: '+rate+'\n\nRegister for staff Invoice Generator?'))return;
  busy=true;$('verify').disabled=true;
  try{
-  await adapter.rpc('bb_bank_register_invoice_tx',{p_customer_id:c.customer_id,p_transaction_id:id,p_amount:amount,p_currency:currency,p_bank_name:$('bank').value.trim()||null});
+  await adapter.rpc('bb_bank_register_invoice_tx_v2',{p_customer_id:c.customer_id,p_transaction_id:id,p_amount:amount,p_currency:currency,p_invoice_currency:invoiceCurrency,p_exchange_rate:rate,p_bank_name:$('bank').value.trim()||null});
   msg('Verified payment registered for '+c.customer_name+'.');
-  $('transaction').value='';$('amount').value='';await refresh();
+  $('transaction').value='';$('amount').value='';updateEquivalent();
  }catch(e){msg(e.message||String(e),true)}
  finally{busy=false;$('verify').disabled=false}
 };
-$('refresh').onclick=async()=>{try{await refresh();msg('History refreshed.')}catch(e){msg(e.message||String(e),true)}};
+
 init();
 })();
 </script></body></html>
