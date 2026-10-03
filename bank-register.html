@@ -1,0 +1,62 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BIG BROTHER — Verified Bank Register</title>
+<style>
+:root{font-family:Arial,"Noto Sans Khmer",sans-serif;color:#193a63;background:#eef4fa}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1060px;margin:auto;padding:20px}.card{background:white;border:1px solid #d5e1ee;border-radius:14px;padding:20px;margin:16px 0;box-shadow:0 3px 14px #1c4d780d}h1{font-size:25px;margin:0 0 7px}h2{font-size:18px;margin:0 0 15px}p{color:#60748b;font-size:13px;line-height:1.5}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}label{font-size:13px;font-weight:750;display:block;margin-bottom:5px}input,select{width:100%;min-height:43px;padding:10px;border:1px solid #afc4dd;border-radius:8px;background:#fff;font:inherit;font-size:15px}button{border:0;border-radius:8px;padding:12px 17px;background:#174979;color:white;font-weight:bold;cursor:pointer}button.secondary{background:#e7eff8;color:#224c7b}button:disabled{opacity:.55;cursor:wait}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:17px}.message{min-height:17px;color:#1f6a3a}.message.error{color:#bd3131}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}td,th{text-align:left;padding:12px 9px;border-bottom:1px solid #e3ebf3;white-space:nowrap}.status{font-weight:bold}.status.AVAILABLE{color:#218149}.status.USED{color:#38699d}.status.CANCELLED{color:#858990}td button{padding:7px 10px;background:#dbe8f5;color:#184877}a{color:#215c98}@media(max-width:650px){.grid{grid-template-columns:1fr}.wrap{padding:10px}.card{padding:13px}h1{font-size:21px}}
+</style></head><body><main class="wrap">
+<a href="./">← Admin Work</a><h1>🔐 Verified Bank Register</h1><p>Register a bank transfer only after confirming it in your real bank account. Only registered, matching transactions can be used by staff in Invoice Generator. Admin receivable and deposit approvals remain unchanged.</p>
+<section class="card"><h2>Verify a transaction for Invoice Generator</h2>
+<div class="grid"><div><label for="customer">Customer (required)</label><input id="customer" list="customerOptions" placeholder="Search customer name, ID or location" autocomplete="off"><datalist id="customerOptions"></datalist></div>
+<div><label for="transaction">Actual bank transaction ID</label><input id="transaction" maxlength="160" placeholder="Enter ID from bank statement" autocapitalize="characters" autocomplete="off"></div>
+<div><label for="amount">Verified amount</label><input id="amount" inputmode="decimal" type="number" min=".0001" step="any" placeholder="0.00"></div>
+<div><label for="currency">Currency</label><select id="currency"><option value="USD">USD</option><option value="KHR">KHR</option></select></div>
+<div><label for="bank">Receiving bank name (optional)</label><input id="bank" placeholder="Exact bank name if applicable"></div></div>
+<div class="actions"><button id="verify">Register verified payment</button><button class="secondary" id="refresh">Refresh history</button></div>
+<p id="message" class="message" role="status"></p></section>
+<section class="card"><h2>Verified transactions</h2><p>AVAILABLE = not yet used; USED = already linked to a staff invoice; CANCELLED = registration voided without releasing the ID.</p>
+<div class="table-wrap"><table><thead><tr><th>Transaction ID</th><th>Customer</th><th>Amount</th><th>Bank</th><th>Status</th><th>Registered</th><th></th></tr></thead><tbody id="rows"><tr><td colspan="7">Loading…</td></tr></tbody></table></div></section></main>
+<script src="supabase-admin-work-adapter.js?v=20261003-bank-register1"></script>
+<script>
+(function(){'use strict';
+const $=id=>document.getElementById(id);
+const adapter=window.BBAdminWorkAdapter;
+let customers=[];
+let busy=false;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function msg(s,error=false){$('message').textContent=s;$('message').className='message'+(error?' error':'')}
+function customerLabel(c){return c.customer_name+' ['+c.customer_id+']'+(c.location_code?' · '+c.location_code:'')}
+async function init(){
+ try{
+  await adapter.ensureSession();
+  customers=await adapter.rpc('bb_bank_register_customers');
+  if(!Array.isArray(customers))throw Error('Cannot load authorized customer list');
+  $('customerOptions').innerHTML=customers.map(c=>'<option value="'+esc(customerLabel(c))+'"></option>').join('');
+  await refresh();
+ }catch(e){msg(e.message||String(e),true);$('rows').innerHTML='<tr><td colspan="7">Sign in as an Admin to use this page.</td></tr>'}
+}
+async function refresh(){
+ const rows=await adapter.rpc('bb_bank_invoice_register_list');
+ if(!Array.isArray(rows))throw Error('Could not load verified history');
+ $('rows').innerHTML=rows.map(t=>'<tr><td><strong>'+esc(t.transaction_id)+'</strong></td><td>'+esc(t.customer_name||t.customer_id)+'</td><td>'+esc(t.currency)+' '+Number(t.amount).toLocaleString(undefined,{maximumFractionDigits:4})+'</td><td>'+esc(t.bank_name||'—')+'</td><td class="status '+esc(t.status)+'">'+esc(t.status)+'</td><td>'+esc(new Date(t.created_at).toLocaleString())+'</td><td>'+(t.status==='AVAILABLE'?'<button type="button" data-cancel="'+esc(t.transaction_id)+'">Cancel</button>':'')+'</td></tr>').join('')||'<tr><td colspan="7">No registered transactions yet.</td></tr>';
+ $('rows').querySelectorAll('[data-cancel]').forEach(b=>b.onclick=async()=>{
+  if(!confirm('Cancel unused verification '+b.dataset.cancel+'? This ID will remain reserved.'))return;
+  try{b.disabled=true;await adapter.rpc('bb_bank_cancel_invoice_tx',{p_transaction_id:b.dataset.cancel});msg('Unused verification cancelled.');await refresh()}catch(e){msg(e.message||String(e),true);b.disabled=false}
+ });
+}
+$('verify').onclick=async()=>{
+ if(busy)return;
+ const c=customers.find(x=>customerLabel(x)===$('customer').value.trim());
+ const id=$('transaction').value.trim().toUpperCase(),amount=Number($('amount').value),currency=$('currency').value;
+ if(!c)return msg('Choose an exact customer from the list.',true);
+ if(!id||!Number.isFinite(amount)||amount<=0)return msg('Enter a valid transaction ID and positive bank amount.',true);
+ if(!confirm('I confirmed this transfer in my bank account:\n'+id+'\n'+customerLabel(c)+'\n'+currency+' '+amount+'\n\nRegister for staff Invoice Generator?'))return;
+ busy=true;$('verify').disabled=true;
+ try{
+  await adapter.rpc('bb_bank_register_invoice_tx',{p_customer_id:c.customer_id,p_transaction_id:id,p_amount:amount,p_currency:currency,p_bank_name:$('bank').value.trim()||null});
+  msg('Verified payment registered for '+c.customer_name+'.');
+  $('transaction').value='';$('amount').value='';await refresh();
+ }catch(e){msg(e.message||String(e),true)}
+ finally{busy=false;$('verify').disabled=false}
+};
+$('refresh').onclick=async()=>{try{await refresh();msg('History refreshed.')}catch(e){msg(e.message||String(e),true)}};
+init();
+})();
+</script></body></html>
