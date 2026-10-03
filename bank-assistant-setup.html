@@ -21,6 +21,7 @@ $('check').onclick=async()=>{
   const session=await api.ensureSession();
   const response=await fetch('https://sjfhlaclgmkwwofzstok.supabase.co/functions/v1/bb-bank-assistant-setup',{method:'POST',headers:{'Authorization':'Bearer '+session.access_token,'apikey':api.publicKey(),'Content-Type':'application/json'},body:'{}',cache:'no-store'});
   const result=await response.json();
+  if(response.status===401){$('loginBox').classList.remove('hidden');throw Error('Please sign in again using the form above. Your previous session was rejected.');}
   if(!response.ok||!result.ok)throw Error(result.error||'Telegram connection check failed');
   $('status').textContent=result.webhook_active?'Existing bot webhook detected. We must preserve that listener before enabling Bank Assistant.':'No existing webhook detected. Available recent group messages are listed below.';
   if(result.instructions)$('status').textContent+='\n'+result.instructions;
