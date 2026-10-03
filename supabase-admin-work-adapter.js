@@ -49,7 +49,7 @@
     session=readSession();
     if(!session?.access_token)throw new Error('Please sign in to BIG BROTHER first.');
     const now=Math.floor(Date.now()/1000);
-    if(session.expires_at&&Number(session.expires_at)<now+30)await refreshSession();
+    if(session.expires_at&&Number(session.expires_at)<now+30)session=await refreshSession();
     return session;
   }
 
@@ -117,6 +117,19 @@
     }
   }
 
+  async function signIn(email,password){
+    const response=await fetch(URL+'/auth/v1/token?grant_type=password',{
+      method:'POST',
+      headers:{apikey:KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({email,password})
+    });
+    const next=await parse(response);
+    if(!next?.access_token)throw new Error('Sign in failed.');
+    saveSession(next);
+    return next;
+  }
+  function publicKey(){return KEY;}
+
   async function accessProfile(){return rpc('bb_admin_work_access_profile');}
 
   async function signOut(){
@@ -132,5 +145,5 @@
     saveSession(null);
   }
 
-  window.BBAdminWorkAdapter={rpc,apiPost,apiGet,ensureSession,accessProfile,signOut};
+  window.BBAdminWorkAdapter={rpc,apiPost,apiGet,ensureSession,accessProfile,signOut,signIn,publicKey};
 })();
