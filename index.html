@@ -13,6 +13,11 @@
     const params=new URLSearchParams(location.search);
     const requestedView=params.get('view')||'';
 
+    if(requestedView==='customer-bank-directory'){
+      location.replace('customer-bank-directory.html');
+      return;
+    }
+
     if(requestedView==='bank-register'){
       location.replace('bank-register.html');
       return;
@@ -47,7 +52,7 @@
     html=html.replace(marker,replacement);
     html=html.replace('<title>BIG BROTHER — Admin Work V6.1 Vault Includes Receivable Cash</title>','<title>BIG BROTHER — Admin Work Supabase</title>');
     // Keep the verified bank register accessible from the existing Admin Work header.
-    html=html.replace('<span class="pill" id="accessPill">Admin Work</span>',
+    html=html.replace('<a href="customer-bank-directory.html" style="display:inline-block;margin-right:10px;padding:9px 12px;background:#dbeafc;border-radius:9px;color:#164676;font-weight:800;font-size:12px;text-decoration:none">🏦 Customer Bank Directory</a><span class="pill" id="accessPill">Admin Work</span>',
       '<a href="bank-register.html" style="display:inline-block;margin-right:10px;padding:9px 12px;background:#dbeafc;border-radius:9px;color:#164676;font-weight:800;font-size:12px;text-decoration:none">🔐 Bank Register</a><span class="pill" id="accessPill">Admin Work</span>');
 
     document.open();document.write(html);document.close();
