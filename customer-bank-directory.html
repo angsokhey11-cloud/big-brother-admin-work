@@ -14,13 +14,22 @@
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=c=>c.customer_name+' ['+c.customer_id+']'+(c.location_code?' · '+c.location_code:'');
 function message(s,bad=false){$('message').textContent=s;$('message').className=bad?'message error':'message'}
-function reset(){editing=null;$('editorTitle').textContent='Add customer bank identity';for(const id of ['customer','bank','holder','account','aliases'])$(id).value='';message('')}
+function reset(){editing=null;$('editorTitle').textContent='Add customer bank identity';for(const id of ['customer','bank','holder','account','aliases'])$(id).value='';renderCustomerOptions();message('')}
 function render(){const q=$('search').value.toLowerCase().trim();$('rows').innerHTML=identities.filter(r=>!q||[r.customer_name,r.customer_id,r.bank_name,r.account_holder_name,r.account_number,...(r.alternative_names||[])].some(s=>String(s??'').toLowerCase().includes(q))).map(r=>'<tr><td>'+esc(r.customer_name)+'<br><small>'+esc(r.customer_id)+'</small></td><td>'+esc(r.bank_name)+'</td><td>'+esc(r.account_holder_name)+'</td><td>'+esc(r.account_number||'—')+'</td><td>'+esc((r.alternative_names||[]).join(', ')||'—')+'</td><td>'+esc(r.active?'Active':'Inactive')+'<br><button data-edit="'+r.identity_id+'">Edit</button><button class="secondary" data-toggle="'+r.identity_id+'">'+(r.active?'Deactivate':'Activate')+'</button></td></tr>').join('')||'<tr><td colspan="6">No bank identities yet.</td></tr>';
-$('rows').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const r=identities.find(x=>String(x.identity_id)===b.dataset.edit);if(!r)return;editing=r.identity_id;const c=customers.find(x=>x.customer_id===r.customer_id);$('customer').value=c?label(c):'';$('bank').value=r.bank_name;$('holder').value=r.account_holder_name;$('account').value=r.account_number||'';$('aliases').value=(r.alternative_names||[]).join(', ');$('editorTitle').textContent='Edit bank identity';window.scrollTo({top:0,behavior:'smooth'})});
+$('rows').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const r=identities.find(x=>String(x.identity_id)===b.dataset.edit);if(!r)return;editing=r.identity_id;renderCustomerOptions();const c=customers.find(x=>x.customer_id===r.customer_id);$('customer').value=c?label(c):'';$('bank').value=r.bank_name;$('holder').value=r.account_holder_name;$('account').value=r.account_number||'';$('aliases').value=(r.alternative_names||[]).join(', ');$('editorTitle').textContent='Edit bank identity';window.scrollTo({top:0,behavior:'smooth'})});
 $('rows').querySelectorAll('[data-toggle]').forEach(b=>b.onclick=async()=>{const r=identities.find(x=>String(x.identity_id)===b.dataset.toggle);if(!r||!confirm((r.active?'Deactivate':'Activate')+' this bank identity?'))return;try{await api.rpc('bb_customer_bank_identity_set_active',{p_identity_id:r.identity_id,p_active:!r.active});await load()}catch(e){message(e.message,true)}})}
-async function load(){identities=await api.rpc('bb_customer_bank_identity_list');render()}
+function renderCustomerOptions(){
+  const used=new Set(identities.map(r=>String(r.customer_id||'')));
+  const editingIdentity=editing?identities.find(r=>String(r.identity_id)===String(editing)):null;
+  const editingCustomerId=editingIdentity?.customer_id||'';
+  $('customers').innerHTML=customers
+    .filter(c=>!used.has(String(c.customer_id))||String(c.customer_id)===String(editingCustomerId))
+    .map(c=>'<option value="'+esc(label(c))+'"></option>')
+    .join('');
+}
+async function load(){identities=await api.rpc('bb_customer_bank_identity_list');renderCustomerOptions();render()}
 $('save').onclick=async()=>{const c=customers.find(x=>label(x)===$('customer').value.trim());if(!c)return message('Select an exact customer from the list.',true);if(!$('bank').value.trim()||!$('holder').value.trim())return message('Enter bank and actual account holder name.',true);const btn=$('save');btn.disabled=true;try{await api.rpc('bb_customer_bank_identity_save',{p_customer_id:c.customer_id,p_bank_name:$('bank').value.trim(),p_holder_name:$('holder').value.trim(),p_account_number:$('account').value.trim()||null,p_alternative_names:$('aliases').value.split(',').map(s=>s.trim()).filter(Boolean),p_identity_id:editing});reset();message('Bank identity saved.');await load()}catch(e){message(e.message,true)}finally{btn.disabled=false}};
 $('reset').onclick=reset;$('search').oninput=render;
-(async()=>{try{await api.ensureSession();customers=await api.rpc('bb_bank_register_customers');$('customers').innerHTML=customers.map(c=>'<option value="'+esc(label(c))+'"></option>').join('');await load()}catch(e){message(e.message||String(e),true);$('rows').innerHTML='<tr><td colspan="6">Sign in with an admin account to use this page.</td></tr>'}})();
+(async()=>{try{await api.ensureSession();customers=await api.rpc('bb_bank_register_customers');await load()}catch(e){message(e.message||String(e),true);$('rows').innerHTML='<tr><td colspan="6">Sign in with an admin account to use this page.</td></tr>'}})();
 })();
 </script></body></html>
