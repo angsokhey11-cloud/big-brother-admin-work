@@ -19,11 +19,9 @@ function render(){const q=$('search').value.toLowerCase().trim();$('rows').inner
 $('rows').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const r=identities.find(x=>String(x.identity_id)===b.dataset.edit);if(!r)return;editing=r.identity_id;renderCustomerOptions();const c=customers.find(x=>x.customer_id===r.customer_id);$('customer').value=c?label(c):'';$('bank').value=r.bank_name;$('holder').value=r.account_holder_name;$('account').value=r.account_number||'';$('aliases').value=(r.alternative_names||[]).join(', ');$('editorTitle').textContent='Edit bank identity';window.scrollTo({top:0,behavior:'smooth'})});
 $('rows').querySelectorAll('[data-toggle]').forEach(b=>b.onclick=async()=>{const r=identities.find(x=>String(x.identity_id)===b.dataset.toggle);if(!r||!confirm((r.active?'Deactivate':'Activate')+' this bank identity?'))return;try{await api.rpc('bb_customer_bank_identity_set_active',{p_identity_id:r.identity_id,p_active:!r.active});await load()}catch(e){message(e.message,true)}})}
 function renderCustomerOptions(){
-  const used=new Set(identities.map(r=>String(r.customer_id||'')));
-  const editingIdentity=editing?identities.find(r=>String(r.identity_id)===String(editing)):null;
-  const editingCustomerId=editingIdentity?.customer_id||'';
+  // One customer can have many bank identities. Never hide a customer merely
+  // because an identity already exists; Admin may add ABA, ACLEDA, Wing, etc.
   $('customers').innerHTML=customers
-    .filter(c=>!used.has(String(c.customer_id))||String(c.customer_id)===String(editingCustomerId))
     .map(c=>'<option value="'+esc(label(c))+'"></option>')
     .join('');
 }
