@@ -134,7 +134,7 @@ function render(){
    '<td><strong>'+esc(t.transaction_id)+'</strong></td>'+
    '<td>'+esc(money(t.amount,t.currency))+'</td>'+
    '<td>'+esc(money(eq.amount,eq.currency))+(eq.currency===t.currency?'':'<br><small class="muted">Rate: '+esc(eq.rate)+'</small>')+'</td>'+
-   '<td>'+esc(t.bank_name||'—')+'</td>'+
+   '<td>'+esc(t.payer_name||'—')+'</td>'+
    '<td class="'+esc(t.status)+'"><strong>'+esc(t.status)+'</strong></td>'+
    '<td>'+esc(t.used_payment_id||'—')+'</td>'+
    '<td>'+esc(new Date(t.created_at).toLocaleString())+'</td>'+
@@ -175,7 +175,7 @@ function buildSummary(){
  $('summarySheet').innerHTML=
   '<div class="sheet-head"><div><h2>BIG BROTHER — BANK TRANSACTION SUMMARY</h2><p style="margin:5px 0 0">Verified payments selected for staff invoice key-in.</p></div>'+
   '<div class="meta"><strong>Prepared:</strong> '+esc(now.toLocaleString())+'<br><strong>Transactions:</strong> '+rows.length+'</div></div>'+
-  '<div class="table-wrap"><table><thead><tr><th>#</th><th>Received</th><th>Customer</th><th>Transaction ID</th><th>Actual Payment</th><th>Invoice Amount</th><th>Bank</th><th>Status</th></tr></thead><tbody>'+
+  '<div class="table-wrap"><table><thead><tr><th>#</th><th>Received</th><th>Customer</th><th>Transaction ID</th><th>Actual Payment</th><th>Invoice Amount</th><th>Payer</th><th>Status</th></tr></thead><tbody>'+
   rows.map((t,i)=>{const eq=equivalent(t);return '<tr><td>'+(i+1)+'</td><td>'+esc(dateText(t.received_date))+'</td><td>'+esc(t.customer_name||t.customer_id)+'</td><td class="tx">'+esc(t.transaction_id)+'</td><td>'+esc(money(t.amount,t.currency))+'</td><td>'+esc(money(eq.amount,eq.currency))+'</td><td>'+esc(t.bank_name||'—')+'</td><td>'+esc(t.status)+'</td></tr>'}).join('')+
   '</tbody></table></div>'+
   '<div class="sheet-total"><span>Actual: '+esc(Object.entries(actualTotals).map(([c,n])=>money(n,c)).join(' · '))+'</span><span>Invoice Equivalent: '+esc(Object.entries(invoiceTotals).map(([c,n])=>money(n,c)).join(' · '))+'</span></div>';
@@ -184,12 +184,12 @@ function buildSummary(){
 function summaryText(){
  const rows=selectedRows();
  return ['BIG BROTHER — BANK TRANSACTION SUMMARY','Transactions: '+rows.length,'']
-  .concat(rows.map((t,i)=>{const eq=equivalent(t);return (i+1)+'. '+dateText(t.received_date)+' | '+(t.customer_name||t.customer_id)+' | TX: '+t.transaction_id+' | '+money(t.amount,t.currency)+' | Invoice: '+money(eq.amount,eq.currency)+(t.bank_name?' | '+t.bank_name:'');}))
+  .concat(rows.map((t,i)=>{const eq=equivalent(t);return (i+1)+'. '+dateText(t.received_date)+' | '+(t.customer_name||t.customer_id)+' | TX: '+t.transaction_id+' | '+money(t.amount,t.currency)+' | Invoice: '+money(eq.amount,eq.currency)+(t.payer_name?' | Payer: '+t.payer_name:'');}))
   .join('\n');
 }
 async function refresh(){
  try{
-   data=await api.rpc('bb_bank_invoice_register_list_v3');
+   data=await api.rpc('bb_bank_invoice_register_list_v4');
    if(!Array.isArray(data))throw Error('History unavailable');
    selected=new Set([...selected].filter(id=>data.some(x=>x.transaction_id===id)));
    $('message').textContent='';$('message').className='';
