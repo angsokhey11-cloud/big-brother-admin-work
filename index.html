@@ -39,7 +39,8 @@
     if(!response.ok)throw new Error('Could not load Admin Work source.');
     let html=await response.text();
 
-    const adapter='<scr'+'ipt src="supabase-admin-work-adapter.js?v=20260910-1"></scr'+'ipt>\n'
+    const adapter='<scr'+'ipt src="https://angsokhey11-cloud.github.io/big-brother-dashboard/bb-system-dialog-v1.js?v=20261005-dialog2"></scr'+'ipt>\n'
+      +'<scr'+'ipt src="supabase-admin-work-adapter.js?v=20260910-1"></scr'+'ipt>\n'
       +'<scr'+'ipt src="receivable-approval-backup-v2.js?v=20260916-2"></scr'+'ipt>\n'
       +'<scr'+'ipt src="receivable-telegram-approval-v1.js?v=20260920-artelegram2"></scr'+'ipt>';
     const headClose=html.toLowerCase().indexOf('</head>');
