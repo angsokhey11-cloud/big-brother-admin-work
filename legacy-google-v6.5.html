@@ -1922,7 +1922,10 @@ async function acceptPendingDailyCash(){
     ? `Accept ${r.requestId} and record the direct company-bank deposit?`
     : `Accept ${r.requestId} and add the physical USD/KHR to Cash Vault?`;
 
-  if(!confirm(message))return;
+  const acceptOk=window.bbConfirm
+    ? await window.bbConfirm(message,{title:"Accept Daily Cash",okText:"Accept",cancelText:"Cancel"})
+    : confirm(message);
+  if(!acceptOk)return;
 
   const btn=$("dcAcceptBtn");
   btn.disabled=true;btn.textContent="Accepting…";
@@ -1957,7 +1960,10 @@ async function acceptPendingDailyCash(){
 async function rejectPendingDailyCash(){
   if(!currentDailyCashCollectionRequest)return;
   const r=currentDailyCashCollectionRequest;
-  if(!confirm(`Reject ${r.requestId}?`))return;
+  const rejectDailyOk=window.bbConfirm
+    ? await window.bbConfirm(`Reject ${r.requestId}?`,{title:"Reject Daily Cash",okText:"Reject",cancelText:"Cancel"})
+    : confirm(`Reject ${r.requestId}?`);
+  if(!rejectDailyOk)return;
 
   const btn=$("dcRejectBtn");
   btn.disabled=true;btn.textContent="Rejecting…";
@@ -2332,7 +2338,11 @@ async function clearRequest(){
     return;
   }
 
-  if(!confirm(`Clear ${currentRequest.requestId} as ${method} and save the Receivable payment?`))return;
+  const clearMessage=`Clear ${currentRequest.requestId} as ${method} and save the Receivable payment?`;
+  const clearOk=window.bbConfirm
+    ? await window.bbConfirm(clearMessage,{title:"Clear Receivable Payment",okText:"Clear & Save",cancelText:"Cancel"})
+    : confirm(clearMessage);
+  if(!clearOk)return;
 
   const btn=$("clearBtn");
   btn.disabled=true;
@@ -2380,7 +2390,10 @@ async function clearRequest(){
 async function rejectRequest(){
   if(!currentRequest)return;
 
-  if(!confirm(`Reject ${currentRequest.requestId}?`))return;
+  const rejectRequestOk=window.bbConfirm
+    ? await window.bbConfirm(`Reject ${currentRequest.requestId}?`,{title:"Reject Receivable Request",okText:"Reject Request",cancelText:"Cancel"})
+    : confirm(`Reject ${currentRequest.requestId}?`);
+  if(!rejectRequestOk)return;
 
   const btn=$("rejectBtn");
   btn.disabled=true;
