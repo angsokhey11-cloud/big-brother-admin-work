@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BIG BROTHER — Verified Bank Register</title>
 <style>
-:root{font-family:Arial,"Noto Sans Khmer",sans-serif;color:#193a63;background:#eef4fa}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1060px;margin:auto;padding:20px}.card{background:white;border:1px solid #d5e1ee;border-radius:14px;padding:20px;margin:16px 0;box-shadow:0 3px 14px #1c4d780d}h1{font-size:25px;margin:0 0 7px}h2{font-size:18px;margin:0 0 15px}p{color:#60748b;font-size:13px;line-height:1.5}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}label{font-size:13px;font-weight:750;display:block;margin-bottom:5px}input,select{width:100%;min-height:43px;padding:10px;border:1px solid #afc4dd;border-radius:8px;background:#fff;font:inherit;font-size:15px}button{border:0;border-radius:8px;padding:12px 17px;background:#174979;color:white;font-weight:bold;cursor:pointer}button.secondary{background:#e7eff8;color:#224c7b}button:disabled{opacity:.55;cursor:wait}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:17px}.message{min-height:17px;color:#1f6a3a}.message.error{color:#bd3131}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}td,th{text-align:left;padding:12px 9px;border-bottom:1px solid #e3ebf3;white-space:nowrap}.status{font-weight:bold}.status.AVAILABLE{color:#218149}.status.USED{color:#38699d}.status.CANCELLED{color:#858990}td button{padding:7px 10px;background:#dbe8f5;color:#184877}a{color:#215c98}@media(max-width:650px){.grid{grid-template-columns:1fr}.wrap{padding:10px}.card{padding:13px}h1{font-size:21px}}
+:root{font-family:Arial,"Noto Sans Khmer",sans-serif;color:#193a63;background:#eef4fa}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1060px;margin:auto;padding:20px}.card{background:white;border:1px solid #d5e1ee;border-radius:14px;padding:20px;margin:16px 0;box-shadow:0 3px 14px #1c4d780d}h1{font-size:25px;margin:0 0 7px}h2{font-size:18px;margin:0 0 15px}p{color:#60748b;font-size:13px;line-height:1.5}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}label{font-size:13px;font-weight:750;display:block;margin-bottom:5px}input,select{width:100%;min-height:43px;padding:10px;border:1px solid #afc4dd;border-radius:8px;background:#fff;font:inherit;font-size:15px}button{border:0;border-radius:8px;padding:12px 17px;background:#174979;color:white;font-weight:bold;cursor:pointer}button.secondary{background:#e7eff8;color:#224c7b}button:disabled{opacity:.55;cursor:wait}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:17px}.message{min-height:17px;color:#1f6a3a}.message.error{color:#bd3131}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}td,th{text-align:left;padding:12px 9px;border-bottom:1px solid #e3ebf3;white-space:nowrap}.status{font-weight:bold}.status.AVAILABLE{color:#218149}.status.USED{color:#38699d}.status.CANCELLED{color:#858990}td button{padding:7px 10px;background:#dbe8f5;color:#184877}a{color:#215c98}.identity-note{font-size:12px;color:#60748b;margin-top:5px}.modal{position:fixed;inset:0;background:rgba(7,24,43,.65);display:grid;place-items:center;padding:16px;z-index:9999}.modal[hidden]{display:none}.modal-card{width:min(620px,96vw);background:#fff;border-radius:15px;padding:20px;box-shadow:0 24px 70px #0005}.modal-card h2{margin:0 0 7px}.modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}@media(max-width:650px){.grid{grid-template-columns:1fr}.wrap{padding:10px}.card{padding:13px}h1{font-size:21px}}
 </style></head><body><main class="wrap">
 <a href="./">← Admin Work</a><h1>🔐 Verified Bank Register</h1><p>Register a bank transfer only after confirming it in your real bank account. Only registered, matching transactions can be used by staff in Invoice Generator. Admin receivable and deposit approvals remain unchanged.</p>
 <section class="card"><h2>Verify a transaction for Invoice Generator</h2>
@@ -9,29 +9,100 @@
 <div><label for="amount">Verified amount</label><input id="amount" inputmode="decimal" type="number" min=".0001" step="any" placeholder="0.00"></div>
 <div><label for="receivedDate">Received date</label><input id="receivedDate" type="date"></div>
 <div><label for="currency">Currency</label><select id="currency"><option value="USD">USD</option><option value="KHR">KHR</option></select></div>
-<div><label for="bank">Receiving bank name (optional)</label><input id="bank" placeholder="Exact bank name if applicable"></div>
+<div><label for="bank">Receiving bank name</label><select id="bank"><option value="">Select customer bank identity</option></select><div id="bankHint" class="identity-note">Choose a customer first.</div></div>
 <div><label for="invoiceCurrency">Invoice currency</label><select id="invoiceCurrency"><option value="USD">USD</option><option value="KHR">KHR</option></select></div>
 <div id="rateWrap" style="display:none"><label for="rate">Admin-approved exchange rate (KHR per USD)</label><input id="rate" type="number" inputmode="decimal" min="1" step="any" placeholder="e.g. 4050"></div>
 <div style="grid-column:1/-1;background:#f2f7fd;border-radius:10px;padding:12px"><span style="font-size:12px;color:#60748b">Payment equivalent</span><div id="equivalent" style="font-size:22px;font-weight:900;margin-top:4px">—</div></div></div>
 <div class="actions"><button id="verify">Register verified payment</button><a class="secondary" style="display:inline-flex;align-items:center;padding:11px 17px;background:#e7eff8;border-radius:8px;text-decoration:none;font-weight:bold" href="bank-history.html">View Transaction History →</a></div>
 <p id="message" class="message" role="status"></p></section>
 </main>
-<script src="supabase-admin-work-adapter.js?v=20261003-bank-register1"></script>
+<div id="identityModal" class="modal" hidden>
+  <div class="modal-card">
+    <h2>Quick Register Payment Identity</h2>
+    <p id="identityCustomerText">This customer has no active bank identity yet. Add one here without leaving Bank Register.</p>
+    <div class="grid">
+      <div><label for="identityBank">Sending / customer bank</label><input id="identityBank" placeholder="e.g. ABA, ACLEDA" autocomplete="off"></div>
+      <div><label for="identityHolder">Actual sender account name</label><input id="identityHolder" placeholder="Name shown on incoming transfer" autocomplete="off"></div>
+      <div><label for="identityAccount">Sending account number (optional)</label><input id="identityAccount" placeholder="If visible in notification" autocomplete="off"></div>
+      <div><label for="identityAliases">Alternative names (optional)</label><input id="identityAliases" placeholder="Comma-separated spellings" autocomplete="off"></div>
+    </div>
+    <p id="identityMessage" class="message" role="status"></p>
+    <div class="modal-actions">
+      <button id="identityCancel" type="button" class="secondary">Cancel</button>
+      <button id="identitySave" type="button">Save Identity & Continue</button>
+    </div>
+  </div>
+</div>
+<script src="supabase-admin-work-adapter.js?v=20261005-bank-register-directory1"></script>
 <script>
 (function(){'use strict';
 const $=id=>document.getElementById(id);
 const adapter=window.BBAdminWorkAdapter;
 let customers=[];
+let identities=[];
 let busy=false;
+let identityBusy=false;
+let lastIdentityPromptCustomer='';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function msg(s,error=false){$('message').textContent=s;$('message').className='message'+(error?' error':'')}
 function customerLabel(c){return c.customer_name+' ['+c.customer_id+']'+(c.location_code?' · '+c.location_code:'')}
+function selectedCustomer(){return customers.find(x=>customerLabel(x)===$('customer').value.trim())||null}
+function customerIdentities(customerId){
+ return identities.filter(r=>String(r.customer_id||'')===String(customerId||'')&&r.active===true);
+}
+function uniqueCustomerBanks(customerId){
+ const seen=new Set(),out=[];
+ customerIdentities(customerId).forEach(r=>{
+   const name=String(r.bank_name||'').trim();
+   const key=name.toLowerCase();
+   if(name&&!seen.has(key)){seen.add(key);out.push(name)}
+ });
+ return out;
+}
+function updateBankChoices(promptIfMissing=false){
+ const c=selectedCustomer();
+ const banks=c?uniqueCustomerBanks(c.customer_id):[];
+ const previous=$('bank').value;
+ $('bank').innerHTML='<option value="">'+(c?(banks.length?'Select registered bank':'No registered bank identity'):'Select customer bank identity')+'</option>'+
+   banks.map(name=>'<option value="'+esc(name)+'">'+esc(name)+'</option>').join('');
+ if(banks.includes(previous))$('bank').value=previous;
+ $('bank').disabled=!c||banks.length===0;
+ $('bankHint').textContent=!c?'Choose a customer first.':
+   banks.length?banks.length+' registered bank '+(banks.length===1?'option':'options')+' for '+c.customer_name+'.':
+   'No active payment identity for '+c.customer_name+'. Quick register is required.';
+ if(c&&!banks.length&&promptIfMissing&&lastIdentityPromptCustomer!==c.customer_id){
+   lastIdentityPromptCustomer=c.customer_id;
+   openIdentityModal(c);
+ }
+}
+function openIdentityModal(c){
+ if(!c)return;
+ $('identityCustomerText').textContent=c.customer_name+' ['+c.customer_id+'] has no active payment identity. Register it here, then continue this bank transaction.';
+ for(const id of ['identityBank','identityHolder','identityAccount','identityAliases'])$(id).value='';
+ $('identityMessage').textContent='';
+ $('identityModal').hidden=false;
+ setTimeout(()=>$('identityBank').focus(),50);
+}
+function closeIdentityModal(){$('identityModal').hidden=true}
+async function refreshIdentities(){
+ const rows=await adapter.rpc('bb_customer_bank_identity_list');
+ identities=Array.isArray(rows)?rows:[];
+ updateBankChoices(false);
+}
+async function ensureCustomerIdentity(){
+ const c=selectedCustomer();
+ if(!c)return false;
+ if(customerIdentities(c.customer_id).length)return true;
+ openIdentityModal(c);
+ return false;
+}
 async function init(){
  try{
   await adapter.ensureSession();
   customers=await adapter.rpc('bb_bank_register_customers');
   if(!Array.isArray(customers))throw Error('Cannot load authorized customer list');
   $('customerOptions').innerHTML=customers.map(c=>'<option value="'+esc(customerLabel(c))+'"></option>').join('');
+  await refreshIdentities();
   $('receivedDate').value=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Phnom_Penh'});
   updateEquivalent();
  }catch(e){msg(e.message||String(e),true)}
@@ -44,11 +115,40 @@ function updateEquivalent(){
  $('equivalent').textContent=n>0 && Number.isFinite(eq) && eq>0 ? (invCur==='USD'?'$':'៛')+eq.toLocaleString(undefined,{maximumFractionDigits:invCur==='USD'?2:0}) : '—';
 }
 ['amount','currency','invoiceCurrency','rate'].forEach(id=>$(id).addEventListener('input',updateEquivalent));
+$('customer').addEventListener('change',()=>{lastIdentityPromptCustomer='';updateBankChoices(true)});
+$('customer').addEventListener('input',()=>{clearTimeout(window.__bbBankCustomerTimer);window.__bbBankCustomerTimer=setTimeout(()=>{if(selectedCustomer()){lastIdentityPromptCustomer='';updateBankChoices(true)}else updateBankChoices(false)},180)});
+$('identityCancel').onclick=closeIdentityModal;
+$('identityModal').onclick=e=>{if(e.target===$('identityModal'))closeIdentityModal()};
+$('identitySave').onclick=async()=>{
+ if(identityBusy)return;
+ const c=selectedCustomer();
+ if(!c){$('identityMessage').textContent='Choose an exact customer first.';return}
+ const bank=$('identityBank').value.trim(),holder=$('identityHolder').value.trim();
+ if(!bank||!holder){$('identityMessage').textContent='Enter bank name and actual sender account name.';return}
+ identityBusy=true;$('identitySave').disabled=true;
+ try{
+   await adapter.rpc('bb_customer_bank_identity_save',{
+     p_customer_id:c.customer_id,
+     p_bank_name:bank,
+     p_holder_name:holder,
+     p_account_number:$('identityAccount').value.trim()||null,
+     p_alternative_names:$('identityAliases').value.split(',').map(s=>s.trim()).filter(Boolean),
+     p_identity_id:null
+   });
+   await refreshIdentities();
+   $('bank').value=bank;
+   closeIdentityModal();
+   msg('Payment identity saved for '+c.customer_name+'. You can continue registering the verified transaction.');
+ }catch(e){$('identityMessage').textContent=e.message||String(e)}
+ finally{identityBusy=false;$('identitySave').disabled=false}
+};
 $('verify').onclick=async()=>{
  if(busy)return;
  const c=customers.find(x=>customerLabel(x)===$('customer').value.trim());
  const id=$('transaction').value.trim().toUpperCase(),amount=Number($('amount').value),currency=$('currency').value,invoiceCurrency=$('invoiceCurrency').value,rate=currency===invoiceCurrency?1:Number($('rate').value),receivedDate=$('receivedDate').value;
  if(!c)return msg('Choose an exact customer from the list.',true);
+ if(!(await ensureCustomerIdentity()))return msg('Register this customer payment identity first.',true);
+ if(!$('bank').value)return msg('Choose one of this customer\'s registered bank names.',true);
  if(!id||!Number.isFinite(amount)||amount<=0)return msg('Enter a valid transaction ID and positive bank amount.',true);
  if(!receivedDate)return msg('Choose the date the bank payment was received.',true);
  if(!Number.isFinite(rate)||rate<=0||(currency!==invoiceCurrency&&rate<=1))return msg('Enter the Admin-approved KHR per USD exchange rate.',true);
