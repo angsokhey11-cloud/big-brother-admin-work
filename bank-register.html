@@ -63,7 +63,7 @@ function updateBankChoices(promptIfMissing=false){
  const options=c?customerIdentityOptions(c.customer_id):[];
  const previous=$('bank').value;
  $('bank').innerHTML='<option value="">'+(c?(options.length?'Select registered payer identity':'No registered payer identity'):'Select registered payer identity')+'</option>'+
-   options.map(o=>'<option value="'+esc(o.holder)+'" data-bank="'+esc(o.bankName)+'">'+esc(o.label)+'</option>').join('');
+   options.map(o=>'<option value="'+esc(o.holder)+'" data-identity="'+esc(o.identityId)+'" data-bank="'+esc(o.bankName)+'">'+esc(o.label)+'</option>').join('');
  if(options.some(o=>o.holder===previous))$('bank').value=previous;
  $('bank').disabled=!c||options.length===0;
  $('bankHint').textContent=!c?'Choose a customer first.':
@@ -154,7 +154,10 @@ $('verify').onclick=async()=>{
  if(!confirm('I confirmed this transfer in my bank account:\n'+id+'\n'+customerLabel(c)+'\nPayer: '+$('bank').value+'\nReceived: '+receivedDate+'\n'+currency+' '+amount+'\nInvoice currency: '+invoiceCurrency+'\nExchange rate: '+rate+'\n\nRegister for staff Invoice Generator?'))return;
  busy=true;$('verify').disabled=true;
  try{
-  await adapter.rpc('bb_bank_register_invoice_tx_v3',{p_customer_id:c.customer_id,p_transaction_id:id,p_amount:amount,p_currency:currency,p_invoice_currency:invoiceCurrency,p_exchange_rate:rate,p_received_date:receivedDate,p_bank_name:null});
+  const selectedPayerOption=$('bank').selectedOptions[0];
+  const payerIdentityId=Number(selectedPayerOption?.dataset?.identity||0);
+  if(!payerIdentityId)throw new Error('Choose a valid registered payer identity.');
+  await adapter.rpc('bb_bank_register_invoice_tx_v4',{p_customer_id:c.customer_id,p_transaction_id:id,p_amount:amount,p_currency:currency,p_invoice_currency:invoiceCurrency,p_exchange_rate:rate,p_received_date:receivedDate,p_payer_identity_id:payerIdentityId,p_bank_name:null});
   msg('Verified payment registered for '+c.customer_name+'.');
   $('transaction').value='';$('amount').value='';updateEquivalent();
  }catch(e){msg(e.message||String(e),true)}
