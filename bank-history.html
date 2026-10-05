@@ -30,7 +30,7 @@ td button{padding:7px 10px;background:#dbe8f5;color:#184877}.check{width:18px;he
 @media(max-width:650px){.wrap{padding:11px}.card{padding:13px}.summary{gap:6px}.summary strong{font-size:19px}.filters>*{width:100%}.sheet{padding:14px}.sheet-head{display:block}.sheet .meta{text-align:left;margin-top:8px}}
 @media print{body>*{display:none!important}#summaryModal{display:block!important;position:static!important;background:#fff!important;padding:0!important}#summaryModal .modal-card{width:auto!important;max-height:none!important;overflow:visible!important;background:#fff!important;padding:0!important}.modal-actions{display:none!important}.sheet{box-shadow:none!important;border-radius:0!important}}
 </style>
-</head>
+<script src="https://angsokhey11-cloud.github.io/big-brother-dashboard/bb-system-dialog-v1.js?v=20261005-dialog2"></script></head>
 <body>
 <main class="wrap">
 <a href="bank-register.html">← Bank Register</a>
@@ -147,7 +147,9 @@ function render(){
    syncSelection();
  });
  $('rows').querySelectorAll('[data-cancel]').forEach(b=>b.onclick=async()=>{
-   if(!confirm('Remove this unused verification from Bank History? Its transaction ID will remain reserved to prevent reuse.'))return;
+   const cancelMessage='Remove this unused verification from Bank History? Its transaction ID will remain reserved to prevent reuse.';
+   const cancelOk=window.bbConfirm?await window.bbConfirm(cancelMessage,{title:'Cancel Verified Payment',okText:'Remove Verification',cancelText:'Keep'}):confirm(cancelMessage);
+   if(!cancelOk)return;
    try{
      b.disabled=true;
      await api.rpc('bb_bank_cancel_invoice_tx',{p_transaction_id:b.dataset.cancel});
