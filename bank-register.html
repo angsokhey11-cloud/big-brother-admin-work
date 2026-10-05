@@ -9,7 +9,7 @@
 <div><label for="amount">Verified amount</label><input id="amount" inputmode="decimal" type="number" min=".0001" step="any" placeholder="0.00"></div>
 <div><label for="receivedDate">Received date</label><input id="receivedDate" type="date"></div>
 <div><label for="currency">Currency</label><select id="currency"><option value="USD">USD</option><option value="KHR">KHR</option></select></div>
-<div><label for="bank">Receiving bank name</label><select id="bank"><option value="">Select customer bank identity</option></select><div id="bankHint" class="identity-note">Choose a customer first.</div></div>
+<div><label for="bank">Payer / account holder identity</label><select id="bank"><option value="">Select registered payer identity</option></select><div id="bankHint" class="identity-note">Choose a customer first.</div></div>
 <div><label for="invoiceCurrency">Invoice currency</label><select id="invoiceCurrency"><option value="USD">USD</option><option value="KHR">KHR</option></select></div>
 <div id="rateWrap" style="display:none"><label for="rate">Admin-approved exchange rate (KHR per USD)</label><input id="rate" type="number" inputmode="decimal" min="1" step="any" placeholder="e.g. 4050"></div>
 <div style="grid-column:1/-1;background:#f2f7fd;border-radius:10px;padding:12px"><span style="font-size:12px;color:#60748b">Payment equivalent</span><div id="equivalent" style="font-size:22px;font-weight:900;margin-top:4px">—</div></div></div>
@@ -50,27 +50,26 @@ function selectedCustomer(){return customers.find(x=>customerLabel(x)===$('custo
 function customerIdentities(customerId){
  return identities.filter(r=>String(r.customer_id||'')===String(customerId||'')&&r.active===true);
 }
-function uniqueCustomerBanks(customerId){
- const seen=new Set(),out=[];
- customerIdentities(customerId).forEach(r=>{
-   const name=String(r.bank_name||'').trim();
-   const key=name.toLowerCase();
-   if(name&&!seen.has(key)){seen.add(key);out.push(name)}
- });
- return out;
+function customerIdentityOptions(customerId){
+ return customerIdentities(customerId).map(r=>{
+   const holder=String(r.account_holder_name||'').trim();
+   const aliases=(r.alternative_names||[]).map(x=>String(x||'').trim()).filter(Boolean);
+   const label=holder+(aliases.length?' · '+aliases.join(' / '):'');
+   return {identityId:r.identity_id,label,holder,aliases,bankName:String(r.bank_name||'').trim()};
+ }).filter(x=>x.label);
 }
 function updateBankChoices(promptIfMissing=false){
  const c=selectedCustomer();
- const banks=c?uniqueCustomerBanks(c.customer_id):[];
+ const options=c?customerIdentityOptions(c.customer_id):[];
  const previous=$('bank').value;
- $('bank').innerHTML='<option value="">'+(c?(banks.length?'Select registered bank':'No registered bank identity'):'Select customer bank identity')+'</option>'+
-   banks.map(name=>'<option value="'+esc(name)+'">'+esc(name)+'</option>').join('');
- if(banks.includes(previous))$('bank').value=previous;
- $('bank').disabled=!c||banks.length===0;
+ $('bank').innerHTML='<option value="">'+(c?(options.length?'Select registered payer identity':'No registered payer identity'):'Select registered payer identity')+'</option>'+
+   options.map(o=>'<option value="'+esc(o.holder)+'" data-bank="'+esc(o.bankName)+'">'+esc(o.label)+'</option>').join('');
+ if(options.some(o=>o.holder===previous))$('bank').value=previous;
+ $('bank').disabled=!c||options.length===0;
  $('bankHint').textContent=!c?'Choose a customer first.':
-   banks.length?banks.length+' registered bank '+(banks.length===1?'option':'options')+' for '+c.customer_name+'.':
-   'No active payment identity for '+c.customer_name+'. Quick register is required.';
- if(c&&!banks.length&&promptIfMissing&&lastIdentityPromptCustomer!==c.customer_id){
+   options.length?options.length+' registered payer '+(options.length===1?'identity':'identities')+' for '+c.customer_name+'.':
+   'No active payer identity for '+c.customer_name+'. Quick register is required.';
+ if(c&&!options.length&&promptIfMissing&&lastIdentityPromptCustomer!==c.customer_id){
    lastIdentityPromptCustomer=c.customer_id;
    openIdentityModal(c);
  }
@@ -148,14 +147,14 @@ $('verify').onclick=async()=>{
  const id=$('transaction').value.trim().toUpperCase(),amount=Number($('amount').value),currency=$('currency').value,invoiceCurrency=$('invoiceCurrency').value,rate=currency===invoiceCurrency?1:Number($('rate').value),receivedDate=$('receivedDate').value;
  if(!c)return msg('Choose an exact customer from the list.',true);
  if(!(await ensureCustomerIdentity()))return msg('Register this customer payment identity first.',true);
- if(!$('bank').value)return msg('Choose one of this customer\'s registered bank names.',true);
+ if(!$('bank').value)return msg('Choose one of this customer\'s registered payer identities.',true);
  if(!id||!Number.isFinite(amount)||amount<=0)return msg('Enter a valid transaction ID and positive bank amount.',true);
  if(!receivedDate)return msg('Choose the date the bank payment was received.',true);
  if(!Number.isFinite(rate)||rate<=0||(currency!==invoiceCurrency&&rate<=1))return msg('Enter the Admin-approved KHR per USD exchange rate.',true);
- if(!confirm('I confirmed this transfer in my bank account:\n'+id+'\n'+customerLabel(c)+'\nReceived: '+receivedDate+'\n'+currency+' '+amount+'\nInvoice currency: '+invoiceCurrency+'\nExchange rate: '+rate+'\n\nRegister for staff Invoice Generator?'))return;
+ if(!confirm('I confirmed this transfer in my bank account:\n'+id+'\n'+customerLabel(c)+'\nPayer: '+$('bank').value+'\nReceived: '+receivedDate+'\n'+currency+' '+amount+'\nInvoice currency: '+invoiceCurrency+'\nExchange rate: '+rate+'\n\nRegister for staff Invoice Generator?'))return;
  busy=true;$('verify').disabled=true;
  try{
-  await adapter.rpc('bb_bank_register_invoice_tx_v3',{p_customer_id:c.customer_id,p_transaction_id:id,p_amount:amount,p_currency:currency,p_invoice_currency:invoiceCurrency,p_exchange_rate:rate,p_received_date:receivedDate,p_bank_name:$('bank').value.trim()||null});
+  await adapter.rpc('bb_bank_register_invoice_tx_v3',{p_customer_id:c.customer_id,p_transaction_id:id,p_amount:amount,p_currency:currency,p_invoice_currency:invoiceCurrency,p_exchange_rate:rate,p_received_date:receivedDate,p_bank_name:null});
   msg('Verified payment registered for '+c.customer_name+'.');
   $('transaction').value='';$('amount').value='';updateEquivalent();
  }catch(e){msg(e.message||String(e),true)}
