@@ -1,35 +1,222 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BIG BROTHER — Bank Transaction History</title><style>
-:root{font-family:Arial,"Noto Sans Khmer",sans-serif;color:#193a63;background:#eef4fa}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1200px;margin:auto;padding:20px}h1{font-size:25px}p{color:#60748b;font-size:13px;line-height:1.5}.card{background:white;border:1px solid #d5e1ee;border-radius:14px;padding:20px;margin:16px 0;box-shadow:0 3px 14px #1c4d780d}.summary{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.summary strong{display:block;font-size:24px;margin-top:7px}.filters{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}input,select{min-height:43px;padding:10px;border:1px solid #afc4dd;border-radius:8px;font:inherit;font-size:14px}input{flex:1;min-width:180px}button,.link{display:inline-block;border:0;border-radius:8px;padding:11px 15px;background:#174979;color:white;text-decoration:none;font-size:13px;font-weight:bold;cursor:pointer}.link{background:#e7eff8;color:#215c98}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}td,th{text-align:left;padding:12px 9px;border-bottom:1px solid #e3ebf3;white-space:nowrap}td:last-child{white-space:normal}.AVAILABLE{color:#218149}.USED{color:#38699d}.muted{color:#60748b}.error{color:#b42318}td button{background:#dbe8f5;color:#184877}.info{margin-bottom:8px}@media(max-width:650px){.wrap{padding:11px}.card{padding:13px}.summary{gap:6px}.summary strong{font-size:19px}}</style></head><body>
-<main class="wrap"><a href="bank-register.html">← Bank Register</a><h1>Bank Transaction History</h1><p>Admin-only verified transaction records. Cancelled verifications are removed from this history. Their transaction IDs remain reserved to prevent duplicate registration.</p>
-<div class="summary"><div class="card">Available<strong id="available">—</strong></div><div class="card">Used<strong id="used">—</strong></div></div>
-<section class="card"><div class="filters"><input id="search" placeholder="Search customer, transaction ID or bank" autocomplete="off"><select id="status"><option value="">All statuses</option><option value="AVAILABLE">Available</option><option value="USED">Used</option></select><button id="refresh">Refresh</button><a href="bank-register.html" class="link">+ Register Payment</a></div>
-<p id="message" role="status"></p><div class="table-wrap"><table><thead><tr><th>Registered</th><th>Customer</th><th>Transaction ID</th><th>Actual bank payment</th><th>Invoice equivalent</th><th>Bank</th><th>Status</th><th>Payment ID</th><th>Action</th></tr></thead><tbody id="rows"><tr><td colspan="9">Loading…</td></tr></tbody></table></div></section></main>
-<script src="supabase-admin-work-adapter.js?v=20261004-bankhistory-clean1"></script><script>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BIG BROTHER — Bank Transaction History</title>
+<style>
+:root{font-family:Arial,"Noto Sans Khmer",sans-serif;color:#193a63;background:#eef4fa}
+*{box-sizing:border-box}body{margin:0}.wrap{max-width:1260px;margin:auto;padding:20px}
+h1{font-size:25px;margin-bottom:8px}p{color:#60748b;font-size:13px;line-height:1.5}
+.card{background:#fff;border:1px solid #d5e1ee;border-radius:14px;padding:20px;margin:16px 0;box-shadow:0 3px 14px #1c4d780d}
+.summary{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.summary strong{display:block;font-size:24px;margin-top:7px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0;align-items:center}
+input,select{min-height:43px;padding:10px;border:1px solid #afc4dd;border-radius:8px;font:inherit;font-size:14px}
+input{flex:1;min-width:180px}
+button,.link{display:inline-block;border:0;border-radius:8px;padding:11px 15px;background:#174979;color:#fff;text-decoration:none;font-size:13px;font-weight:bold;cursor:pointer}
+button.secondary,.link{background:#e7eff8;color:#215c98}button.green{background:#198754}button:disabled{opacity:.5;cursor:not-allowed}
+.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}td,th{text-align:left;padding:11px 8px;border-bottom:1px solid #e3ebf3;white-space:nowrap}
+td:last-child{white-space:normal}.AVAILABLE{color:#218149}.USED{color:#38699d}.muted{color:#60748b}.error{color:#b42318}
+td button{padding:7px 10px;background:#dbe8f5;color:#184877}.check{width:18px;height:18px}
+.selection-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:#f1f6fb;border:1px solid #d8e5f2;border-radius:10px}
+.selection-bar strong{margin-right:auto}.modal{position:fixed;inset:0;background:rgba(7,25,46,.68);display:grid;place-items:center;padding:16px;z-index:9999}.modal[hidden]{display:none}
+.modal-card{width:min(980px,96vw);max-height:94vh;overflow:auto;background:#eef3f8;border-radius:16px;padding:14px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;position:sticky;top:0;background:#eef3f8;padding:2px 0 10px;z-index:2}
+.sheet{background:#fff;border-radius:10px;padding:24px;box-shadow:0 5px 22px #0002;color:#17385e}
+.sheet-head{display:flex;justify-content:space-between;gap:16px;border-bottom:3px solid #174979;padding-bottom:14px;margin-bottom:15px}
+.sheet h2{margin:0;color:#143d78}.sheet .meta{text-align:right;font-size:12px;color:#60748b}
+.sheet table{font-size:12px}.sheet th{background:#174979;color:#fff}.sheet .tx{font-weight:900;font-size:13px;color:#102f5a}
+.sheet-total{display:flex;gap:18px;justify-content:flex-end;margin-top:15px;font-weight:900}
+@media(max-width:650px){.wrap{padding:11px}.card{padding:13px}.summary{gap:6px}.summary strong{font-size:19px}.filters>*{width:100%}.sheet{padding:14px}.sheet-head{display:block}.sheet .meta{text-align:left;margin-top:8px}}
+@media print{body>*{display:none!important}#summaryModal{display:block!important;position:static!important;background:#fff!important;padding:0!important}#summaryModal .modal-card{width:auto!important;max-height:none!important;overflow:visible!important;background:#fff!important;padding:0!important}.modal-actions{display:none!important}.sheet{box-shadow:none!important;border-radius:0!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<a href="bank-register.html">← Bank Register</a>
+<h1>Bank Transaction History</h1>
+<p>Admin-only verified transaction records. Select transactions and build one clean summary for staff instead of writing transaction numbers one by one.</p>
+
+<div class="summary">
+  <div class="card">Available<strong id="available">—</strong></div>
+  <div class="card">Used<strong id="used">—</strong></div>
+</div>
+
+<section class="card">
+  <div class="filters">
+    <input id="search" placeholder="Search customer, transaction ID or bank" autocomplete="off">
+    <select id="status"><option value="">All statuses</option><option value="AVAILABLE">Available</option><option value="USED">Used</option></select>
+    <button id="refresh">Refresh</button>
+    <a href="bank-register.html" class="link">+ Register Payment</a>
+  </div>
+
+  <div class="selection-bar">
+    <label><input id="selectAll" class="check" type="checkbox"> Select all shown</label>
+    <strong id="selectedCount">0 selected</strong>
+    <button id="summaryBtn" class="green" disabled>🧾 Summary Selected</button>
+    <button id="clearSelected" class="secondary" disabled>Clear Selection</button>
+  </div>
+
+  <p id="message" role="status"></p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Received Date</th>
+          <th>Customer</th>
+          <th>Transaction ID</th>
+          <th>Actual bank payment</th>
+          <th>Invoice equivalent</th>
+          <th>Bank</th>
+          <th>Status</th>
+          <th>Payment ID</th>
+          <th>Registered</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="rows"><tr><td colspan="11">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</section>
+</main>
+
+<div id="summaryModal" class="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-actions">
+      <button id="copySummary" class="secondary">Copy Text</button>
+      <button id="printSummary">Print / Save PDF</button>
+      <button id="closeSummary" class="secondary">✕ Close</button>
+    </div>
+    <div id="summarySheet" class="sheet"></div>
+  </div>
+</div>
+
+<script src="supabase-admin-work-adapter.js?v=20261003-bank-register1"></script>
+<script>
 (function(){
 'use strict';
 const $=id=>document.getElementById(id),api=window.BBAdminWorkAdapter;
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let data=[];
+let data=[],filtered=[],selected=new Set();
 const money=(n,c)=>c+' '+Number(n).toLocaleString(undefined,{minimumFractionDigits:c==='USD'?2:0,maximumFractionDigits:c==='USD'?2:0});
+const dateText=v=>{
+ if(!v)return '—';
+ const s=String(v);
+ const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+ return m?m[3]+'/'+m[2]+'/'+m[1]:s;
+};
+function equivalent(t){
+ const invoiceCurrency=t.invoice_currency||t.currency,rate=Number(t.approved_exchange_rate)||1;
+ const amount=t.currency===invoiceCurrency?Number(t.amount):t.currency==='KHR'?Number(t.amount)/rate:Number(t.amount)*rate;
+ return {currency:invoiceCurrency,amount,rate};
+}
+function syncSelection(){
+ const count=selected.size;
+ $('selectedCount').textContent=count+' selected';
+ $('summaryBtn').disabled=count===0;
+ $('clearSelected').disabled=count===0;
+ const visibleIds=filtered.map(x=>x.transaction_id);
+ const selectedVisible=visibleIds.filter(x=>selected.has(x)).length;
+ $('selectAll').checked=visibleIds.length>0&&selectedVisible===visibleIds.length;
+ $('selectAll').indeterminate=selectedVisible>0&&selectedVisible<visibleIds.length;
+}
 function render(){
  const q=$('search').value.toLowerCase().trim(),status=$('status').value;
  for(const key of ['AVAILABLE','USED'])$(key.toLowerCase()).textContent=data.filter(t=>t.status===key).length;
- const filtered=data.filter(t=>(!status||t.status===status)&&(!q||[t.customer_name,t.customer_id,t.transaction_id,t.bank_name,t.used_payment_id].some(s=>String(s??'').toLowerCase().includes(q))));
+ filtered=data.filter(t=>(!status||t.status===status)&&(!q||[t.customer_name,t.customer_id,t.transaction_id,t.bank_name,t.used_payment_id,t.received_date].some(s=>String(s??'').toLowerCase().includes(q))));
  $('rows').innerHTML=filtered.map(t=>{
-  const invoiceCurrency=t.invoice_currency||t.currency,rate=Number(t.approved_exchange_rate)||1;
-  const equivalent=t.currency===invoiceCurrency?Number(t.amount):t.currency==='KHR'?Number(t.amount)/rate:Number(t.amount)*rate;
-  return '<tr><td>'+esc(new Date(t.created_at).toLocaleString())+'</td><td>'+esc(t.customer_name||t.customer_id)+'</td><td><strong>'+esc(t.transaction_id)+'</strong></td><td>'+esc(money(t.amount,t.currency))+'</td><td>'+esc(money(equivalent,invoiceCurrency))+(invoiceCurrency===t.currency?'':'<br><small class="muted">Rate: '+esc(rate)+'</small>')+'</td><td>'+esc(t.bank_name||'—')+'</td><td class="'+esc(t.status)+'"><strong>'+esc(t.status)+'</strong></td><td>'+esc(t.used_payment_id||'—')+'</td><td>'+(t.status==='AVAILABLE'?'<button data-cancel="'+esc(t.transaction_id)+'">Cancel</button>':'—')+'</td></tr>'
- }).join('')||'<tr><td colspan="9">No matching transactions.</td></tr>';
- $('rows').querySelectorAll('[data-cancel]').forEach(b=>b.onclick=async()=>{
- if(!confirm('Remove this unused verification from Bank History? Its transaction ID will remain reserved to prevent reuse.'))return;
- try{b.disabled=true;await api.rpc('bb_bank_cancel_invoice_tx',{p_transaction_id:b.dataset.cancel});$('message').textContent='Unused verification removed from Bank History.';await refresh()}catch(e){$('message').textContent=e.message;b.disabled=false}
+  const eq=equivalent(t);
+  return '<tr>'+
+   '<td><input class="check rowcheck" type="checkbox" data-select="'+esc(t.transaction_id)+'" '+(selected.has(t.transaction_id)?'checked':'')+'></td>'+
+   '<td><strong>'+esc(dateText(t.received_date))+'</strong></td>'+
+   '<td>'+esc(t.customer_name||t.customer_id)+'</td>'+
+   '<td><strong>'+esc(t.transaction_id)+'</strong></td>'+
+   '<td>'+esc(money(t.amount,t.currency))+'</td>'+
+   '<td>'+esc(money(eq.amount,eq.currency))+(eq.currency===t.currency?'':'<br><small class="muted">Rate: '+esc(eq.rate)+'</small>')+'</td>'+
+   '<td>'+esc(t.bank_name||'—')+'</td>'+
+   '<td class="'+esc(t.status)+'"><strong>'+esc(t.status)+'</strong></td>'+
+   '<td>'+esc(t.used_payment_id||'—')+'</td>'+
+   '<td>'+esc(new Date(t.created_at).toLocaleString())+'</td>'+
+   '<td>'+(t.status==='AVAILABLE'?'<button data-cancel="'+esc(t.transaction_id)+'">Cancel</button>':'—')+'</td>'+
+  '</tr>';
+ }).join('')||'<tr><td colspan="11">No matching transactions.</td></tr>';
+
+ $('rows').querySelectorAll('[data-select]').forEach(box=>box.onchange=()=>{
+   if(box.checked)selected.add(box.dataset.select);else selected.delete(box.dataset.select);
+   syncSelection();
  });
+ $('rows').querySelectorAll('[data-cancel]').forEach(b=>b.onclick=async()=>{
+   if(!confirm('Remove this unused verification from Bank History? Its transaction ID will remain reserved to prevent reuse.'))return;
+   try{
+     b.disabled=true;
+     await api.rpc('bb_bank_cancel_invoice_tx',{p_transaction_id:b.dataset.cancel});
+     selected.delete(b.dataset.cancel);
+     $('message').textContent='Unused verification removed from Bank History.';
+     await refresh();
+   }catch(e){$('message').textContent=e.message;b.disabled=false}
+ });
+ syncSelection();
+}
+function selectedRows(){
+ return data.filter(x=>selected.has(x.transaction_id))
+   .sort((a,b)=>String(a.received_date||'').localeCompare(String(b.received_date||''))||String(a.transaction_id).localeCompare(String(b.transaction_id),undefined,{numeric:true}));
+}
+function buildSummary(){
+ const rows=selectedRows();
+ if(!rows.length)return;
+ const now=new Date();
+ const actualTotals={},invoiceTotals={};
+ rows.forEach(t=>{
+   actualTotals[t.currency]=(actualTotals[t.currency]||0)+Number(t.amount||0);
+   const eq=equivalent(t);
+   invoiceTotals[eq.currency]=(invoiceTotals[eq.currency]||0)+eq.amount;
+ });
+ $('summarySheet').innerHTML=
+  '<div class="sheet-head"><div><h2>BIG BROTHER — BANK TRANSACTION SUMMARY</h2><p style="margin:5px 0 0">Verified payments selected for staff invoice key-in.</p></div>'+
+  '<div class="meta"><strong>Prepared:</strong> '+esc(now.toLocaleString())+'<br><strong>Transactions:</strong> '+rows.length+'</div></div>'+
+  '<div class="table-wrap"><table><thead><tr><th>#</th><th>Received</th><th>Customer</th><th>Transaction ID</th><th>Actual Payment</th><th>Invoice Amount</th><th>Bank</th><th>Status</th></tr></thead><tbody>'+
+  rows.map((t,i)=>{const eq=equivalent(t);return '<tr><td>'+(i+1)+'</td><td>'+esc(dateText(t.received_date))+'</td><td>'+esc(t.customer_name||t.customer_id)+'</td><td class="tx">'+esc(t.transaction_id)+'</td><td>'+esc(money(t.amount,t.currency))+'</td><td>'+esc(money(eq.amount,eq.currency))+'</td><td>'+esc(t.bank_name||'—')+'</td><td>'+esc(t.status)+'</td></tr>'}).join('')+
+  '</tbody></table></div>'+
+  '<div class="sheet-total"><span>Actual: '+esc(Object.entries(actualTotals).map(([c,n])=>money(n,c)).join(' · '))+'</span><span>Invoice Equivalent: '+esc(Object.entries(invoiceTotals).map(([c,n])=>money(n,c)).join(' · '))+'</span></div>';
+ $('summaryModal').hidden=false;
+}
+function summaryText(){
+ const rows=selectedRows();
+ return ['BIG BROTHER — BANK TRANSACTION SUMMARY','Transactions: '+rows.length,'']
+  .concat(rows.map((t,i)=>{const eq=equivalent(t);return (i+1)+'. '+dateText(t.received_date)+' | '+(t.customer_name||t.customer_id)+' | TX: '+t.transaction_id+' | '+money(t.amount,t.currency)+' | Invoice: '+money(eq.amount,eq.currency)+(t.bank_name?' | '+t.bank_name:'');}))
+  .join('\n');
 }
 async function refresh(){
- try{data=await api.rpc('bb_bank_invoice_register_list_v2');if(!Array.isArray(data))throw Error('History unavailable');$('message').textContent='';render()}
- catch(e){$('message').textContent=e.message;$('message').className='error';$('rows').innerHTML='<tr><td colspan="9">Could not load history.</td></tr>'}
+ try{
+   data=await api.rpc('bb_bank_invoice_register_list_v3');
+   if(!Array.isArray(data))throw Error('History unavailable');
+   selected=new Set([...selected].filter(id=>data.some(x=>x.transaction_id===id)));
+   $('message').textContent='';$('message').className='';
+   render();
+ }catch(e){
+   $('message').textContent=e.message;$('message').className='error';
+   $('rows').innerHTML='<tr><td colspan="11">Could not load history.</td></tr>';
+ }
 }
-$('search').addEventListener('input',render);$('status').addEventListener('change',render);$('refresh').onclick=refresh;
+$('search').addEventListener('input',render);
+$('status').addEventListener('change',render);
+$('refresh').onclick=refresh;
+$('selectAll').onchange=()=>{
+ filtered.forEach(t=>{if($('selectAll').checked)selected.add(t.transaction_id);else selected.delete(t.transaction_id)});
+ render();
+};
+$('clearSelected').onclick=()=>{selected.clear();render()};
+$('summaryBtn').onclick=buildSummary;
+$('closeSummary').onclick=()=>{$('summaryModal').hidden=true};
+$('summaryModal').onclick=e=>{if(e.target===$('summaryModal'))$('summaryModal').hidden=true};
+$('printSummary').onclick=()=>window.print();
+$('copySummary').onclick=async()=>{
+ try{await navigator.clipboard.writeText(summaryText());$('copySummary').textContent='Copied ✓';setTimeout(()=>$('copySummary').textContent='Copy Text',1200)}
+ catch(_){alert(summaryText())}
+};
 refresh();
 })();
-</script></body></html>
+</script>
+</body>
+</html>
