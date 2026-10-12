@@ -109,7 +109,7 @@ async function registerUser(){
   const confirm=$('regConfirm').value;
   const msg=$('regMsg'),btn=$('regSend');
   msg.className='status';
-  if(!/^[^\s@]+@[^\s@]+\\.[^\s@]+$/.test(email)){msg.textContent='Enter a valid login email.';msg.className='status err';return}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg.textContent='Enter a valid login email.';msg.className='status err';return}
   if(password.length<12||password.length>128||!/[A-Za-z]/.test(password)||!/[0-9]/.test(password)){msg.textContent='Use a 12–128 character password with letters and numbers.';msg.className='status err';return}
   if(password!==confirm){msg.textContent='Password confirmation does not match.';msg.className='status err';return}
   btn.disabled=true;msg.textContent='Creating account on the current system…';
