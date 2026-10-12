@@ -79,11 +79,9 @@ export default {
     for (const row of rows) {
       try {
         const { data: existing, error: mappingError } = await ctx.supabaseAdmin
-          .from("bb_local_cloud_user_links")
-          .select("cloud_user_id,email")
-          .eq("source_instance", sourceInstance)
-          .eq("local_user_id", row.localUserId)
-          .maybeSingle();
+          .rpc("bb_local_cloud_link_lookup", {
+            p_source: sourceInstance, p_local: row.localUserId,
+          });
         if (mappingError) throw new Error("Identity mapping lookup failed");
         if (existing) {
           if (String(existing.email).toLowerCase() !== row.email) {
@@ -98,13 +96,11 @@ export default {
         }
 
         const { data: conflicting, error: conflictErr } = await ctx.supabaseAdmin
-          .from("bb_local_cloud_user_links")
-          .select("local_user_id")
-          .eq("source_instance", sourceInstance)
-          .eq("email", row.email)
-          .limit(1);
+          .rpc("bb_local_cloud_link_email_in_use", {
+            p_source: sourceInstance, p_email: row.email,
+          });
         if (conflictErr) throw new Error("Identity conflict lookup failed");
-        if ((conflicting || []).length) {
+        if (conflicting === true) {
           throw new Error("Email already mapped to another Local user");
         }
 
@@ -135,12 +131,9 @@ export default {
         }
 
         const { error: insertError } = await ctx.supabaseAdmin
-          .from("bb_local_cloud_user_links")
-          .insert({
-            source_instance: sourceInstance,
-            local_user_id: row.localUserId,
-            cloud_user_id: cloudId,
-            email: row.email,
+          .rpc("bb_local_cloud_link_create", {
+            p_source: sourceInstance, p_local: row.localUserId,
+            p_cloud: cloudId, p_email: row.email,
           });
         if (insertError) {
           throw new Error("Cloud Auth account exists but ID mapping was not saved: " +
