@@ -44,7 +44,7 @@ export default {
     const password = typeof payload.password === "string"
       ? payload.password
       : "";
-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || email.length > 254) {
+    if (!/^[^\s@]+@[^\s@]+\\.[^\s@]+$/.test(email) || email.length > 254) {
       return response("Valid email address is required", 400);
     }
     if (password.length < 12 || password.length > 128 ||
