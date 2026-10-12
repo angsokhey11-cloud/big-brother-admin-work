@@ -22,10 +22,10 @@
 <div id="registerModal" class="overlay"><div class="modal"><h2>Register BIG BROTHER User</h2><p>Create a new Auth account on the <strong>currently connected Supabase environment</strong> (Live or Local). No email is sent. The new employee must be approved and assigned permissions before using BIG BROTHER.</p><label style="font-size:10px;font-weight:900;color:#526981">LOGIN EMAIL</label><input id="regEmail" type="email" maxlength="254" autocomplete="off" placeholder="staff@example.com"><label style="font-size:10px;font-weight:900;color:#526981;display:block;margin-top:10px">TEMPORARY PASSWORD (12+ CHARACTERS)</label><input id="regPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" placeholder="Use a unique temporary password"><label style="font-size:10px;font-weight:900;color:#526981;display:block;margin-top:10px">CONFIRM PASSWORD</label><input id="regConfirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" placeholder="Repeat temporary password"><p class="sub">Use a password with letters and numbers. Deliver it privately to the employee and ask them to change it after first login. The password is not stored in this page.</p><div id="regMsg" role="status" class="status" style="margin-top:9px"></div><div class="modal-actions"><button id="regCancel" class="btn ghost">Cancel</button><button id="regSend" class="btn primary">Create Account</button></div></div></div>
 <div id="syncLocalModal" class="overlay"><div class="modal">
 <h2>Sync Local Users to Cloud</h2>
-<p>Import a <b>reviewed</b> JSON manifest exported from BIG BROTHER Local Brain. The Cloud will match accounts by email and invite new email addresses. <b>Passwords and local permissions are never uploaded.</b> Existing Cloud roles are not changed.</p>
+<p>Import a <b>reviewed</b> JSON manifest exported from BIG BROTHER Local Brain. Cloud will match or invite accounts. If the manifest includes permissions, you will see a <b>separate preview and approval</b> before any Live access changes. Passwords are never uploaded.</p>
 <label style="font-size:10px;font-weight:900;color:#526981">LOCAL USER MANIFEST (.JSON)</label>
 <input id="syncLocalFile" type="file" accept=".json,application/json">
-<p class="sub">Maximum 50 accounts per batch. Your browser will send the user IDs and email addresses to Live only after confirmation.</p>
+<p class="sub">Maximum 50 accounts per batch. Your browser will send approved user identities, and any explicitly confirmed access snapshot, to Live.</p>
 <div id="syncLocalMsg" class="status" style="white-space:pre-wrap;margin-top:9px"></div>
 <div class="modal-actions"><button id="syncLocalCancel" class="btn ghost">Cancel</button><button id="syncLocalSend" class="btn primary">Review &amp; Sync</button></div>
 </div></div>
@@ -69,35 +69,75 @@ async function syncLocalUsers(){
   const file=$('syncLocalFile').files?.[0],msg=$('syncLocalMsg'),btn=$('syncLocalSend');
   msg.className='status';
   if(!file){msg.textContent='Choose the Local User JSON manifest.';msg.className='status err';return}
-  if(file.size>128000){msg.textContent='File too large. Export at most 50 users per batch.';msg.className='status err';return}
+  if(file.size>256000){msg.textContent='File too large. Export at most 50 users per batch.';msg.className='status err';return}
   let doc;
   try{doc=JSON.parse(await file.text())}catch(_){msg.textContent='Invalid JSON manifest.';msg.className='status err';return}
   if(!doc||!Array.isArray(doc.users)||doc.users.length<1||doc.users.length>50||
      !/^[a-z0-9][a-z0-9_-]{2,59}$/.test(String(doc.sourceInstance||''))){
-    msg.textContent='Manifest must contain sourceInstance and 1–50 users.';msg.className='status err';return
+    msg.textContent='Manifest must contain sourceInstance and 1–50 users.';msg.className='status err';return;
   }
   if(!doc.users.every(u=>u&&typeof u.email==='string'&&typeof u.localUserId==='string')){
-    msg.textContent='Each user must have localUserId and email.';msg.className='status err';return
+    msg.textContent='Each user must have localUserId and email.';msg.className='status err';return;
   }
   const items=doc.users.map(u=>({localUserId:String(u.localUserId),email:String(u.email)}));
   const emails=items.map(u=>u.email).join('\n');
   if(!window.confirm('Sync '+items.length+' Local account identities to LIVE?\n\n'+emails+
-      '\n\nMissing accounts will receive Cloud invitations. No passwords or permissions will be copied.')){
-    return
+      '\n\nMissing accounts will receive Cloud invitations. No passwords will be copied.')){
+    return;
   }
   btn.disabled=true;msg.textContent='Reconciling Local identities with LIVE…';
   try{
     await ensure();
-    const invoke=()=>fetch(SB_URL+'/functions/v1/bb-admin-import-local-users',{
-      method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
-      body:JSON.stringify({sourceInstance:doc.sourceInstance,users:items}),cache:'no-store'
-    });
-    let r=await invoke();if(r.status===401){await refresh();r=await invoke()}
-    const d=await parse(r);
-    msg.textContent='Linked/invited: '+d.imported+'   Need review: '+d.review+'\n'+
-      (d.results||[]).map(v=>v.email+' — '+v.state+(v.message?': '+v.message:'')).join('\n')+
-      '\n\nCheck Cloud permissions before users sign in.';
+    const invoke=async body=>{
+      const send=()=>fetch(SB_URL+'/functions/v1/bb-admin-import-local-users',{
+        method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
+        body:JSON.stringify(body),cache:'no-store'
+      });
+      let r=await send();if(r.status===401){await refresh();r=await send()}
+      return await parse(r);
+    };
+    const d=await invoke({sourceInstance:doc.sourceInstance,users:items});
+    const identityStatus='Linked/invited: '+d.imported+'   Need review: '+d.review+'\n'+
+      (d.results||[]).map(v=>v.email+' — '+v.state+(v.message?': '+v.message:'')).join('\n');
+    msg.textContent=identityStatus;
     if(d.review)msg.className='status err';
+    const ready = new Set((d.results||[]).filter(x=>x.state!=='needs-review').map(x=>String(x.email).toLowerCase()));
+    const withAccess=doc.users.filter(u=>u.access && ready.has(String(u.email).toLowerCase()));
+    for(const user of withAccess){
+      const payload={sourceInstance:doc.sourceInstance,user:{
+        localUserId:String(user.localUserId),email:String(user.email),access:user.access
+      }};
+      try{
+        const preview=await invoke({...payload,operation:'previewAccess'});
+        if(preview.alreadyAligned){
+          msg.textContent+='\n'+user.email+': LIVE and LOCAL permissions already match.';
+          continue;
+        }
+        const before=preview.current,after=preview.requested;
+        const grantText=a=>(a.modules||[]).map(m=>m.moduleKey+':'+
+          [m.canView?'V':'',m.canCreate?'C':'',m.canEdit?'E':'',m.canApprove?'A':''].join('')).join('\n');
+        const detail='EMPLOYEE: '+user.email+'\n'+
+          'CURRENT LIVE: '+JSON.stringify({role:before.role,active:before.active,staffId:before.staffId,locations:before.locations})+'\n'+grantText(before)+
+          '\n\nREQUESTED LOCAL: '+JSON.stringify({role:after.role,active:after.active,staffId:after.staffId,locations:after.locations})+'\n'+grantText(after);
+        msg.textContent=identityStatus+'\n\nPERMISSIONS PREVIEW — review before confirming:\n'+detail;
+        if(!window.confirm('Apply the reviewed LOCAL permissions to LIVE for '+user.email+'?\n\n'+
+             'Role: '+before.role+' → '+after.role+
+             '\nStaff: '+(before.staffId||'None')+' → '+(after.staffId||'None')+
+             '\nLocations: '+after.locations.join(', ')+
+             '\nFunction grants: '+after.modules.length+
+             '\n\nReview the FULL permissions list displayed in the page before confirming.')){
+          msg.textContent+='\n\nAccess sync skipped by Admin. No access changes applied.';
+          continue;
+        }
+        const applied=await invoke({...payload,operation:'applyAccess',
+          expectedCloudHash:preview.currentHash,expectedLocalHash:preview.requestedHash});
+        msg.textContent+='\n\nACCESS SYNC: '+applied.state+' — '+user.email;
+      }catch(err){
+        msg.className='status err';
+        msg.textContent+='\n\nACCESS SYNC NEEDS REVIEW: '+user.email+' — '+err.message;
+      }
+    }
+    if(!withAccess.length)msg.textContent+='\nNo permission snapshot included. Identity sync only.';
     await loadAll(false);
   }catch(e){msg.textContent=e.message;msg.className='status err'}
   finally{btn.disabled=!canInvite()}
