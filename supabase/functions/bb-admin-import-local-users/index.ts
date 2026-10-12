@@ -38,10 +38,11 @@ function normalizeAccess(raw: any): Snapshot {
       if (typeof m[key] !== "boolean") throw new Error("Invalid module permission flags");
     }
     return {
-      moduleKey, canView: m.canView, canCreate: m.canCreate,
-      canEdit: m.canEdit, canApprove: m.canApprove,
+      moduleKey, canView: m.canView || m.canCreate || m.canEdit || m.canApprove,
+      canCreate: m.canCreate, canEdit: m.canEdit, canApprove: m.canApprove,
     };
-  }).sort((a: any,b: any) => a.moduleKey.localeCompare(b.moduleKey));
+  }).filter((m:any) => m.canView || m.canCreate || m.canEdit || m.canApprove)
+    .sort((a: any,b: any) => a.moduleKey.localeCompare(b.moduleKey));
   if (new Set(modules.map((m: any) => m.moduleKey)).size !== modules.length) {
     throw new Error("Duplicate module key");
   }
