@@ -48,3 +48,14 @@ The existing V5 server rewrites hard-coded cloud URLs; registration is routed to
 - Branch-only frontend + Edge Function source.
 - No live user accounts created, no SQL applied, no Edge Function deployed and no Local Brain files changed.
 - Reviewed frontend JavaScript syntax and permission paths. Real backend integration testing remains outstanding.
+
+
+## Local → Cloud user reconciliation add-on
+The existing Control Center V3.3 `12-SYNC-LOCAL-TO-CLOUD-NEW-ID-V1.2.ps1` and associated `12B/12C` SQL enumerate business tables in `public`; they do **not** provision records in `auth.users`, and they do not include `app_users` or a Local-to-Cloud Auth ID translation.
+
+The companion cloud endpoint `bb-admin-import-local-users` plus migration `bb_local_cloud_user_links` implements an explicitly approved matching/invitation operation. It accepts **no password, no local service key, no role or permission assignment**. It matches existing email accounts or creates Cloud invitations, then stores a restricted Local UUID to Cloud UUID mapping. The manager displays per-user `matched-existing`, `invited-to-cloud`, `already-linked`, or `needs-review` results.
+
+The Windows add-on includes a read-only manifest exporter and installer for the Local registration Edge Function. Run the normal business upload first, then in LIVE User & Permission Manager choose `Sync Local Users` and provide the reviewed JSON manifest. This is **not yet an automatic Control Center action**. It is a separate post-upload procedure, designed not to weaken the existing uploader.
+
+**Business-row ID dependencies remain unresolved:** if a new local transaction stores a Local Auth UUID in an ownership/actor column, the business uploader must use `bb_local_cloud_user_links` to translate it to the Cloud Auth UUID or fail safely. Never directly copy Local Auth users into the Cloud Auth schema.
+
