@@ -10,7 +10,7 @@
 <body>
 <div id="loading" class="loading"><div id="loadingText" class="loadbox">Loading User Access…</div></div>
 <div class="page">
-  <div class="top"><div><h1 class="title">User & Permission Manager</h1><div class="sub">BIG BROTHER · Permission Controlled V3 · Admin role does not bypass function permissions</div></div><div class="actions"><span class="pill ok">🔐 SUPABASE SECURE</span><button id="inviteBtn" class="btn green">＋ Invite User</button><button id="registerBtn" class="btn primary">＋ Register User</button><button id="refreshBtn" class="btn ghost">Refresh</button></div></div>
+  <div class="top"><div><h1 class="title">User & Permission Manager</h1><div class="sub">BIG BROTHER · Permission Controlled V3 · Admin role does not bypass function permissions</div></div><div class="actions"><span class="pill ok">🔐 SUPABASE SECURE</span><button id="inviteBtn" class="btn green">＋ Invite User</button><button id="registerBtn" class="btn primary">＋ Register User</button><button id="syncLocalBtn" class="btn ghost" style="display:none">⇪ Sync Local Users</button><button id="refreshBtn" class="btn ghost">Refresh</button></div></div>
   <div class="summary"><div class="stat"><span>Auth Users</span><strong id="sUsers">0</strong></div><div class="stat"><span>Approved</span><strong id="sApproved">0</strong></div><div class="stat"><span>Active</span><strong id="sActive">0</strong></div><div class="stat"><span>Waiting Approval</span><strong id="sWaiting">0</strong></div><div class="stat"><span>Menus / Functions</span><strong id="sFunctions">0</strong></div></div>
   <div class="layout">
     <div class="card"><div class="head"><strong>Users</strong><span id="userCount" class="pill blue">0</span></div><div class="body"><input id="search" class="search" placeholder="Search email / staff…"></div><div id="users" class="users"></div></div>
@@ -20,6 +20,15 @@
 </div>
 <div id="inviteModal" class="overlay"><div class="modal"><h2>Invite BIG BROTHER User</h2><p>An invitation email will be sent. The user sets their password, then appears here for approval and permission assignment.</p><label style="font-size:10px;font-weight:900;color:#526981">EMAIL</label><input id="inviteEmail" type="email" placeholder="staff@example.com"><div id="inviteMsg" class="status" style="margin-top:9px"></div><div class="modal-actions"><button id="inviteCancel" class="btn ghost">Cancel</button><button id="inviteSend" class="btn green">Send Invitation</button></div></div></div>
 <div id="registerModal" class="overlay"><div class="modal"><h2>Register BIG BROTHER User</h2><p>Create a new Auth account on the <strong>currently connected Supabase environment</strong> (Live or Local). No email is sent. The new employee must be approved and assigned permissions before using BIG BROTHER.</p><label style="font-size:10px;font-weight:900;color:#526981">LOGIN EMAIL</label><input id="regEmail" type="email" maxlength="254" autocomplete="off" placeholder="staff@example.com"><label style="font-size:10px;font-weight:900;color:#526981;display:block;margin-top:10px">TEMPORARY PASSWORD (12+ CHARACTERS)</label><input id="regPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" placeholder="Use a unique temporary password"><label style="font-size:10px;font-weight:900;color:#526981;display:block;margin-top:10px">CONFIRM PASSWORD</label><input id="regConfirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" placeholder="Repeat temporary password"><p class="sub">Use a password with letters and numbers. Deliver it privately to the employee and ask them to change it after first login. The password is not stored in this page.</p><div id="regMsg" role="status" class="status" style="margin-top:9px"></div><div class="modal-actions"><button id="regCancel" class="btn ghost">Cancel</button><button id="regSend" class="btn primary">Create Account</button></div></div></div>
+<div id="syncLocalModal" class="overlay"><div class="modal">
+<h2>Sync Local Users to Cloud</h2>
+<p>Import a <b>reviewed</b> JSON manifest exported from BIG BROTHER Local Brain. The Cloud will match accounts by email and invite new email addresses. <b>Passwords and local permissions are never uploaded.</b> Existing Cloud roles are not changed.</p>
+<label style="font-size:10px;font-weight:900;color:#526981">LOCAL USER MANIFEST (.JSON)</label>
+<input id="syncLocalFile" type="file" accept=".json,application/json">
+<p class="sub">Maximum 50 accounts per batch. Your browser will send the user IDs and email addresses to Live only after confirmation.</p>
+<div id="syncLocalMsg" class="status" style="white-space:pre-wrap;margin-top:9px"></div>
+<div class="modal-actions"><button id="syncLocalCancel" class="btn ghost">Cancel</button><button id="syncLocalSend" class="btn primary">Review &amp; Sync</button></div>
+</div></div>
 <script>
 'use strict';
 const SB_URL='https://sjfhlaclgmkwwofzstok.supabase.co',SB_KEY='sb_publishable_w762jR65CWwlO30fKQsYOw_6L9grx8S',SESSION_KEY='BB_SUPABASE_DEV_SESSION_V1';
@@ -37,7 +46,7 @@ function currentGrant(){return (profile?.modules||[]).find(m=>String(m.moduleKey
 function canManage(){const g=currentGrant();return !!(g.canEdit||g.canApprove)}
 function canInvite(){return !!currentGrant().canApprove}
 function userStatus(u){if(!u.approved)return'<span class="pill warn">Waiting Approval</span>';if(!u.active)return'<span class="pill off">Disabled</span>';if(u.role==='admin')return'<span class="pill blue">Admin</span>';return'<span class="pill ok">Active</span>'}
-function renderSummary(){const u=data?.users||[];$('sUsers').textContent=u.length;$('sApproved').textContent=u.filter(x=>x.approved).length;$('sActive').textContent=u.filter(x=>x.approved&&x.active).length;$('sWaiting').textContent=u.filter(x=>!x.approved).length;$('sFunctions').textContent=(data?.modules||[]).length;$('userCount').textContent=u.length+' Users';$('inviteBtn').disabled=!canInvite();$('registerBtn').disabled=!canInvite()}
+function renderSummary(){const u=data?.users||[];$('sUsers').textContent=u.length;$('sApproved').textContent=u.filter(x=>x.approved).length;$('sActive').textContent=u.filter(x=>x.approved&&x.active).length;$('sWaiting').textContent=u.filter(x=>!x.approved).length;$('sFunctions').textContent=(data?.modules||[]).length;$('userCount').textContent=u.length+' Users';$('inviteBtn').disabled=!canInvite();$('registerBtn').disabled=!canInvite();$('syncLocalBtn').disabled=!canInvite()}
 function renderUsers(){const q=$('search').value.trim().toLowerCase();const rows=(data?.users||[]).filter(u=>[u.email,u.staffName,u.role].join(' ').toLowerCase().includes(q));$('users').innerHTML=rows.length?rows.map(u=>`<div class="user ${u.userId===selectedId?'active':''}" data-id="${esc(u.userId)}"><div class="email">${esc(u.email||'No email')}</div><div class="meta">${userStatus(u)}<span>${esc(u.staffName||'No Staff Link')}</span><span>•</span><span>${esc(u.role||'viewer')}</span></div></div>`).join(''):'<div class="empty">No users found.</div>';document.querySelectorAll('.user[data-id]').forEach(el=>el.onclick=()=>selectUser(el.dataset.id))}
 function grantMap(){return new Map((detail?.modules||[]).map(m=>[m.moduleKey,m]))}
 function filterPermissionRows(){const q=$('permSearch')?.value.trim().toLowerCase()||'';document.querySelectorAll('tbody tr[data-module]').forEach(tr=>tr.hidden=!!q&&!String(tr.dataset.search||'').includes(q));document.querySelectorAll('tbody tr.group-row').forEach(gr=>{let n=gr.nextElementSibling,visible=false;while(n&&!n.classList.contains('group-row')){if(n.dataset.module&&!n.hidden){visible=true;break}n=n.nextElementSibling}gr.hidden=!visible})}
@@ -55,6 +64,44 @@ async function selectUser(id){selectedId=id;renderUsers();loading(true,'Loading 
 async function saveAccess(){if(!detail||!canManage())return;const btn=$('saveBtn'),status=$('saveStatus');btn.disabled=true;status.className='status';status.textContent='Saving permissions…';try{const modules=[];document.querySelectorAll('tbody tr[data-module]').forEach(tr=>{const v=tr.querySelector('.pv'),c=tr.querySelector('.pc'),e=tr.querySelector('.pe'),a=tr.querySelector('.pa');if(v?.checked||c?.checked||e?.checked||a?.checked)modules.push({moduleKey:tr.dataset.module,canView:!!v?.checked,canCreate:!!c?.checked,canEdit:!!e?.checked,canApprove:!!a?.checked})});const payload={userId:detail.user.userId,staffId:$('eStaff').value,role:$('eRole').value,active:$('eActive').checked,locations:[...document.querySelectorAll('.loc:checked')].map(x=>x.value),modules,note:'Saved from User & Permission Manager V3 — explicit permissions for every role'};detail=await rpc('bb_user_access_admin_save',{p_payload:payload});status.textContent='Permissions saved successfully.';await loadAll(false);selectedId=payload.userId;await selectUser(selectedId)}catch(e){status.textContent=e.message;status.className='status err'}finally{if(btn)btn.disabled=!canManage()}}
 function renderAudit(){const a=data?.audit||[];$('audit').innerHTML=a.length?a.map(x=>`<div class="audit-row"><strong>${esc(x.action)}</strong> · ${esc(x.targetEmail)} · by ${esc(x.actorEmail)} · ${esc(fmt(x.occurredAt))}${x.note?' · '+esc(x.note):''}</div>`).join(''):'<div class="empty">No access changes yet.</div>'}
 async function loadAll(show=true){if(show)loading(true,'Loading User Access V3…');try{profile=await rpc('bb_current_access_profile');data=await rpc('bb_user_access_admin_bootstrap');renderSummary();renderUsers();renderAudit()}finally{if(show)loading(false)}}
+async function syncLocalUsers(){
+  if(!canInvite()||!SB_URL.includes('.supabase.co'))return;
+  const file=$('syncLocalFile').files?.[0],msg=$('syncLocalMsg'),btn=$('syncLocalSend');
+  msg.className='status';
+  if(!file){msg.textContent='Choose the Local User JSON manifest.';msg.className='status err';return}
+  if(file.size>128000){msg.textContent='File too large. Export at most 50 users per batch.';msg.className='status err';return}
+  let doc;
+  try{doc=JSON.parse(await file.text())}catch(_){msg.textContent='Invalid JSON manifest.';msg.className='status err';return}
+  if(!doc||!Array.isArray(doc.users)||doc.users.length<1||doc.users.length>50||
+     !/^[a-z0-9][a-z0-9_-]{2,59}$/.test(String(doc.sourceInstance||''))){
+    msg.textContent='Manifest must contain sourceInstance and 1–50 users.';msg.className='status err';return
+  }
+  if(!doc.users.every(u=>u&&typeof u.email==='string'&&typeof u.localUserId==='string')){
+    msg.textContent='Each user must have localUserId and email.';msg.className='status err';return
+  }
+  const items=doc.users.map(u=>({localUserId:String(u.localUserId),email:String(u.email)}));
+  const emails=items.map(u=>u.email).join('\n');
+  if(!window.confirm('Sync '+items.length+' Local account identities to LIVE?\n\n'+emails+
+      '\n\nMissing accounts will receive Cloud invitations. No passwords or permissions will be copied.')){
+    return
+  }
+  btn.disabled=true;msg.textContent='Reconciling Local identities with LIVE…';
+  try{
+    await ensure();
+    const invoke=()=>fetch(SB_URL+'/functions/v1/bb-admin-import-local-users',{
+      method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
+      body:JSON.stringify({sourceInstance:doc.sourceInstance,users:items}),cache:'no-store'
+    });
+    let r=await invoke();if(r.status===401){await refresh();r=await invoke()}
+    const d=await parse(r);
+    msg.textContent='Linked/invited: '+d.imported+'   Need review: '+d.review+'\n'+
+      (d.results||[]).map(v=>v.email+' — '+v.state+(v.message?': '+v.message:'')).join('\n')+
+      '\n\nCheck Cloud permissions before users sign in.';
+    if(d.review)msg.className='status err';
+    await loadAll(false);
+  }catch(e){msg.textContent=e.message;msg.className='status err'}
+  finally{btn.disabled=!canInvite()}
+}
 async function registerUser(){
   if(!canInvite())return;
   const email=$('regEmail').value.trim().toLowerCase();
@@ -86,7 +133,7 @@ async function registerUser(){
   finally{btn.disabled=!canInvite()}
 }
 async function invite(){if(!canInvite())return;const email=$('inviteEmail').value.trim().toLowerCase(),msg=$('inviteMsg'),btn=$('inviteSend');if(!email){msg.textContent='Enter an email address.';msg.className='status err';return}btn.disabled=true;msg.textContent='Sending invitation…';try{await ensure();let r=await fetch(SB_URL+'/functions/v1/bb-admin-invite-user',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},body:JSON.stringify({email}),cache:'no-store'});if(r.status===401){await refresh();r=await fetch(SB_URL+'/functions/v1/bb-admin-invite-user',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},body:JSON.stringify({email}),cache:'no-store'})}const d=await parse(r);msg.textContent='Invitation sent.';await loadAll(false);if(d.user?.userId){selectedId=d.user.userId;await selectUser(selectedId)}setTimeout(()=>$('inviteModal').classList.remove('show'),700)}catch(e){msg.textContent=e.message;msg.className='status err'}finally{btn.disabled=false}}
-$('search').addEventListener('input',renderUsers);$('refreshBtn').onclick=()=>loadAll(true);$('inviteBtn').onclick=()=>{if(!canInvite())return;$('inviteEmail').value='';$('inviteMsg').textContent='';$('inviteModal').classList.add('show')};$('inviteCancel').onclick=()=>$('inviteModal').classList.remove('show');$('inviteSend').onclick=invite;$('registerBtn').onclick=()=>{if(!canInvite())return;$('regEmail').value='';$('regPassword').value='';$('regConfirm').value='';$('regMsg').textContent='';$('registerModal').classList.add('show')};$('regCancel').onclick=()=>{$('regPassword').value='';$('regConfirm').value='';$('registerModal').classList.remove('show')};$('regSend').onclick=registerUser;$('registerModal').addEventListener('click',e=>{if(e.target===$('registerModal')){$('regPassword').value='';$('regConfirm').value='';$('registerModal').classList.remove('show')}});$('inviteModal').addEventListener('click',e=>{if(e.target===$('inviteModal'))$('inviteModal').classList.remove('show')});
+$('search').addEventListener('input',renderUsers);$('refreshBtn').onclick=()=>loadAll(true);$('inviteBtn').onclick=()=>{if(!canInvite())return;$('inviteEmail').value='';$('inviteMsg').textContent='';$('inviteModal').classList.add('show')};$('inviteCancel').onclick=()=>$('inviteModal').classList.remove('show');$('inviteSend').onclick=invite;const isLiveSystem=SB_URL.includes('.supabase.co');$('syncLocalBtn').style.display=isLiveSystem?'':'none';$('syncLocalBtn').onclick=()=>{if(!isLiveSystem||!canInvite())return;$('syncLocalMsg').textContent='';$('syncLocalFile').value='';$('syncLocalModal').classList.add('show')};$('syncLocalCancel').onclick=()=>$('syncLocalModal').classList.remove('show');$('syncLocalSend').onclick=syncLocalUsers;$('syncLocalModal').addEventListener('click',e=>{if(e.target===$('syncLocalModal'))$('syncLocalModal').classList.remove('show')});$('registerBtn').onclick=()=>{if(!canInvite())return;$('regEmail').value='';$('regPassword').value='';$('regConfirm').value='';$('regMsg').textContent='';$('registerModal').classList.add('show')};$('regCancel').onclick=()=>{$('regPassword').value='';$('regConfirm').value='';$('registerModal').classList.remove('show')};$('regSend').onclick=registerUser;$('registerModal').addEventListener('click',e=>{if(e.target===$('registerModal')){$('regPassword').value='';$('regConfirm').value='';$('registerModal').classList.remove('show')}});$('inviteModal').addEventListener('click',e=>{if(e.target===$('inviteModal'))$('inviteModal').classList.remove('show')});
 (async()=>{try{await ensure();await loadAll(true)}catch(e){loading(false);document.body.innerHTML=`<div class="page"><div class="card"><div class="body"><h2 style="color:#b42318">Access Denied</h2><p>${esc(e.message)}</p><p class="sub">This function is controlled by User & Permission Manager permissions.</p></div></div></div>`}})();
 </script>
 </body></html>
