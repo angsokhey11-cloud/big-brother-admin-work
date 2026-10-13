@@ -1,61 +1,53 @@
-# BIG BROTHER — Shared Live / Local User Registration (V1)
+# BIG BROTHER — Separate Live and Local User Accounts
 
-## Scope and safety
-This change adds **Register User** next to **Invite User** in the existing User & Permission Manager V3. It does not replace the existing permission editor or registration-by-invitation flow.
+## Current decision (13 October 2026)
 
-- Runs the **same** frontend code for Live and Local Brain.
-- Browser calls `<active SUPABASE URL>/functions/v1/bb-admin-register-user`.
-- Supabase Edge Function uses **its own environment** to create the account. It never accepts a user-supplied Supabase URL or privileged API key.
-- Must be deployed **separately to both Live and Local Supabase**. Code Sync alone cannot deploy an Edge Function to a running Supabase installation.
-- This branch is a staging prototype. Do not merge or deploy before an admin verifies its behavior on a nonproduction copy.
+The automatic Local ↔ Live user identity and permission synchronization experiment has been **deferred**. It is not a production feature, and must not be reintroduced just because old branches or commits mention it.
 
-## Architecture
-**Frontend:** `user-permissions.html` (same file in both environments). Existing V5 Local Brain web server rewrites the configured cloud Supabase URL to its local Supabase URL while serving pages. This mechanism must be rechecked when moving to the V6 HTTPS LAN gateway.
+**User-selected approach:** Register the employee separately in Local Brain and Live, then manage their role, staff link, location access and module permissions independently in each environment.
 
-**Backend:** `supabase/functions/bb-admin-register-user/index.ts`. Same Edge Function source installed to each Supabase backend. Uses the existing authenticated-user middleware `npm:@supabase/server@1.5.3` and `ctx.supabaseAdmin.auth.admin.createUser`.
+No cross-environment password copying, automatic permission propagation or Auth UUID copying.
 
-**Authorization:** Server calls `bb_has_module_access('route.admin-user-permissions','approve')`. Neither client-side UI checks nor merely possessing the Admin role bypasses that explicit permission. Admin/service-role API credentials are never placed in browser code.
+## Working features to preserve
 
-**Post-registration:** The new Auth user must be saved via existing `bb_user_access_admin_save` (staff link, location grants, module grants, role and active flag) before BIG BROTHER application access. If no user record is approved, `bb_current_access_profile` denies application use.
+- **Register User** in the existing User & Permission Manager. Uses the Supabase environment currently connected to the application (Local or Live); authorized administrators enter an initial password directly instead of depending on a Gmail inbox.
+- **Reset Password** for an existing selected account on Live (and on Local only if that same Edge Function has been installed there). Requires explicit privileged permission. This does not change the other environment's password.
+- **Invite User** remains available for accounts with real deliverable email.
+- **Approve & Save** manually assigns staff links, role, allowed locations and module permissions. Those grants belong to the selected environment.
 
-**Legacy allowlist:** Existing Auth trigger `trg_bb_sync_app_user_from_auth` can auto-approve allowlisted email addresses. To prevent surprise privileges, direct registration refuses email addresses already present in `app_user_allowlist`. Review/remove legacy entries with an authorized admin workflow before continuing.
+Do not change the existing live registration, password-reset or permission-save implementation as part of abandoned user synchronization cleanup.
 
-**Offline:** No verification email is sent. Admin directly sets an initial strong password. Employee receives password privately and should change it. If password change enforcement is required, add that feature to the sign-in flow separately; this version does not enforce it.
+## Backend requirements
 
-## Prerequisites in *each* environment
-1. `bb_has_module_access` RPC with explicit `approve` permission.
-2. `app_user_allowlist`, Auth-to-app-users trigger, and `bb_user_access_admin_save` / `bb_current_access_profile`.
-3. Installed and running Supabase Auth and Edge Functions runtime, with the function code and its package dependencies cached **before** disconnected operation.
-4. Correct CORS, Origin and URL rewrites; no cloud endpoint fallback when in Local mode.
-5. Working Local admin account with User & Permission Manager **Approve** grant; separate from the accounts being created.
+The registration endpoint is `supabase/functions/bb-admin-register-user/index.ts`. It uses server-side Supabase Auth admin privileges within the running environment; never accepts a browser-supplied service-role key or a target server URL. It checks explicit User & Permission Manager approval access and legacy allowlist conditions before account creation.
 
-## Deployment and testing — NOT AUTOMATIC
-1. Back up Live and Local separately. Keep V5 unchanged while testing.
-2. Verify actual `Local Brain/supabase` configuration and Edge Function directory used by the V5 launcher. Copy the function folder into that project's `supabase/functions` location and start its Edge runtime; do **not** install files into a guessed path.
-3. Deploy this function to Live independently through your normal Supabase deployment workflow, only after staging tests and approval.
-4. Point the application to the correct environment. Check browser Network logs to confirm the registration request target for each environment.
-5. With a test admin, create a **new non-allowlisted** test Auth user; confirm it appears as waiting approval. Ensure it cannot use company data before grants.
-6. Link test user to test staff/location/modules via existing permission editor. Confirm login, granted access and denied modules.
-7. Remove network connectivity **while Local Supabase is running**; register a second test account locally and verify sign-in + permissions. Do not rely on an internet-delivered JS library on cold start.
-8. Reconnect to internet and verify the offline test account was not added to Live, and Live registration did not touch Local.
-9. Test duplicate email, invalid password, unauthorized actor, legacy allowlisted email and disabling an account.
-10. Confirm Cloud Refresh does not overwrite or delete locally registered accounts and any locally edited staff/permissions. Existing sync protections need separate verification before permanent production use.
+The password-reset endpoint is `supabase/functions/bb-admin-reset-user-password/index.ts`. It changes only the selected environment's Auth password; it does not email a reset link to a placeholder login identifier. Account role and permission grants must remain unchanged.
 
-## Warning: Local vs Live isolation
-The existing V5 server rewrites hard-coded cloud URLs; registration is routed to **whatever API URL the active app actually uses**. Full Local-only routing remains a separate prerequisite. Do not assume all 32 repos are safely isolated based on this one registration feature.
+Registration and password-reset functions need to be installed in **each environment separately**. Updating the GitHub frontend code alone does not install an Edge Function into Local Brain. Verify the correct Local API URL and locally running Edge Functions before relying on offline operation.
 
-## Change status
-- Branch-only frontend + Edge Function source.
-- No live user accounts created, no SQL applied, no Edge Function deployed and no Local Brain files changed.
-- Reviewed frontend JavaScript syntax and permission paths. Real backend integration testing remains outstanding.
+Never give an account privileges just because registration succeeded. Review the user in the existing permission manager.
 
+## Retired experiment — do not rely on it
 
-## Local → Cloud user reconciliation add-on
-The existing Control Center V3.3 `12-SYNC-LOCAL-TO-CLOUD-NEW-ID-V1.2.ps1` and associated `12B/12C` SQL enumerate business tables in `public`; they do **not** provision records in `auth.users`, and they do not include `app_users` or a Local-to-Cloud Auth ID translation.
+- The experimental **Sync Local Users** button, JSON manifest import UI, and its GitHub Edge Function source `bb-admin-import-local-users` were removed from the active branch.
+- Its draft `previewAccess` / `applyAccess` endpoints were **never approved as an operational permission sync**.
+- Earlier experimental PowerShell helpers and two-way sync notes do not represent a working production user-sync implementation.
+- The historical migration `supabase/migrations/20261012_bb_local_cloud_user_links.sql` stays in version history because it was applied and deleting or editing applied migrations can break database migration consistency. It does **not** mean the abandoned sync project is active. Existing identity-link rows should not be dropped automatically.
 
-The companion cloud endpoint `bb-admin-import-local-users` plus migration `bb_local_cloud_user_links` implements an explicitly approved matching/invitation operation. It accepts **no password, no local service key, no role or permission assignment**. It matches existing email accounts or creates Cloud invitations, then stores a restricted Local UUID to Cloud UUID mapping. The manager displays per-user `matched-existing`, `invited-to-cloud`, `already-linked`, or `needs-review` results.
+GitHub deletion does **not** automatically undeploy an already deployed Supabase Edge Function, delete existing database tables/rows, remove old Git commits, or delete old branches. Any separate retirement of deployed endpoints or old branches should be deliberate; do not change production databases as part of repository cleanup.
 
-The Windows add-on includes a read-only manifest exporter and installer for the Local registration Edge Function. Run the normal business upload first, then in LIVE User & Permission Manager choose `Sync Local Users` and provide the reviewed JSON manifest. This is **not yet an automatic Control Center action**. It is a separate post-upload procedure, designed not to weaken the existing uploader.
+## Existing Control Center V3.3
 
-**Business-row ID dependencies remain unresolved:** if a new local transaction stores a Local Auth UUID in an ownership/actor column, the business uploader must use `bb_local_cloud_user_links` to translate it to the Cloud Auth UUID or fail safely. Never directly copy Local Auth users into the Cloud Auth schema.
+Do not infer from this document that Cloud → Local or Local → Cloud buttons synchronize Auth accounts or permissions. Continue using the approved existing Control Center behavior for data and storage only. Independently assigned Local and Live credentials and permissions remain authoritative in their own systems.
 
+In particular, the old Cloud → Local data merge has historically needed care around `app_users` and related access tables. Treat it as **not permission-safe** until verified or updated; back up your Local environment before a Cloud Refresh after Local-only permission changes.
+
+## Safe employee setup today
+
+1. Register user in Live; set their initial password directly using a trusted admin account.
+2. Choose their Live role, staff link, allowed locations and module permissions and save.
+3. Register separately in Local Brain and set the Local password.
+4. Assign and save Local role, staff link, allowed locations and permissions.
+5. Verify each login against the correct backend and retain each environment's separate Auth ID.
+
+This process is manual by design; there is currently no automatic permission sync roadmap attached to it.
