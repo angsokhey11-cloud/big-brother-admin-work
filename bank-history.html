@@ -103,8 +103,14 @@ const money=(n,c)=>c+' '+Number(n).toLocaleString(undefined,{minimumFractionDigi
 const dateText=v=>{
  if(!v)return '—';
  const s=String(v);
- const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
- return m?m[3]+'/'+m[2]+'/'+m[1]:s;
+ const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+ if(m){const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];const mon=Number(m[2]);if(mon>=1&&mon<=12)return m[3]+'-'+months[mon-1]+'-'+m[1];}
+ const d=new Date(v);
+ return Number.isNaN(d.getTime())?s:d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Phnom_Penh'}).replace(/ /g,'-');
+};
+const dateTime=v=>{
+ const d=new Date(v);
+ return Number.isNaN(d.getTime())?String(v??'—'):dateText(d)+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Phnom_Penh'});
 };
 function equivalent(t){
  const invoiceCurrency=t.invoice_currency||t.currency,rate=Number(t.approved_exchange_rate)||1;
@@ -137,7 +143,7 @@ function render(){
    '<td>'+esc(t.payer_name||'—')+'</td>'+
    '<td class="'+esc(t.status)+'"><strong>'+esc(t.status)+'</strong></td>'+
    '<td>'+esc(t.used_payment_id||'—')+'</td>'+
-   '<td>'+esc(new Date(t.created_at).toLocaleString())+'</td>'+
+   '<td>'+esc(dateTime(t.created_at))+'</td>'+
    '<td>'+(t.status==='AVAILABLE'?'<button data-cancel="'+esc(t.transaction_id)+'">Cancel</button>':'—')+'</td>'+
   '</tr>';
  }).join('')||'<tr><td colspan="11">No matching transactions.</td></tr>';
@@ -176,7 +182,7 @@ function buildSummary(){
  });
  $('summarySheet').innerHTML=
   '<div class="sheet-head"><div><h2>BIG BROTHER — BANK TRANSACTION SUMMARY</h2><p style="margin:5px 0 0">Verified payments selected for staff invoice key-in.</p></div>'+
-  '<div class="meta"><strong>Prepared:</strong> '+esc(now.toLocaleString())+'<br><strong>Transactions:</strong> '+rows.length+'</div></div>'+
+  '<div class="meta"><strong>Prepared:</strong> '+esc(dateTime(now))+'<br><strong>Transactions:</strong> '+rows.length+'</div></div>'+
   '<div class="table-wrap"><table><thead><tr><th>#</th><th>Received</th><th>Customer</th><th>Transaction ID</th><th>Actual Payment</th><th>Invoice Amount</th><th>Payer</th><th>Status</th></tr></thead><tbody>'+
   rows.map((t,i)=>{const eq=equivalent(t);return '<tr><td>'+(i+1)+'</td><td>'+esc(dateText(t.received_date))+'</td><td>'+esc(t.customer_name||t.customer_id)+'</td><td class="tx">'+esc(t.transaction_id)+'</td><td>'+esc(money(t.amount,t.currency))+'</td><td>'+esc(money(eq.amount,eq.currency))+'</td><td>'+esc(t.bank_name||'—')+'</td><td>'+esc(t.status)+'</td></tr>'}).join('')+
   '</tbody></table></div>'+
