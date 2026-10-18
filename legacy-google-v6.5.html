@@ -1540,6 +1540,17 @@ function renderVaultCards(){
   if($("vaultAvgRate"))$("vaultAvgRate").textContent=vaultBalance.khrAverageRate>0?vaultBalance.khrAverageRate.toLocaleString(undefined,{maximumFractionDigits:2}):"0";
   if($("vaultStatus"))$("vaultStatus").textContent=isEmpty?"Empty":"Cash On Hold";
 }
+// Display-only accounting date formatter; keep ISO source values for filters, saves, and reports.
+function adminDateShown(value){
+ const raw=String(value??'').trim();
+ if(!raw)return '-';
+ const m=raw.match(/^(\d{4})-(\d{2})-(\d{2})(?=$|T|\s)/);
+ const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+ if(m&&+m[2]>=1&&+m[2]<=12&&+m[3]>=1&&+m[3]<=31)return m[3]+'-'+months[+m[2]-1]+'-'+m[1];
+ const d=new Date(raw);
+ return Number.isNaN(d.getTime())?raw:d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Phnom_Penh'}).replace(/ /g,'-');
+}
+
 function depositSearchText(r){
   return norm([r.date,r.source,r.referenceId,r.closeId,r.depositId,r.customer,r.customerName,r.salesperson,r.locationCode,r.entryId,r.invoiceDate].join(" "));
 }
@@ -1590,7 +1601,7 @@ function renderPendingDeposit(){
 
         return `<tr>
           <td>${i+1}</td>
-          <td>${esc(r.date||"-")}</td>
+          <td>${esc(adminDateShown(r.date))}</td>
           <td><span class="vault-source ${sourceClass}">${esc(source||"-")}</span></td>
           <td><strong>${esc(ref)}</strong></td>
           <td>${esc(customer)}</td>
@@ -1769,7 +1780,7 @@ function renderPendingDailyCash(){
   $("pendingDailyCashBody").innerHTML=visible.length?visible.map(r=>`
     <tr>
       <td><strong>${esc(r.requestId)}</strong></td>
-      <td>${esc(r.requestDate||"-")}</td>
+      <td>${esc(adminDateShown(r.requestDate))}</td>
       <td>${esc(r.salesman||"-")}</td>
       <td class="center">${num(r.groupCount)}</td>
       <td class="center">${num(r.invoiceCount)}</td>
@@ -1844,7 +1855,7 @@ function openPendingDailyCashReview(requestId){
     return `<tr>
       <td>${i+1}</td>
       <td><strong>${esc(x.invoiceNo||x.invoiceId||"-")}</strong></td>
-      <td>${esc(x.invoiceDate||"-")}</td>
+      <td>${esc(adminDateShown(x.invoiceDate))}</td>
       <td>${esc(x.customer||"-")}</td>
       <td>${esc(x.salesperson||r.salesman||"-")}</td>
       <td>${esc(x.locationCode||"-")}</td>
@@ -1871,11 +1882,11 @@ function openPendingDailyCashReview(requestId){
 
   $("dcInfoRequest").textContent=r.requestId||"-";
   $("dcInfoSalesman").textContent=r.salesman||"-";
-  $("dcInfoSaleDate").textContent=first.invoiceDate||r.requestDate||"-";
+  $("dcInfoSaleDate").textContent=adminDateShown(first.invoiceDate||r.requestDate);
   $("dcInfoLocation").textContent=first.locationCode||"-";
   $("dcInfoInvoiceCount").textContent=num(r.invoiceCount);
   $("dcInfoGroups").textContent=num(r.groupCount)||1;
-  $("dcInfoCreated").textContent=r.createdAt||r.requestDate||"-";
+  $("dcInfoCreated").textContent=adminDateShown(r.createdAt||r.requestDate);
 
   $("dcVerifyExpected").textContent=money(r.expectedUSD,"USD");
   $("dcVerifyUSD").textContent=money(r.actualCashUSD,"USD");
@@ -2278,7 +2289,7 @@ async function openReview(requestId){
     const isDirect=(r.requestType==="Direct Request"||r.paymentMethod==="Direct Request"||!r.paymentMethod);
 
     $("reviewMeta").innerHTML=
-      `<strong>Request Date:</strong> ${esc(r.requestDate||"-")}<br>`+
+      `<strong>Request Date:</strong> ${esc(adminDateShown(r.requestDate))}<br>`+
       `<strong>Request Type:</strong> ${esc(isDirect?"Direct Request":(r.requestType||r.paymentMethod||"-"))}`+
       `${r.note?`<br><strong>Salesman Note:</strong> ${esc(r.note)}`:""}`+
       `<br><strong>Admin Action:</strong> Choose the final Payment Method below before clearing.`;
@@ -2488,8 +2499,8 @@ function recalcVaultReportValue(){
 function renderVaultReport(){
   const d=vaultReportData||{};
   const reportDate=$("vaultReportDate").value||d.reportDate||"";
-  $("vrDailyDate").textContent="Report Date: "+reportDate;
-  $("vrReceivableDate").textContent="Report Date: "+reportDate;
+  $("vrDailyDate").textContent="Report Date: "+adminDateShown(reportDate);
+  $("vrReceivableDate").textContent="Report Date: "+adminDateShown(reportDate);
 
   const daily=Array.isArray(d.dailyRows)?d.dailyRows:[];
   const recv=Array.isArray(d.receivableRows)?d.receivableRows:[];
@@ -2503,7 +2514,7 @@ function renderVaultReport(){
   $("vrDailyFootKHR").textContent=vrKhr(d.dailyKHR);
 
   $("vrDailyBody").innerHTML=daily.length?daily.map((x,i)=>`<tr>
-    <td>${i+1}</td><td>${vrEsc(x.saleDate||x.date||"-")}</td><td title="${vrEsc(x.locationCode||"")}">${vrEsc(x.locationName||x.locationCode||"-")}</td>
+    <td>${i+1}</td><td>${vrEsc(adminDateShown(x.saleDate||x.date))}</td><td title="${vrEsc(x.locationCode||"")}">${vrEsc(x.locationName||x.locationCode||"-")}</td>
     <td>${vrEsc(x.salesperson||"-")}</td><td>${Number(x.invoiceCount||0).toLocaleString()}</td>
     <td>${vrUsd(x.usd)}</td><td>${vrKhr(x.khr)}</td>
   </tr>`).join(""):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#7a8798">No Daily Cash currently in Vault.</td></tr>';
@@ -2515,11 +2526,11 @@ function renderVaultReport(){
   $("vrReceivableBody").innerHTML=recv.length?recv.map((x,i)=>`
     <tr>
       <td>${i+1}</td>
-      <td>${vrEsc(x.date||"-")}</td>
+      <td>${vrEsc(adminDateShown(x.date))}</td>
       <td>${vrEsc(x.salesperson||"-")}</td>
       <td>${vrUsd(x.usd)}</td>
       <td>${vrKhr(x.khr)}</td>
-      <td title="${vrEsc((x.paymentId||"")+(x.invoiceNos&&x.invoiceNos.length?" · "+x.invoiceNos.join(", "):""))}">${vrEsc(x.invoiceDate||"-")}</td>
+      <td title="${vrEsc((x.paymentId||"")+(x.invoiceNos&&x.invoiceNos.length?" · "+x.invoiceNos.join(", "):""))}">${vrEsc(adminDateShown(x.invoiceDate))}</td>
       <td>${vrEsc(x.customerName||"-")}</td>
     </tr>
   `).join(""):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#7a8798">No Receivable Cash currently in Vault.</td></tr>';
