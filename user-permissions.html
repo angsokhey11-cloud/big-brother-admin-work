@@ -42,7 +42,7 @@ async function refresh(){session=readSession();if(!session?.refresh_token)throw 
 async function ensure(){session=readSession();if(!session?.access_token)throw new Error('Please sign in from the BIG BROTHER Dashboard.');if(session.expires_at&&Number(session.expires_at)<Math.floor(Date.now()/1000)+45)await refresh();return session}
 async function rpc(fn,args={}){await ensure();let r=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},body:JSON.stringify(args),cache:'no-store'});if(r.status===401){await refresh();r=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},body:JSON.stringify(args),cache:'no-store'})}return parse(r)}
 function loading(on,text='Loading…'){$('loading').classList.toggle('hidden',!on);$('loadingText').textContent=text}
-function fmt(v){if(!v)return'—';const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleString()}
+function fmt(v){if(!v)return'—';const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Phnom_Penh'}).replace(/ /g,'-')+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Phnom_Penh'})}
 function currentGrant(){return (profile?.modules||[]).find(m=>String(m.moduleKey).toLowerCase()==='route.admin-user-permissions')||{}}
 function canManage(){const g=currentGrant();return !!(g.canEdit||g.canApprove)}
 function canInvite(){return !!currentGrant().canApprove}
