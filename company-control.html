@@ -2,10 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BIG BROTHER — Company Control</title>
+<title>BIG BROTHER — Company Control</title><meta name="bb-notification-build" content="20261025-compact-categories-staff-ar1">
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#213247;font-family:Arial,Helvetica,sans-serif}button,input,select,textarea{font:inherit}.page{max-width:1600px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.title{margin:0;color:#174a91;font-size:27px}.sub{margin-top:5px;color:#6d7f93;font-size:12px}.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.btn{border:0;border-radius:9px;padding:9px 13px;font-weight:900;cursor:pointer}.primary{background:#174a91;color:#fff}.ghost{background:#fff;color:#38556f;border:1px solid #d4deea}.danger{background:#fff0f0;color:#b42318;border:1px solid #f1c8c6}.okbtn{background:#157a51;color:#fff}.pill{display:inline-block;border-radius:999px;padding:6px 9px;font-size:10px;font-weight:900}.blue{background:#eaf3ff;color:#174a91}.ok{background:#e8f7ef;color:#157a51}.warn{background:#fff6dd;color:#9a6700}.crit{background:#ffeded;color:#b42318}.info{background:#edf5ff;color:#245da8}.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}.card{background:#fff;border:1px solid #dce5ef;border-radius:13px;box-shadow:0 3px 13px #173a660d;overflow:hidden}.stat{padding:14px}.stat span{font-size:10px;color:#74869b;font-weight:900;text-transform:uppercase}.stat strong{display:block;margin-top:6px;color:#234463;font-size:21px}.head{padding:12px 14px;border-bottom:1px solid #e6edf4;display:flex;justify-content:space-between;gap:10px;align-items:center}.body{padding:14px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}.toolbar input,.toolbar select{border:1px solid #ccd8e5;border-radius:8px;padding:9px;background:#fff;min-width:170px}.tablewrap{overflow:auto;border:1px solid #dce5ee;border-radius:10px}table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:9px;border-bottom:1px solid #edf1f5;text-align:left;font-size:11px;vertical-align:top}th{background:#f7f9fc;color:#556b84;font-size:10px;text-transform:uppercase;position:sticky;top:0;z-index:1}.money{text-align:right;font-variant-numeric:tabular-nums}.empty{padding:35px;text-align:center;color:#8493a5}.alertrow{padding:12px 14px;border-bottom:1px solid #edf1f5;display:grid;grid-template-columns:110px 1fr auto;gap:12px;align-items:center}.alertrow:last-child{border-bottom:0}.alert-title{font-weight:900;color:#294762;font-size:12px}.alert-msg{margin-top:4px;color:#6d7f93;font-size:10px}.notif.unread{background:#f5f9ff}.activity-meta{font-size:10px;color:#7a8a9c;margin-top:4px}.overlay{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.overlay.show{display:flex}.modal{width:min(620px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:14px;padding:18px}.modal h2{margin:0 0 4px;color:#174a91}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}.field label{display:block;font-size:10px;font-weight:900;color:#526981;margin-bottom:5px;text-transform:uppercase}.field input,.field select,.field textarea{width:100%;border:1px solid #cbd7e4;border-radius:8px;padding:9px;background:#fff}.field textarea{min-height:70px}.full{grid-column:1/-1}.check{display:flex;gap:8px;align-items:center;min-height:38px;font-size:11px}.check input{width:17px;height:17px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}.loading{position:fixed;inset:0;background:#f3f6faed;display:flex;align-items:center;justify-content:center;z-index:90}.loading.hide{display:none}.loadbox{background:#fff;border:1px solid #dce5ef;border-radius:13px;padding:18px 24px;color:#174a91;font-weight:900}.errorbox{background:#fff0f0;border:1px solid #f2c9c6;color:#a82a23;border-radius:10px;padding:13px}.section-note{font-size:10px;color:#73859a;margin:8px 0 13px}.locbar{height:8px;background:#e8eef6;border-radius:8px;overflow:hidden;margin-top:5px}.locbar>span{display:block;height:100%;background:#174a91}.nowrap{white-space:nowrap}@media(max-width:1100px){.cards{grid-template-columns:repeat(2,1fr)}.alertrow{grid-template-columns:90px 1fr}}@media(max-width:700px){.page{padding:10px}.top{display:block}.actions{margin-top:10px}.cards,.grid{grid-template-columns:1fr}.alertrow{grid-template-columns:1fr}.full{grid-column:auto}}
 
+
+/* Compact one-row category navigation on PC, tablet and phone. */
+.bb-notif-filter-card{padding:10px 12px;margin-bottom:12px}
+.bb-notif-tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:7px;padding:3px 1px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;overscroll-behavior-x:contain}
+.bb-notif-tabs::-webkit-scrollbar{display:none}
+.bb-notif-tabs .btn{flex:0 0 auto;min-height:33px;min-width:0;padding:7px 12px;border-radius:999px;font-size:12px;line-height:1.25;white-space:nowrap;box-shadow:none}
+.bb-notif-tabs .btn:focus-visible{outline:2px solid #4b96d3;outline-offset:2px}
+.bb-notif-mobile-hint{display:none;font-size:10px;line-height:1;color:#718397;text-align:right;margin-top:3px}
+.bb-notif-head{gap:7px}
+.bb-notif-head strong{min-width:0;font-size:13px}
+.bb-notif-head .pill{white-space:nowrap;font-size:9px;padding:5px 8px}
+@media(max-width:640px){
+ .bb-notif-filter-card{padding:9px 10px;margin-bottom:10px}
+ .bb-notif-tabs{gap:6px;padding-bottom:5px}
+ .bb-notif-tabs .btn{min-height:32px;padding:6px 10px;font-size:11px}
+ .bb-notif-mobile-hint{display:block}
+ .bb-notif-head{padding:10px}
+ .bb-notif-head strong{font-size:12px}
+}
 .bb-notif-line{width:100%;display:flex;align-items:center;text-align:left;gap:9px;padding:13px 15px;background:white;border:0;border-bottom:1px solid #e7edf4;color:#24374a;cursor:pointer;font:inherit;font-size:12px}.bb-notif-line:hover,.bb-notif-line:focus-visible{background:#f1f6fd;outline:0}.bb-notif-line.unread{font-weight:800;background:#f7faff}.bb-notif-dot{width:10px;color:#2677cd}.bb-notif-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bb-notif-time{font-size:10px;color:#7b899a;font-weight:400;white-space:nowrap}@media(max-width:640px){.bb-notif-time{display:none}.bb-notif-line{padding:12px 10px}}
 </style>
 </head>
@@ -75,17 +94,19 @@ function stockModal(x={}){const products=lastData.products||[],locs=lastData.loc
 window.newStockRule=()=>stockModal({});window.editStockRule=i=>stockModal(lastData.settings[i]);
 
 let notificationCategory='All',receivableMode='Overdue Only';
-const categories=['All','Stock','Receivable','Approvals','Cash & Bank','Requests','Payments','Schedule'];
+const adminCategories=['All','Stock','Receivable','Approvals','Cash & Bank'];
+const staffCategories=['All','Receivable','Stock','Requests','Payments','Schedule'];
 async function loadNotifications(){
   const d=await rpc('bb_notification_v2_feed',{p_category:notificationCategory,p_receivable_view:receivableMode});
   lastData=d;
   const visible=(d.notifications||[]);
+  const categories=(d.isAdmin?adminCategories:staffCategories).filter(t=>t!=='Receivable'||d.canViewReceivable!==false);
   $('content').innerHTML=
-    '<div class="card" style="padding:12px 14px;margin-bottom:12px"><div class="toolbar" id="bbNotifTabs" style="margin:0">'+
-    categories.map(t=>'<button type="button" class="btn '+(t===notificationCategory?'primary':'ghost')+'" data-cat="'+esc(t)+'">'+esc(t)+'</button>').join('')+
-    '</div>'+(notificationCategory==='Receivable'?
+    '<div class="card bb-notif-filter-card"><div class="bb-notif-tabs" id="bbNotifTabs" role="group" aria-label="Notification categories">'+
+    categories.map(t=>'<button type="button" class="btn '+(t===notificationCategory?'primary':'ghost')+'" data-cat="'+esc(t)+'" aria-pressed="'+(t===notificationCategory?'true':'false')+'">'+esc(t)+'</button>').join('')+
+    '</div><div class="bb-notif-mobile-hint">Swipe for more categories ›</div>'+(notificationCategory==='Receivable'?
       '<div class="toolbar" style="margin:12px 0 0"><label>Receivable view <select id="bbReceivableMode"><option>Overdue Only</option><option>All Outstanding</option></select></label></div>':'')+
-    '</div><div class="card"><div class="head"><strong>Business activity · '+visible.length+' shown</strong><span class="pill blue">Manual refresh · No live checking</span></div>'+
+    '</div><div class="card"><div class="head bb-notif-head"><strong>'+visible.length+' '+(notificationCategory==='All'?'Notifications':esc(notificationCategory))+'</strong><span class="pill blue">Manual refresh</span></div>'+
     '<div>'+visible.map((x,i)=>
       '<button type="button" class="bb-notif-line '+(x.read?'':'unread')+'" data-row="'+i+'" title="Open related source">'+
       '<span class="bb-notif-dot">'+(x.read?'':'●')+'</span>'+
