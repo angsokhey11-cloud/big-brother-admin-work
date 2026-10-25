@@ -122,10 +122,31 @@ async function loadNotifications(){
 async function openNotification(item){
   if(!item)return;
   try{await rpc('bb_notification_mark',{p_notification_key:item.notificationKey,p_action:'read'})}catch(_){}
-  // Preserve record reference for modules that support deep-linking.
-  try{sessionStorage.setItem('BB_NOTIFICATION_TARGET_V2',JSON.stringify({route:item.route,entityId:item.entityId,notificationKey:item.notificationKey}))}catch(_){}
+  // A/R customer summaries carry exact customer IDs, not ambiguous names.
+  // The target is one-use and short-lived; the A/R module checks ownership.
+  try{
+    sessionStorage.setItem('BB_NOTIFICATION_TARGET_V2',JSON.stringify({
+      route:item.route,entityId:item.entityId,notificationKey:item.notificationKey
+    }));
+    if(item.category==='Receivable' &&
+       String(item.notificationKey||'').startsWith('OVERDUE-CUSTOMER:') &&
+       (item.route==='ar-your'||item.route==='ar-all') &&
+       String(item.entityId||'').trim()){
+      sessionStorage.setItem('BB_NOTIFICATION_AR_FOCUS_V1',JSON.stringify({
+        route:item.route,customerId:String(item.entityId).trim(),
+        view:receivableMode,createdAt:Date.now()
+      }));
+    }else{
+      sessionStorage.removeItem('BB_NOTIFICATION_AR_FOCUS_V1');
+    }
+  }catch(_){}
+  // Mobile uses its native module router; desktop retains its current routing.
+  try{
+    if(parent&&typeof parent.BBMobileOpenNotificationV1==='function' &&
+       parent.BBMobileOpenNotificationV1(item.route)!==false)return;
+  }catch(_){}
   try{if(parent&&typeof parent.loadWorkspace==='function'){parent.loadWorkspace(item.route);return}}catch(_){}
-  location.href='https://angsokhey11-cloud.github.io/big-brother-dashboard/?module='+encodeURIComponent(item.route)+'&autoload=1';
+  window.top.location.href='https://angsokhey11-cloud.github.io/big-brother-dashboard/?module='+encodeURIComponent(item.route)+'&autoload=1';
 }
 
 $('refreshBtn').onclick=load;load();
