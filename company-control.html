@@ -21,10 +21,47 @@ const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,
 const money=(v,c='USD')=>String(c).toUpperCase()==='KHR'?'៛'+Number(v||0).toLocaleString(undefined,{maximumFractionDigits:0}):'$'+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 const qty=v=>Number(v||0).toLocaleString(undefined,{maximumFractionDigits:3});
 function readSession(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null')}catch(_){return null}}function saveSession(s){session=s||null;try{if(!s)localStorage.removeItem(SESSION_KEY);else{if(!s.expires_at&&s.expires_in)s.expires_at=Math.floor(Date.now()/1000)+Number(s.expires_in);localStorage.setItem(SESSION_KEY,JSON.stringify(s))}}catch(_){}}
-async function parse(r){const t=await r.text();let d={};try{d=t?JSON.parse(t):{}}catch(_){d={message:t}}if(!r.ok)throw new Error(d.message||d.error_description||d.error||('Request failed '+r.status));return d}
-async function refreshSession(){const s=readSession();if(!s?.refresh_token)throw new Error('Please sign in from the BIG BROTHER Dashboard.');const r=await fetch(SB_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:s.refresh_token}),cache:'no-store'});saveSession(await parse(r));return session}
-async function ensure(){session=readSession();if(!session?.access_token)throw new Error('Please sign in from the BIG BROTHER Dashboard.');if(session.expires_at&&Number(session.expires_at)<Math.floor(Date.now()/1000)+45)await refreshSession();return session}
-async function rpc(fn,args={}){await ensure();let r=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},body:JSON.stringify(args),cache:'no-store'});if(r.status===401){await refreshSession();r=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},body:JSON.stringify(args),cache:'no-store'})}return parse(r)}
+async function parse(r){const t=await r.text();let d={};try{d=t?JSON.parse(t):{}}catch(_){d={message:t}}if(!r.ok)throw new Error(d.message||d.msg||d.error_description||d.error||d.error_code||('Request failed '+r.status));return d}
+
+let bbSessionRefreshInFlight=null;
+async function refreshSession(){
+  if(bbSessionRefreshInFlight)return bbSessionRefreshInFlight;
+  const rotate=async()=>{
+    // Other BIG BROTHER views share this origin and may have renewed the session already.
+    const current=readSession();
+    if(!current?.refresh_token)throw new Error('Please sign in to BIG BROTHER again.');
+    const now=Math.floor(Date.now()/1000);
+    if(Number(current.expires_at||0)>now+60){session=current;return current;}
+    const response=await fetch(SB_URL+'/auth/v1/token?grant_type=refresh_token',{
+      method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({refresh_token:current.refresh_token}),cache:'no-store'
+    });
+    if(!response.ok){
+      let detail={};try{detail=await response.json()}catch(_){}
+      const newest=readSession();
+      if(newest?.access_token&&newest.refresh_token!==current.refresh_token&&
+         Number(newest.expires_at||0)>Math.floor(Date.now()/1000)+30){
+        session=newest;return newest;
+      }
+      const code=String(detail.error_code||detail.code||'');
+      if(code==='refresh_token_not_found'||code==='refresh_token_already_used'||
+         String(detail.msg||'').toLowerCase().includes('refresh token')){
+        throw new Error('Your sign-in session has expired. Please return to BIG BROTHER Dashboard and sign in again.');
+      }
+      throw new Error(detail.message||detail.msg||detail.error_description||detail.error||('Session refresh failed ('+response.status+')'));
+    }
+    const next=await parse(response);saveSession(next);return next;
+  };
+  // Web Locks serializes rotation between same-origin open tabs/iframes (where supported).
+  const work=()=>navigator.locks?.request
+    ? navigator.locks.request('BB_SUPABASE_DEV_SESSION_REFRESH_V1',rotate)
+    : rotate();
+  bbSessionRefreshInFlight=work();
+  try{return await bbSessionRefreshInFlight}
+  finally{bbSessionRefreshInFlight=null}
+}
+async function ensure(){session=readSession();if(!session?.access_token)throw new Error('Please sign in from the BIG BROTHER Dashboard.');if(session.expires_at&&Number(session.expires_at)<Math.floor(Date.now()/1000)+45)await refreshSession();session=readSession()||session;return session}
+async function rpc(fn,args={}){await ensure();let r=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},body:JSON.stringify(args),cache:'no-store'});if(r.status===401){await refreshSession();session=readSession()||session;r=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},body:JSON.stringify(args),cache:'no-store'})}return parse(r)}
 function setLoading(x,t='Loading…'){$('loadingText').textContent=t;$('loading').classList.toggle('hide',!x)}function badge(s){const x=String(s||'INFO').toUpperCase(),c=x==='CRITICAL'||x==='OVER_LIMIT'?'crit':x==='WARNING'||x==='OVERDUE'?'warn':x==='OK'?'ok':'info';return `<span class="pill ${c}">${esc(x)}</span>`}function fmtDate(v){if(!v)return'—';const d=new Date(v);if(Number.isNaN(d.getTime()))return esc(v);return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Phnom_Penh'}).replace(/ /g,'-')+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Phnom_Penh'})}
 function modal(html){$('modalBody').innerHTML=html;$('modal').classList.add('show')}function closeModal(){$('modal').classList.remove('show')}window.closeModal=closeModal;$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
 const META={management:['Management Control Center','Live company overview across Sales, Cash, A/R, Purchase, Expenses and Stock.'],activity:['System Activity','Company-wide audit history · Admin only.'],credit:['Customer Credit Control','Live A/R risk, overdue monitoring and configurable customer credit rules.'],'stock-alerts':['Smart Stock Alerts','Low stock, expiry, damage, batch reconciliation and receiving alerts.'],notifications:['Notification Center','Business activity notices · refresh on demand.']};
