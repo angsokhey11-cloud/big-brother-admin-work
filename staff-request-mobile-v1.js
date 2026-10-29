@@ -54,7 +54,7 @@ function compactRows(tbody){
   specialRows:{label:'Staff',value:'Amount',columns:[0,1,6]},
   paymentRows:{label:'Staff',value:'Amount',columns:[0,1,4]},
   leaveRows:{label:'Staff',value:'Days',columns:[0,1,4]},
-  batchEarningRows:{label:'Batch',value:'Incentive',columns:[0,1,4]}
+  batchEarningRows:{label:'Salesman',value:'Incentive',columns:[0,1,2,4]}
  };
  const cfg=types[tbody.id];
  if(!cfg)return;
@@ -62,7 +62,9 @@ function compactRows(tbody){
  if(wrap&&!wrap.querySelector('.bb-mr-list-header')){
   const header=document.createElement('div');
   header.className='bb-mr-list-header';
-  header.innerHTML='<span>Request</span><span>'+cfg.label+'</span><span>'+cfg.value+'</span><span>Action</span>';
+  header.innerHTML=tbody.id==='batchEarningRows'
+   ?'<span>Salesman</span><span>Location</span><span>Batch Date</span><span>Amount</span><span>Action</span>'
+   :'<span>Request</span><span>'+cfg.label+'</span><span>'+cfg.value+'</span><span>Action</span>';
   wrap.insertBefore(header,wrap.firstChild);
  }
  tbody.querySelectorAll('tr').forEach(row=>{
@@ -70,8 +72,28 @@ function compactRows(tbody){
   row.dataset.bbMrSearchText=row.textContent||'';
   const cells=Array.from(row.children);
   if(row.querySelector('td.empty')){row.dataset.bbMrCompact='1';return}
-  for(const i of cfg.columns){
-   if(cells[i])cells[i].textContent=firstLine(cells[i]);
+  if(tbody.id==='batchEarningRows'){
+   // The source row is populated by the existing approved Batch Earning
+   // workflow. Keep its Review button/data-id and full search content.
+   const salesman=firstLine(cells[2])||'No Salesperson';
+   const batchCell=cells[1];
+   const nodes=Array.from(batchCell?.childNodes||[]);
+   const afterBreak=nodes.findIndex(n=>n.nodeType===1&&n.tagName==='BR');
+   const detail=(afterBreak>=0?nodes.slice(afterBreak+1):[]).map(n=>n.textContent||'').join('').trim();
+   const parts=detail.split(/\s*·\s*/);
+   const batchDate=(parts[0]||'-').trim();
+   const location=(parts.slice(1).join(' · ')||'-').trim();
+   // Visible columns: Salesman / Location / Batch Date / Incentive / Review.
+   // IDs remain in the existing review modal, never in this list.
+   if(cells[0]){cells[0].textContent=salesman;cells[0].title=salesman}
+   if(cells[1]){cells[1].textContent=location;cells[1].title=location}
+   if(cells[2]){cells[2].textContent=batchDate;cells[2].title=batchDate}
+   if(cells[4])cells[4].textContent=firstLine(cells[4]);
+   row.classList.add('bb-mr-batch-row');
+  }else{
+   for(const i of cfg.columns){
+    if(cells[i])cells[i].textContent=firstLine(cells[i]);
+   }
   }
   row.dataset.bbMrCompact='1';
  });
