@@ -310,3 +310,56 @@ body.bb-staff-request-mobile{
  .bb-staff-request-mobile .tablewrap tbody tr{padding:6px}
  .bb-staff-request-mobile .tablewrap tbody .review{font-size:8px}
 }
+
+
+/* Mobile V1.2 — Batch Earnings only: Salesman | Location | Batch Date | Amount | Review */
+.bb-staff-request-mobile #tab-batch-earning .bb-mr-list-header,
+.bb-staff-request-mobile #tab-batch-earning .tablewrap tbody tr{
+ grid-template-columns:minmax(0,1.2fr) minmax(0,.72fr) minmax(0,1fr) minmax(0,.85fr) 48px;
+ grid-template-areas:"id name extra amount action";
+ column-gap:4px;
+}
+.bb-staff-request-mobile #tab-batch-earning .bb-mr-list-header{
+ font-size:8px;padding-inline:7px;
+}
+.bb-staff-request-mobile #tab-batch-earning .bb-mr-list-header span:nth-child(3){
+ text-align:left;
+}
+.bb-staff-request-mobile #tab-batch-earning .bb-mr-list-header span:nth-child(4){
+ text-align:right;
+}
+.bb-staff-request-mobile #tab-batch-earning .tablewrap tbody tr{
+ padding-inline:7px;
+}
+.bb-staff-request-mobile #batchEarningRows td:nth-child(3){
+ display:block;grid-area:extra;
+}
+.bb-staff-request-mobile #batchEarningRows td:nth-child(1){
+ grid-area:id;
+}
+.bb-staff-request-mobile #batchEarningRows td:nth-child(2){
+ grid-area:name;
+}
+.bb-staff-request-mobile #batchEarningRows td:nth-child(5){
+ grid-area:amount;text-align:right;
+}
+.bb-staff-request-mobile #batchEarningRows td:nth-child(7){
+ grid-area:action;
+}
+.bb-staff-request-mobile #batchEarningRows td{
+ font-size:9px;min-width:0;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.bb-staff-request-mobile #batchEarningRows td.money,
+.bb-staff-request-mobile #batchEarningRows td.money strong{font-size:9px}
+@media(max-width:360px){
+ .bb-staff-request-mobile #tab-batch-earning .bb-mr-list-header,
+ .bb-staff-request-mobile #tab-batch-earning .tablewrap tbody tr{
+  grid-template-columns:minmax(0,1fr) minmax(0,.7fr) minmax(0,1fr) minmax(0,.82fr) 43px;
+  column-gap:3px;
+ }
+ .bb-staff-request-mobile #tab-batch-earning .bb-mr-list-header{font-size:7px}
+ .bb-staff-request-mobile #batchEarningRows td{font-size:8px}
+ .bb-staff-request-mobile #batchEarningRows td.money,
+ .bb-staff-request-mobile #batchEarningRows td.money strong{font-size:8px}
+}
