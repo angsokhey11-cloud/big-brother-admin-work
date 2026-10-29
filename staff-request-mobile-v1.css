@@ -363,3 +363,35 @@ body.bb-staff-request-mobile{
  .bb-staff-request-mobile #batchEarningRows td.money,
  .bb-staff-request-mobile #batchEarningRows td.money strong{font-size:8px}
 }
+
+
+/* Mobile V1.3 — Option B: one category switcher, summary, search + Refresh. */
+.bb-staff-request-mobile .hero,
+.bb-staff-request-mobile .bb-mr-section-label,
+.bb-staff-request-mobile .tabs,
+.bb-staff-request-mobile .actions{display:none!important}
+.bb-staff-request-mobile .app{padding-top:0}
+.bb-staff-request-mobile .bb-mr-shortcuts{margin:0 0 10px}
+.bb-staff-request-mobile .bb-mr-shortcut{min-height:79px}
+.bb-staff-request-mobile .summary{margin:0 0 11px}
+.bb-staff-request-mobile .bb-mr-filterbar{
+ display:flex;align-items:center;gap:7px;margin:0 0 10px;
+}
+.bb-staff-request-mobile .bb-mr-filterbar input{
+ flex:1 1 0;min-width:0;min-height:39px;
+ font-size:12px;padding:9px 11px;
+}
+.bb-staff-request-mobile .bb-mr-filterbar #refreshBtn{
+ flex:0 0 auto;min-height:39px;max-width:100px;padding:8px 11px;
+ font-size:11px;border:1px solid #ccdded;background:#e8f2fc;
+ color:#175186;border-radius:10px;font-weight:900;
+}
+.bb-staff-request-mobile .bb-mr-filterbar .bb-mr-count{display:none}
+.bb-staff-request-mobile .bb-mr-shortcut[aria-pressed="true"]{
+ border-color:#6aabd9;background:#e5f2ff;
+ box-shadow:0 0 0 1px #b2d7f6 inset;color:#0b4d85;
+}
+@media(max-width:380px){
+ .bb-staff-request-mobile .bb-mr-shortcut{min-height:73px}
+ .bb-staff-request-mobile .bb-mr-filterbar #refreshBtn{padding-inline:8px}
+}
