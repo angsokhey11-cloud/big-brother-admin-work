@@ -170,8 +170,8 @@ function bbInboxDetails(item){
 function bbInboxActionLabel(item){
  const route=String(item.route||'');
  if(item.category==='Receivable')return 'View Receivable';
- if(item.category==='Approvals')return 'Review Approval';
- if(item.category==='Requests')return 'Review Request';
+ if(item.category==='Approvals')return /approved|completed|rejected/i.test(String(item.title||''))?'View Approval':'Review Approval';
+ if(item.category==='Requests')return /approved|completed|rejected/i.test(String(item.title||''))?'View Request':'Review Request';
  if(item.category==='Stock')return /batch|stock/i.test(route)?'Open Stock':'View Details';
  if(item.category==='Schedule')return 'View Schedule';
  if(item.category==='Payments'||item.category==='Cash & Bank')return 'View Payment';
@@ -190,6 +190,16 @@ function bbInboxFiltered(items){
    if(!Number.isFinite(d.getTime()))return false;
    if(bbInboxDate==='today')return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Phnom_Penh',year:'numeric',month:'2-digit',day:'2-digit'}).format(d)===today;
    return bbInboxDate==='week'&&d.getTime()>=Date.now()-7*86400000;
+ }).sort((a,b)=>{
+   // All is an activity inbox: show real events before current outstanding
+   // customer summaries, which are snapshots rather than timed events.
+   // Never discard a receivable or change its read state.
+   if(notificationCategory==='All'){
+     const sa=String(a.notificationKey||'').startsWith('OVERDUE-CUSTOMER:');
+     const sb=String(b.notificationKey||'').startsWith('OVERDUE-CUSTOMER:');
+     if(sa!==sb)return sa?1:-1;
+   }
+   return new Date(b.eventAt).getTime()-new Date(a.eventAt).getTime();
  });
 }
 function bbInboxRender(){
