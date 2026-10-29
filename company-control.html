@@ -197,6 +197,7 @@ function bbInboxDetails(item){
 }
 function bbInboxActionLabel(item){
  const route=String(item.route||'');
+ if(route==='bank-register')return 'ភ្ជាប់មុខងារមិនទាន់រួច';
  if(item.category==='Receivable')return 'មើលបំណុល';
  if(item.category==='Approvals')return /approved|completed|rejected/i.test(String(item.title||''))?'មើលការអនុម័ត':'ពិនិត្យសំណើ';
  if(item.category==='Requests')return /approved|completed|rejected/i.test(String(item.title||''))?'មើលសំណើ':'ពិនិត្យសំណើ';
@@ -351,7 +352,16 @@ async function loadNotifications(){
 
 async function openNotification(item){
   if(!item)return;
-  try{await rpc('bb_notification_mark',{p_notification_key:item.notificationKey,p_action:'read'})}catch(_){}
+  // This legacy bank event does not have a registered dashboard route.
+  // Do not push staff into a blank page or silently mark it handled.
+  if(item.route==='bank-register'){
+    modal('<h2>មុខងារភ្ជាប់មិនទាន់រួច</h2>'+
+      '<p>ការជូនដំណឹងធនាគារនេះមិនទាន់មានតំណភ្ជាប់ទៅកាន់ប្រតិបត្តិការពិតក្នុង BIG BROTHER ទេ។</p>'+
+      '<p>Bank Register notification links will be connected after the exact target screen is confirmed.</p>'+
+      '<div class="modal-actions"><button type="button" class="btn primary" onclick="closeModal()">បិទ</button></div>');
+    return;
+  }
+  try{await rpc('bb_notification_mark',{p_notification_key:item.notificationKey,p_action:'read'})}catch(_){};
   // A/R customer summaries carry exact customer IDs, not ambiguous names.
   // The target is one-use and short-lived; the A/R module checks ownership.
   try{
