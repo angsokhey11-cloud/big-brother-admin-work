@@ -35,6 +35,7 @@ function syncTabs(){
  document.querySelectorAll('.bb-mr-shortcut').forEach(b=>{
   const match=selected&&(b.dataset.targetTab===selected.id||b.dataset.targetTab===selected.dataset.tab);
   b.classList.toggle('selected',!!match);
+  b.setAttribute('aria-pressed',match?'true':'false');
  });
 }
 /* Preserve the full source text for search but render just the primary value
@@ -188,22 +189,30 @@ function init(){
    const tab=tabId==='batchEarningTab'?$(tabId):
      document.querySelector('.tabs .tab[data-tab="'+tabId+'"]');
    if(tab){
+    // Original hidden tabs still own the validated category switching logic.
     tab.click();
-    document.querySelector('.tabs')?.scrollIntoView({block:'start',behavior:'smooth'});
+    setTimeout(()=>{
+      syncTabs();applyFilter();
+      document.querySelector('.panel.active')?.scrollIntoView({block:'start',behavior:'smooth'});
+    },0);
    }
   };
   shortcuts.appendChild(b);
  }
  main.insertBefore(shortcuts,main.firstChild);
- const title=document.createElement('div');title.className='bb-mr-section-label';
- title.textContent='Approval Overview';
- main.insertBefore(title,shortcuts);
+ // The app already provides the Staff Request header; no duplicate title
+ // or overview heading is needed inside this mobile workspace.
  const tabs=document.querySelector('.tabs');
  if(tabs){
   const filter=document.createElement('div');
   filter.className='bb-mr-filterbar';
   filter.innerHTML='<input type="search" id="bbMrSearch" placeholder="Search staff, request, batch..." autocomplete="off" aria-label="Search approvals"><span class="bb-mr-count" id="bbMrShown"></span>';
-  tabs.insertAdjacentElement('afterend',filter);
+  // Option B: shortcuts -> five counters -> search + Refresh -> queue.
+  const summary=main.querySelector('.summary');
+  if(summary)summary.insertAdjacentElement('afterend',filter);
+  else tabs.insertAdjacentElement('afterend',filter);
+  const refreshButton=$('refreshBtn');
+  if(refreshButton)filter.appendChild(refreshButton);
   $('bbMrSearch').addEventListener('input',applyFilter);
   tabs.addEventListener('click',e=>{
    if(e.target.closest('.tab'))setTimeout(()=>{syncTabs();applyFilter()},0);
