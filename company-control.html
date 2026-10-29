@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BIG BROTHER — Company Control</title><meta name="bb-notification-build" content="20261025-compact-categories-staff-ar1">
+<title>BIG BROTHER — Company Control</title><meta name="bb-notification-build" content="20261029-bb-inbox-professional-v1">
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#213247;font-family:Arial,Helvetica,sans-serif}button,input,select,textarea{font:inherit}.page{max-width:1600px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.title{margin:0;color:#174a91;font-size:27px}.sub{margin-top:5px;color:#6d7f93;font-size:12px}.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.btn{border:0;border-radius:9px;padding:9px 13px;font-weight:900;cursor:pointer}.primary{background:#174a91;color:#fff}.ghost{background:#fff;color:#38556f;border:1px solid #d4deea}.danger{background:#fff0f0;color:#b42318;border:1px solid #f1c8c6}.okbtn{background:#157a51;color:#fff}.pill{display:inline-block;border-radius:999px;padding:6px 9px;font-size:10px;font-weight:900}.blue{background:#eaf3ff;color:#174a91}.ok{background:#e8f7ef;color:#157a51}.warn{background:#fff6dd;color:#9a6700}.crit{background:#ffeded;color:#b42318}.info{background:#edf5ff;color:#245da8}.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}.card{background:#fff;border:1px solid #dce5ef;border-radius:13px;box-shadow:0 3px 13px #173a660d;overflow:hidden}.stat{padding:14px}.stat span{font-size:10px;color:#74869b;font-weight:900;text-transform:uppercase}.stat strong{display:block;margin-top:6px;color:#234463;font-size:21px}.head{padding:12px 14px;border-bottom:1px solid #e6edf4;display:flex;justify-content:space-between;gap:10px;align-items:center}.body{padding:14px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}.toolbar input,.toolbar select{border:1px solid #ccd8e5;border-radius:8px;padding:9px;background:#fff;min-width:170px}.tablewrap{overflow:auto;border:1px solid #dce5ee;border-radius:10px}table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:9px;border-bottom:1px solid #edf1f5;text-align:left;font-size:11px;vertical-align:top}th{background:#f7f9fc;color:#556b84;font-size:10px;text-transform:uppercase;position:sticky;top:0;z-index:1}.money{text-align:right;font-variant-numeric:tabular-nums}.empty{padding:35px;text-align:center;color:#8493a5}.alertrow{padding:12px 14px;border-bottom:1px solid #edf1f5;display:grid;grid-template-columns:110px 1fr auto;gap:12px;align-items:center}.alertrow:last-child{border-bottom:0}.alert-title{font-weight:900;color:#294762;font-size:12px}.alert-msg{margin-top:4px;color:#6d7f93;font-size:10px}.notif.unread{background:#f5f9ff}.activity-meta{font-size:10px;color:#7a8a9c;margin-top:4px}.overlay{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.overlay.show{display:flex}.modal{width:min(620px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:14px;padding:18px}.modal h2{margin:0 0 4px;color:#174a91}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}.field label{display:block;font-size:10px;font-weight:900;color:#526981;margin-bottom:5px;text-transform:uppercase}.field input,.field select,.field textarea{width:100%;border:1px solid #cbd7e4;border-radius:8px;padding:9px;background:#fff}.field textarea{min-height:70px}.full{grid-column:1/-1}.check{display:flex;gap:8px;align-items:center;min-height:38px;font-size:11px}.check input{width:17px;height:17px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}.loading{position:fixed;inset:0;background:#f3f6faed;display:flex;align-items:center;justify-content:center;z-index:90}.loading.hide{display:none}.loadbox{background:#fff;border:1px solid #dce5ef;border-radius:13px;padding:18px 24px;color:#174a91;font-weight:900}.errorbox{background:#fff0f0;border:1px solid #f2c9c6;color:#a82a23;border-radius:10px;padding:13px}.section-note{font-size:10px;color:#73859a;margin:8px 0 13px}.locbar{height:8px;background:#e8eef6;border-radius:8px;overflow:hidden;margin-top:5px}.locbar>span{display:block;height:100%;background:#174a91}.nowrap{white-space:nowrap}@media(max-width:1100px){.cards{grid-template-columns:repeat(2,1fr)}.alertrow{grid-template-columns:90px 1fr}}@media(max-width:700px){.page{padding:10px}.top{display:block}.actions{margin-top:10px}.cards,.grid{grid-template-columns:1fr}.alertrow{grid-template-columns:1fr}.full{grid-column:auto}}
 
@@ -27,6 +27,7 @@
 }
 .bb-notif-line{width:100%;display:flex;align-items:center;text-align:left;gap:9px;padding:13px 15px;background:white;border:0;border-bottom:1px solid #e7edf4;color:#24374a;cursor:pointer;font:inherit;font-size:12px}.bb-notif-line:hover,.bb-notif-line:focus-visible{background:#f1f6fd;outline:0}.bb-notif-line.unread{font-weight:800;background:#f7faff}.bb-notif-dot{width:10px;color:#2677cd}.bb-notif-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bb-notif-time{font-size:10px;color:#7b899a;font-weight:400;white-space:nowrap}@media(max-width:640px){.bb-notif-time{display:none}.bb-notif-line{padding:12px 10px}}
 </style>
+<link rel="stylesheet" href="notifications-inbox-v1.css?v=20261029-bb-inbox1">
 </head>
 <body>
 <div id="loading" class="loading"><div id="loadingText" class="loadbox">Loading BIG BROTHER…</div></div>
@@ -93,32 +94,220 @@ async function loadStock(){const d=await rpc('bb_stock_alerts');lastData=d;$('co
 function stockModal(x={}){const products=lastData.products||[],locs=lastData.locations||[];modal(`<h2>${x.productCode?'Edit':'Add'} Stock Alert Threshold</h2><div class="grid"><div class="field"><label>Product</label><select id="sProd" ${x.productCode?'disabled':''}>${products.map(p=>`<option value="${esc(p.productCode)}" ${p.productCode===x.productCode?'selected':''}>${esc(p.productName)} — ${esc(p.productCode)}</option>`).join('')}</select></div><div class="field"><label>Location</label><select id="sLoc" ${x.locationCode?'disabled':''}>${locs.map(l=>`<option value="${esc(l.locationCode)}" ${l.locationCode===x.locationCode?'selected':''}>${esc(l.locationCode)} — ${esc(l.locationName)}</option>`).join('')}</select></div><div class="field"><label>Minimum Good Stock Qty</label><input id="sMin" type="number" min="0" step="0.001" value="${Number(x.minStockQty||0)}"></div><div class="field"><label>Expiry Warning Days</label><input id="sExp" type="number" min="0" max="365" value="${Number(x.expiryWarningDays??14)}"></div><div class="field"><label>Damage Qty Alert (7 Days)</label><input id="sDmg" type="number" min="0" step="0.001" value="${Number(x.damageWarningQty||0)}"></div><label class="check"><input id="sActive" type="checkbox" ${x.active!==false?'checked':''}> Alert rule active</label></div><div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button><button id="saveStock" class="btn primary">Save Threshold</button></div>`);$('saveStock').onclick=async()=>{setLoading(true,'Saving stock threshold…');try{await rpc('bb_stock_alert_setting_save',{p_payload:{productCode:x.productCode||$('sProd').value,locationCode:x.locationCode||$('sLoc').value,minStockQty:Number($('sMin').value||0),expiryWarningDays:Number($('sExp').value||14),damageWarningQty:Number($('sDmg').value||0),active:$('sActive').checked}});closeModal();await loadStock()}catch(e){alert(e.message||e)}finally{setLoading(false)}}}
 window.newStockRule=()=>stockModal({});window.editStockRule=i=>stockModal(lastData.settings[i]);
 
+
 let notificationCategory='All',receivableMode='Overdue Only';
+let bbInboxDate='all',bbInboxRead='all',bbInboxAllSnapshot=null;
+let bbInboxMarking=false,bbInboxLoading=false;
 const adminCategories=['All','Stock','Receivable','Approvals','Cash & Bank'];
 const staffCategories=['All','Receivable','Stock','Requests','Payments','Schedule'];
+/* Reuse the exact 24px, 1.85-stroke icon geometry from BIG BROTHER's
+ * mobile-function-icons-v1.js. Inlined here because this notification
+ * workspace is on a separate GitHub Pages origin and must not load
+ * remote SVG/icon libraries. */
+const bbInboxShapes={
+ bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
+ 'receivable-one':'<rect x="3" y="3" width="12" height="8" rx="1.6"/><path d="M6 6h6M6 8.5h3M18 5v6m-2-2 2 2 2-2M4 15h16l1 5H3l1-5ZM10 17.5h4"/>',
+ warehouse:'<path d="M3 22V8l9-5 9 5v14M3 11h18M8 22v-7h8v7M10 18h4"/>',
+ 'clipboard-check':'<rect x="5" y="4" width="14" height="18" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-5"/>',
+ 'clipboard-list':'<rect x="5" y="4" width="14" height="18" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 11h6M9 15h6M9 19h4"/>',
+ banknote:'<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/>',
+ wallet:'<rect x="3" y="6" width="18" height="15" rx="2"/><path d="M3 10h18M7 6V4a2 2 0 0 1 2-2h10v4M16 15h2"/>',
+ calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18M8 14h3m2 0h3M8 17h3"/>',
+ 'shield-check':'<path d="m12 2 9 4v6c0 6-4.3 9-9 10-4.7-1-9-4-9-10V6l9-4Z"/><path d="m8 12 3 3 5-6"/>',
+ 'circle-check':'<circle cx="12" cy="12" r="9"/><path d="m8 12 2.8 2.8L16.5 9"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/>',
+ 'list-filter':'<path d="M4 6h16M7 11h10M10 16h4"/>',
+ 'rotate-ccw':'<path d="M3 11a9 9 0 1 1 2.5 6.3M3 3v8h8"/>',
+ truck:'<path d="M3 5h11v12H3zM14 9h4l3 4v4h-7"/><circle cx="7.5" cy="18" r="2"/><circle cx="17.5" cy="18" r="2"/>'
+};
+const bbInboxIconByCategory={
+ All:'bell',Stock:'warehouse',Receivable:'receivable-one',
+ Approvals:'clipboard-check','Cash & Bank':'banknote',
+ Requests:'clipboard-list',Payments:'wallet',Schedule:'calendar'
+};
+const bbInboxTones={All:'blue',Stock:'indigo',Receivable:'teal',
+ Approvals:'blue','Cash & Bank':'blue',Requests:'violet',
+ Payments:'teal',Schedule:'amber'};
+function bbInboxSvg(icon,small=false){
+ const shape=bbInboxShapes[icon]||bbInboxShapes.bell;
+ return '<svg class="bb-inbox-ico'+(small?' bb-inbox-icon-sm':'')+
+  '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+shape+'</svg>';
+}
+function bbInboxTime(item){
+ if(String(item.notificationKey||'').startsWith('OVERDUE-CUSTOMER:'))return 'Current';
+ const date=new Date(item.eventAt);
+ if(!Number.isFinite(date.getTime()))return '';
+ const minutes=Math.max(0,Math.floor((Date.now()-date.getTime())/60000));
+ if(minutes<1)return 'Just now';
+ if(minutes<60)return minutes+'m ago';
+ if(minutes<1440)return Math.floor(minutes/60)+'h ago';
+ if(minutes<2880)return 'Yesterday';
+ return date.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Phnom_Penh'}).replace(/ /g,'-');
+}
+function bbInboxDetails(item){
+ const cat=String(item.category||'');
+ const text=String(item.title||'Notification');
+ const receivableSummary=cat==='Receivable' &&
+   String(item.notificationKey||'').startsWith('OVERDUE-CUSTOMER:');
+ if(receivableSummary){
+   const m=text.match(/^(.*?)\s*·\s*USD\s*([\d,.]+)\s*·\s*KHR\s*([\d,.]+)\s*·\s*(\d+)\s+invoices?$/i);
+   return {
+     title:receivableMode==='Overdue Only'?'Receivable reminder':'Outstanding receivable',
+     description:m?m[1]+' · '+m[4]+' outstanding invoice'+(Number(m[4])===1?'':'s'):text,
+     metrics:m?'USD '+m[2]+' · KHR '+m[3]:'',
+     tag:receivableMode==='Overdue Only'?'Overdue':'Outstanding',
+     tagTone:receivableMode==='Overdue Only'?'alert':'',
+     urgent:receivableMode==='Overdue Only',time:'Current'
+   };
+ }
+ const status=/\boverdue\b|\blow stock\b|\bshortage\b|\bcritical\b/i.test(text)?'Alert':
+   /\bpending\b|\bsubmitted\b|\brequested\b|\bwaiting\b/i.test(text)?'Pending':
+   /\bapproved\b|\bcompleted\b|\bcleared\b|\breceived\b/i.test(text)?'Completed':'';
+ return {title:text,description:'',metrics:'',
+    tag:status,tagTone:status==='Alert'?'alert':status==='Pending'?'pending':status==='Completed'?'done':'',
+    urgent:status==='Alert',time:bbInboxTime(item)};
+}
+function bbInboxActionLabel(item){
+ const route=String(item.route||'');
+ if(item.category==='Receivable')return 'View Receivable';
+ if(item.category==='Approvals')return 'Review Approval';
+ if(item.category==='Requests')return 'Review Request';
+ if(item.category==='Stock')return /batch|stock/i.test(route)?'Open Stock':'View Details';
+ if(item.category==='Schedule')return 'View Schedule';
+ if(item.category==='Payments'||item.category==='Cash & Bank')return 'View Payment';
+ return 'View Details';
+}
+function bbInboxFiltered(items){
+ const now=new Date();
+ const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Phnom_Penh',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
+ return items.filter(x=>{
+   if(bbInboxRead==='unread'&&x.read)return false;
+   if(bbInboxRead==='read'&&!x.read)return false;
+   if(bbInboxDate==='all')return true;
+   // Outstanding customer balances are live summaries, NOT events dated today.
+   if(String(x.notificationKey||'').startsWith('OVERDUE-CUSTOMER:'))return false;
+   const d=new Date(x.eventAt);
+   if(!Number.isFinite(d.getTime()))return false;
+   if(bbInboxDate==='today')return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Phnom_Penh',year:'numeric',month:'2-digit',day:'2-digit'}).format(d)===today;
+   return bbInboxDate==='week'&&d.getTime()>=Date.now()-7*86400000;
+ });
+}
+function bbInboxRender(){
+ const d=lastData||{},items=Array.isArray(d.notifications)?d.notifications:[],
+       visible=bbInboxFiltered(items),unread=visible.filter(x=>!x.read),
+       categories=(d.isAdmin?adminCategories:staffCategories).filter(t=>t!=='Receivable'||d.canViewReceivable!==false),
+       counts=bbInboxAllSnapshot&&Array.isArray(bbInboxAllSnapshot.notifications)
+          ?bbInboxAllSnapshot.notifications:null;
+ const categoryCount=t=>counts?counts.filter(x=>!x.read&&(t==='All'||x.category===t)).length
+                              :(t===notificationCategory?Number(d.unreadCount||0):0);
+ const categoryKnown=t=>counts!==null||t===notificationCategory;
+ $('content').innerHTML=
+  '<div class="bb-inbox-filter-card"><div id="bbNotifTabs" class="bb-inbox-tabs" role="group" aria-label="Notification categories">'+
+    categories.map(t=>'<button type="button" class="bb-inbox-tab" data-cat="'+esc(t)+'" data-active="'+(notificationCategory===t)+'" aria-pressed="'+(notificationCategory===t)+'">'+
+      bbInboxSvg(bbInboxIconByCategory[t])+ '<span>'+esc(t)+'</span>'+
+      (categoryKnown(t)&&categoryCount(t)>0?'<span class="bb-inbox-tab-count">'+categoryCount(t)+'</span>':'')+
+      '</button>').join('')+'</div>'+
+    '<div class="bb-inbox-tab-hint">Swipe for more categories</div>'+
+    '<div class="bb-inbox-tools">'+
+      '<label>'+bbInboxSvg('calendar',true)+'<span class="sr-only" style="position:absolute;left:-9999px">Time</span><select id="bbInboxDate" aria-label="Filter by date">'+
+        '<option value="all">All dates</option><option value="today">Today · events</option><option value="week">Last 7 days · events</option></select></label>'+
+      '<label>'+bbInboxSvg('list-filter',true)+'<select id="bbInboxRead" aria-label="Filter by read status">'+
+        '<option value="all">All status</option><option value="unread">Unread only</option><option value="read">Read only</option></select></label>'+
+      (notificationCategory==='Receivable'?
+        '<label>'+bbInboxSvg('receivable-one',true)+'<select id="bbReceivableMode" aria-label="Receivable scope">'+
+          '<option>Overdue Only</option><option>All Outstanding</option></select></label>':'')+
+    '</div></div>'+
+  '<div class="bb-inbox-list">'+
+    '<div class="bb-inbox-list-head"><div><strong>'+unread.length+' Unread Notification'+(unread.length===1?'':'s')+'</strong>'+
+       '<small>'+visible.length+' shown · '+esc(notificationCategory)+' · refresh on demand</small></div>'+
+       '<button type="button" id="bbInboxMarkAll" class="bb-inbox-mark-all" '+(unread.length?'':'disabled')+'>'+
+         bbInboxSvg('circle-check',true)+'Mark shown as read</button></div>'+
+    (visible.length?visible.map((item,i)=>{
+      const detail=bbInboxDetails(item),category=String(item.category||'Notice');
+      const tone=bbInboxTones[category]||'blue';
+      const icon=bbInboxIconByCategory[category]||'bell';
+      return '<article class="bb-inbox-item '+(item.read?'':'unread ')+(detail.urgent?'bb-inbox-urgent':'')+'">'+
+        '<button type="button" class="bb-inbox-main" data-open="'+i+'" aria-label="Open '+esc(category)+' notification: '+esc(detail.title)+'">'+
+          '<span class="bb-inbox-icon-box '+tone+'">'+bbInboxSvg(icon)+'</span>'+
+          '<span class="bb-inbox-content">'+
+            '<span class="bb-inbox-title-line">'+(!item.read?'<span class="bb-inbox-dot" aria-label="Unread"></span>':'')+
+               '<span class="bb-inbox-title">'+esc(detail.title)+'</span>'+
+               '<span class="bb-inbox-time">'+esc(detail.time)+'</span></span>'+
+            (detail.description?'<span class="bb-inbox-desc">'+esc(detail.description)+'</span>':'')+
+            (detail.metrics?'<span class="bb-inbox-metrics">'+esc(detail.metrics)+'</span>':'')+
+          '</span></button>'+
+        '<div class="bb-inbox-bottom"><div class="bb-inbox-tags">'+
+           '<span class="bb-inbox-tag">'+esc(category)+'</span>'+
+           (detail.tag?'<span class="bb-inbox-tag '+detail.tagTone+'">'+esc(detail.tag)+'</span>':'')+
+          '</div><button type="button" class="bb-inbox-action" data-open="'+i+'">'+
+             esc(bbInboxActionLabel(item))+'</button></div></article>';
+    }).join(''):'<div class="bb-inbox-empty">'+bbInboxSvg('bell')+'No notifications match these filters.</div>')+
+    '</div>';
+ $('bbInboxDate').value=bbInboxDate;
+ $('bbInboxRead').value=bbInboxRead;
+ $('bbInboxDate').onchange=e=>{bbInboxDate=e.target.value;bbInboxRender()};
+ $('bbInboxRead').onchange=e=>{bbInboxRead=e.target.value;bbInboxRender()};
+ const mode=$('bbReceivableMode');
+ if(mode){mode.value=receivableMode;mode.onchange=()=>{
+   receivableMode=mode.value;
+   loadNotifications().catch(e=>alert(e.message||e));
+ }}
+ $('bbNotifTabs').onclick=e=>{
+   const btn=e.target.closest('[data-cat]');if(!btn||bbInboxLoading)return;
+   if(btn.dataset.cat===notificationCategory)return;
+   notificationCategory=btn.dataset.cat;
+   loadNotifications().catch(err=>alert(err.message||err));
+ };
+ $('content').querySelector('.bb-inbox-list').onclick=e=>{
+   const btn=e.target.closest('button[data-open]');
+   if(!btn)return;
+   openNotification(visible[Number(btn.dataset.open)]).catch(err=>alert(err.message||err));
+ };
+ $('bbInboxMarkAll').onclick=()=>bbInboxMarkVisible(unread);
+}
+async function bbInboxMarkVisible(selected){
+ if(bbInboxMarking||!selected.length)return;
+ bbInboxMarking=true;
+ const button=$('bbInboxMarkAll');
+ if(button){button.disabled=true;button.textContent='Marking…';}
+ try{
+   const keys=selected.map(x=>x.notificationKey);
+   await rpc('bb_notification_mark_visible_v1',{p_keys:keys,p_category:notificationCategory});
+   const marked=new Set(keys);
+   (lastData?.notifications||[]).forEach(item=>{
+     if(marked.has(item.notificationKey))item.read=true;
+   });
+   (bbInboxAllSnapshot?.notifications||[]).forEach(item=>{
+     if(marked.has(item.notificationKey))item.read=true;
+   });
+   bbInboxRender();
+ }catch(error){alert(error.message||error);bbInboxRender()}
+ finally{bbInboxMarking=false}
+}
 async function loadNotifications(){
+ if(bbInboxLoading)return;
+ bbInboxLoading=true;
+ document.body.classList.add('bb-inbox-page');
+ try{
   const d=await rpc('bb_notification_v2_feed',{p_category:notificationCategory,p_receivable_view:receivableMode});
   lastData=d;
-  const visible=(d.notifications||[]);
-  const categories=(d.isAdmin?adminCategories:staffCategories).filter(t=>t!=='Receivable'||d.canViewReceivable!==false);
-  $('content').innerHTML=
-    '<div class="card bb-notif-filter-card"><div class="bb-notif-tabs" id="bbNotifTabs" role="group" aria-label="Notification categories">'+
-    categories.map(t=>'<button type="button" class="btn '+(t===notificationCategory?'primary':'ghost')+'" data-cat="'+esc(t)+'" aria-pressed="'+(t===notificationCategory?'true':'false')+'">'+esc(t)+'</button>').join('')+
-    '</div><div class="bb-notif-mobile-hint">Swipe for more categories ›</div>'+(notificationCategory==='Receivable'?
-      '<div class="toolbar" style="margin:12px 0 0"><label>Receivable view <select id="bbReceivableMode"><option>Overdue Only</option><option>All Outstanding</option></select></label></div>':'')+
-    '</div><div class="card"><div class="head bb-notif-head"><strong>'+visible.length+' '+(notificationCategory==='All'?'Notifications':esc(notificationCategory))+'</strong><span class="pill blue">Manual refresh</span></div>'+
-    '<div>'+visible.map((x,i)=>
-      '<button type="button" class="bb-notif-line '+(x.read?'':'unread')+'" data-row="'+i+'" title="Open related source">'+
-      '<span class="bb-notif-dot">'+(x.read?'':'●')+'</span>'+
-      '<span class="bb-notif-title">'+esc(x.title)+'</span>'+
-      '<span class="bb-notif-time">'+fmtDate(x.eventAt)+'</span><span aria-hidden="true">›</span></button>'
-    ).join('')+
-    (visible.length?'':'<div class="empty">No notifications in this category.</div>')+
-    '</div></div>';
-  const mode=$('bbReceivableMode');if(mode){mode.value=receivableMode;mode.onchange=()=>{receivableMode=mode.value;loadNotifications().catch(e=>alert(e.message||e))}}
-  $('bbNotifTabs').onclick=e=>{const btn=e.target.closest('[data-cat]');if(!btn)return;notificationCategory=btn.dataset.cat;loadNotifications().catch(err=>alert(err.message||err))};
-  $('content').querySelectorAll('[data-row]').forEach(btn=>btn.onclick=()=>openNotification(visible[Number(btn.dataset.row)]));
+  if(notificationCategory==='All')bbInboxAllSnapshot=d;
+  const p=document.querySelector('.actions .pill.ok');
+  if(p&&p.dataset.bbInbox!=='1'){
+    p.dataset.bbInbox='1';
+    p.innerHTML=bbInboxSvg('shield-check',true)+' SUPABASE SECURE';
+  }
+  const refresh=$('refreshBtn');if(refresh&&refresh.dataset.bbInbox!=='1'){
+    refresh.dataset.bbInbox='1';
+    refresh.innerHTML=bbInboxSvg('rotate-ccw',true)+' Refresh';
+    refresh.style.display='inline-flex';
+    refresh.style.gap='6px';
+    refresh.style.alignItems='center';
+  }
+  bbInboxRender();
+ }finally{bbInboxLoading=false}
 }
+
 async function openNotification(item){
   if(!item)return;
   try{await rpc('bb_notification_mark',{p_notification_key:item.notificationKey,p_action:'read'})}catch(_){}
