@@ -83,3 +83,25 @@ body.bb-inbox-page{background:#f1f5fa;color:#18314c}
  .bb-inbox-page .bb-inbox-main{gap:8px}
  .bb-inbox-page .bb-inbox-bottom{margin-left:0}
 }
+
+/* Khmer-first labels, retaining the existing compact BIG BROTHER outline icons. */
+.bb-inbox-page .title,
+.bb-inbox-page .sub,
+.bb-inbox-page .bb-inbox-tab,
+.bb-inbox-page .bb-inbox-title,
+.bb-inbox-page .bb-inbox-desc,
+.bb-inbox-page .bb-inbox-tag,
+.bb-inbox-page .bb-inbox-action,
+.bb-inbox-page .bb-inbox-list-head,
+.bb-inbox-page .bb-inbox-tools,
+.bb-inbox-page .bb-inbox-mark-all{
+  font-family:"Noto Sans Khmer","Khmer Nida","Khmer OS Battambang",Arial,sans-serif;
+}
+.bb-inbox-page .bb-inbox-tab{min-height:74px;min-width:91px;gap:2px;line-height:1.5}
+.bb-inbox-page .bb-inbox-tab small{font-family:Arial,sans-serif;font-size:9px;font-weight:600;opacity:.74;line-height:1.1}
+.bb-inbox-page .bb-inbox-tab .bb-inbox-ico{margin-bottom:1px}
+.bb-inbox-page .bb-inbox-title{line-height:1.65}
+.bb-inbox-page .bb-inbox-desc{line-height:1.7}
+.bb-inbox-page .bb-inbox-time{line-height:1.6}
+.bb-inbox-page .bb-inbox-tools select{max-width:200px}
+@media(max-width:650px){.bb-inbox-page .bb-inbox-tab{min-height:73px;min-width:88px}.bb-inbox-page .bb-inbox-action{line-height:1.45}}
