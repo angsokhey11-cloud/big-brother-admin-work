@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#eef4fa">
+<title>BIG BROTHER — Staff Request Mobile</title>
+<style>
+html,body{margin:0;min-height:100%;font-family:Arial,sans-serif;background:#eef4fa}
+.bb-loading{min-height:65vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.bb-state{background:#fff;border:1px solid #d7e4ef;border-radius:15px;padding:24px 20px;color:#17457a;font-size:13px;font-weight:800;text-align:center}
+.bb-state span{display:block;margin-top:7px;font-size:11px;color:#71849a;font-weight:600}
+</style>
+</head>
+<body>
+<div class="bb-loading"><div class="bb-state" id="bbLoadState">Opening Staff Request…<span>Secure BIG BROTHER mobile approval workspace</span></div></div>
+<script>
+(async function(){
+'use strict';
+try{
+  // Separate mobile HTML entry point, shared authoritative Staff Request
+  // engine and batch calculations. The desktop HTML is never modified.
+  const r=await fetch('staff-request.html?v=20261029-mobile-sr1',{cache:'default'});
+  if(!r.ok)throw new Error('Could not load Staff Request source ('+r.status+').');
+  let h=await r.text();
+  if(!h.includes('<body>')||!h.includes('</head>')||!h.includes('</body>'))
+    throw new Error('Staff Request markup is not ready.');
+  h=h.replace('<body>','<body class="bb-staff-request-mobile">');
+  h=h.replace('</head>','<link rel="stylesheet" href="staff-request-mobile-v1.css?v=20261029-staffrelation-cards1">\n</head>');
+  // Include the same cash settlement protection applied to the PC Admin Work.
+  // It uses the original secure v2 cash-payment RPCs for cash approvals.
+  h=h.replace('</body>',
+    '<scr'+'ipt src="staff-request-cash-settlement-v1.js?v=20260926-v1"></scr'+'ipt>\n'+
+    '<scr'+'ipt src="staff-request-mobile-v1.js?v=20261029-staffrelation-cards1"></scr'+'ipt>\n</body>');
+  document.open();
+  document.write(h);
+  document.close();
+}catch(error){
+  const el=document.getElementById('bbLoadState');
+  if(el){el.textContent='Unable to open Staff Request';const sub=document.createElement('span');
+    sub.textContent=String(error&&error.message||error);el.appendChild(sub);}
+}
+})();
+</script>
+</body>
+</html>
