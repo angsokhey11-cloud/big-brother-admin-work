@@ -37,6 +37,46 @@ function syncTabs(){
   b.classList.toggle('selected',!!match);
  });
 }
+/* Preserve the full source text for search but render just the primary value
+   per cell. Original review buttons and all secure action handlers stay intact. */
+function firstLine(cell){
+ if(!cell)return '';
+ let out='';
+ for(const node of cell.childNodes){
+  if(node.nodeType===1&&node.tagName==='BR')break;
+  out+=node.textContent||'';
+ }
+ return out.trim()||String(cell.textContent||'').trim();
+}
+function compactRows(tbody){
+ if(!tbody)return;
+ const types={
+  specialRows:{label:'Staff',value:'Amount',columns:[0,1,6]},
+  paymentRows:{label:'Staff',value:'Amount',columns:[0,1,4]},
+  leaveRows:{label:'Staff',value:'Days',columns:[0,1,4]},
+  batchEarningRows:{label:'Batch',value:'Incentive',columns:[0,1,4]}
+ };
+ const cfg=types[tbody.id];
+ if(!cfg)return;
+ const wrap=tbody.closest('.tablewrap');
+ if(wrap&&!wrap.querySelector('.bb-mr-list-header')){
+  const header=document.createElement('div');
+  header.className='bb-mr-list-header';
+  header.innerHTML='<span>Request</span><span>'+cfg.label+'</span><span>'+cfg.value+'</span><span>Action</span>';
+  wrap.insertBefore(header,wrap.firstChild);
+ }
+ tbody.querySelectorAll('tr').forEach(row=>{
+  if(row.dataset.bbMrCompact==='1')return;
+  row.dataset.bbMrSearchText=row.textContent||'';
+  const cells=Array.from(row.children);
+  if(row.querySelector('td.empty')){row.dataset.bbMrCompact='1';return}
+  for(const i of cfg.columns){
+   if(cells[i])cells[i].textContent=firstLine(cells[i]);
+  }
+  row.dataset.bbMrCompact='1';
+ });
+}
+
 function applyFilter(){
  const input=$('bbMrSearch'),q=String(input?.value||'').trim().toLowerCase();
  const panel=document.querySelector('.panel.active');
@@ -44,7 +84,7 @@ function applyFilter(){
  if(panel){
   panel.querySelectorAll('tbody tr').forEach(row=>{
    const isEmpty=!!row.querySelector('td.empty');
-   const ok=isEmpty||!q||row.textContent.toLowerCase().includes(q);
+   const ok=isEmpty||!q||String(row.dataset.bbMrSearchText||row.textContent).toLowerCase().includes(q);
    row.classList.toggle('bb-mr-hidden-row',!ok);
    if(ok&&!isEmpty)shown++;
   });
@@ -59,7 +99,7 @@ function focusDeepLink(){
  const match=rows.find(row=>{
   const button=row.querySelector('button[data-id]');
   const id=String(button?.dataset.id||'').toLowerCase();
-  const text=String(row.textContent||'').toLowerCase();
+  const text=String(row.dataset.bbMrSearchText||row.textContent||'').toLowerCase();
   return id===key || text.includes(key);
  });
  if(!match)return;
@@ -94,8 +134,10 @@ function attachRows(){
     const btn=row?.querySelector('button.review');
     if(btn)btn.click();
   });
-  new MutationObserver(()=>{applyFilter();focusDeepLink()})
-    .observe(t,{childList:true,subtree:false});
+  compactRows(t);
+  new MutationObserver(()=>{
+    compactRows(t);applyFilter();focusDeepLink();
+  }).observe(t,{childList:true,subtree:false});
  });
 }
 function init(){
