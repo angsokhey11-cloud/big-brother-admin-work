@@ -26,12 +26,12 @@ try{
   if(!h.includes('<body>')||!h.includes('</head>')||!h.includes('</body>'))
     throw new Error('Staff Request markup is not ready.');
   h=h.replace('<body>','<body class="bb-staff-request-mobile">');
-  h=h.replace('</head>','<link rel="stylesheet" href="staff-request-mobile-v1.css?v=20261029-batch-earning-sales-location3">\n</head>');
+  h=h.replace('</head>','<link rel="stylesheet" href="staff-request-mobile-v1.css?v=20261029-option-b-compact4">\n</head>');
   // Include the same cash settlement protection applied to the PC Admin Work.
   // It uses the original secure v2 cash-payment RPCs for cash approvals.
   h=h.replace('</body>',
     '<scr'+'ipt src="staff-request-cash-settlement-v1.js?v=20260926-v1"></scr'+'ipt>\n'+
-    '<scr'+'ipt src="staff-request-mobile-v1.js?v=20261029-batch-earning-sales-location3"></scr'+'ipt>\n</body>');
+    '<scr'+'ipt src="staff-request-mobile-v1.js?v=20261029-option-b-compact4"></scr'+'ipt>\n</body>');
   document.open();
   document.write(h);
   document.close();
