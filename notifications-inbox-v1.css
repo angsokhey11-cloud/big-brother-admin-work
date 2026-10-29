@@ -1,0 +1,85 @@
+/* BIG BROTHER Notification Center V3 — existing mobile SVG icon style.
+ * Appearance only, scoped to notifications. No emoji, no remote icon library.
+ */
+body.bb-inbox-page{background:#f1f5fa;color:#18314c}
+.bb-inbox-page .page{max-width:1060px;padding:18px 16px 34px}
+.bb-inbox-page .title{font-size:30px;font-weight:800;letter-spacing:-.7px;color:#164b86}
+.bb-inbox-page .sub{font-size:12px;line-height:1.5;color:#657b91;margin-top:6px}
+.bb-inbox-page .top{margin-bottom:20px}
+.bb-inbox-page .actions{gap:10px}
+.bb-inbox-page .actions .pill.ok{display:inline-flex;gap:6px;align-items:center;background:#e3f4ec;color:#12694f;border-radius:999px;padding:9px 11px;font-size:10px}
+.bb-inbox-page .actions .btn{min-height:39px;border:1px solid #d5e2ee;background:#fff;border-radius:12px;box-shadow:0 1px 3px #1836540b;color:#315777;font-size:12px}
+.bb-inbox-page .bb-inbox-ico{display:block;flex:none;width:22px;height:22px;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.bb-inbox-page .bb-inbox-icon-sm{width:17px;height:17px}
+.bb-inbox-page .bb-inbox-filter-card{padding:12px;border-radius:17px;background:#fff;border:1px solid #d9e5f0;box-shadow:0 3px 12px #1a41690a;margin-bottom:14px}
+.bb-inbox-page .bb-inbox-tabs{display:flex;gap:9px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:2px 1px 7px}
+.bb-inbox-page .bb-inbox-tabs::-webkit-scrollbar{display:none}
+.bb-inbox-page .bb-inbox-tab{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 auto;min-width:89px;min-height:67px;padding:8px 11px;border:1px solid #d8e6f4;border-radius:14px;background:#fff;color:#395774;font-weight:750;font-size:11px;gap:3px;cursor:pointer;box-shadow:0 2px 6px #173a6606}
+.bb-inbox-page .bb-inbox-tab .bb-inbox-ico{color:#216caf;width:20px;height:20px}
+.bb-inbox-page .bb-inbox-tab[data-active=true]{background:linear-gradient(145deg,#286fc0,#134c93);color:#fff;border-color:#215fa5}
+.bb-inbox-page .bb-inbox-tab[data-active=true] .bb-inbox-ico{color:#fff}
+.bb-inbox-page .bb-inbox-tab-count{position:absolute;top:-3px;right:-2px;min-width:21px;height:21px;border-radius:999px;padding:0 5px;background:#e45361;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
+.bb-inbox-page .bb-inbox-tab-count:empty{display:none}
+.bb-inbox-page .bb-inbox-tab-hint{font-size:10px;color:#748ca3;text-align:right;margin-top:0}
+.bb-inbox-page .bb-inbox-tools{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:12px 0 0}
+.bb-inbox-page .bb-inbox-tools label{position:relative;display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid #d6e4f1;border-radius:10px;padding:8px 10px;font-size:11px;font-weight:700;color:#365a7a;max-width:100%}
+.bb-inbox-page .bb-inbox-tools .bb-inbox-ico{width:16px;height:16px}
+.bb-inbox-page .bb-inbox-tools select{max-width:155px;border:0;background:transparent;color:#214669;font-size:11px;font-weight:750;min-width:0;outline:0;cursor:pointer}
+.bb-inbox-page .bb-inbox-list{border:1px solid #d6e4f1;border-radius:17px;overflow:hidden;background:#fff;box-shadow:0 3px 13px #173a660a}
+.bb-inbox-page .bb-inbox-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid #dce7f0}
+.bb-inbox-page .bb-inbox-list-head strong{font-size:14px;font-weight:800;color:#183451}
+.bb-inbox-page .bb-inbox-list-head small{display:block;color:#7890a7;font-size:10px;font-weight:500;margin-top:4px}
+.bb-inbox-page .bb-inbox-mark-all{display:inline-flex;gap:5px;align-items:center;justify-content:center;min-height:34px;border:0;background:#ecf5ff;color:#1760ad;border-radius:10px;font-size:11px;font-weight:800;padding:7px 10px;cursor:pointer}
+.bb-inbox-page .bb-inbox-mark-all:disabled{color:#8ca6c1;background:#f2f6fa;cursor:default}
+.bb-inbox-page .bb-inbox-item{border-bottom:1px solid #e2ebf3;padding:13px 16px 11px;background:#fff}
+.bb-inbox-page .bb-inbox-item:last-child{border-bottom:0}
+.bb-inbox-page .bb-inbox-item.unread{background:#f5faff}
+.bb-inbox-page .bb-inbox-item.bb-inbox-urgent.unread{background:#fff7f8}
+.bb-inbox-page .bb-inbox-main{display:flex;align-items:flex-start;gap:12px;width:100%;padding:0;border:0;background:none;text-align:left;color:inherit;cursor:pointer}
+.bb-inbox-page .bb-inbox-icon-box{display:flex;flex:0 0 43px;align-items:center;justify-content:center;width:43px;height:43px;border-radius:13px;border:1px solid #cee0f1;background:#e9f4ff;color:#2171b9}
+.bb-inbox-page .bb-inbox-icon-box.teal{background:#e5f7f3;border-color:#c3e9df;color:#148a7e}
+.bb-inbox-page .bb-inbox-icon-box.indigo{background:#ecf0ff;border-color:#ced7fb;color:#4b64ae}
+.bb-inbox-page .bb-inbox-icon-box.amber{background:#fff3e2;border-color:#f3ddba;color:#af741a}
+.bb-inbox-page .bb-inbox-icon-box.violet{background:#f3edff;border-color:#e1d4fb;color:#7c5bab}
+.bb-inbox-page .bb-inbox-icon-box .bb-inbox-ico{width:23px;height:23px}
+.bb-inbox-page .bb-inbox-content{display:block;flex:1;min-width:0}
+.bb-inbox-page .bb-inbox-title-line{display:flex;align-items:flex-start;gap:7px}
+.bb-inbox-page .bb-inbox-title{display:block;flex:1;min-width:0;color:#19334f;font-size:13px;font-weight:800;line-height:1.35;overflow-wrap:anywhere}
+.bb-inbox-page .bb-inbox-time{flex:none;font-size:10px;font-weight:500;color:#7790a8;white-space:nowrap;padding-top:2px}
+.bb-inbox-page .bb-inbox-dot{width:8px;height:8px;margin-top:5px;flex:none;border-radius:50%;background:#df5565}
+.bb-inbox-page .bb-inbox-desc{display:block;font-size:12px;line-height:1.5;margin-top:5px;color:#4c647c;overflow-wrap:anywhere}
+.bb-inbox-page .bb-inbox-metrics{display:block;margin-top:3px;color:#315c84;font-size:11px;line-height:1.4;font-weight:600;overflow-wrap:anywhere}
+.bb-inbox-page .bb-inbox-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-left:55px;margin-top:9px}
+.bb-inbox-page .bb-inbox-tags{display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0}
+.bb-inbox-page .bb-inbox-tag{font-size:10px;padding:5px 8px;border-radius:8px;background:#eaf3fd;color:#2366a5;font-weight:700}
+.bb-inbox-page .bb-inbox-tag.alert{background:#ffe6eb;color:#af3550}
+.bb-inbox-page .bb-inbox-tag.pending{background:#fff0dc;color:#a76a12}
+.bb-inbox-page .bb-inbox-tag.done{background:#e1f6ee;color:#157553}
+.bb-inbox-page .bb-inbox-action{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;min-height:32px;border:1px solid #afcef0;border-radius:9px;background:#fff;color:#1765b0;font-size:10px;font-weight:800;padding:7px 10px;cursor:pointer}
+.bb-inbox-page button:hover{filter:brightness(.97)}
+.bb-inbox-page button:focus-visible,.bb-inbox-page select:focus-visible{outline:2px solid #297bd0;outline-offset:2px}
+.bb-inbox-page .bb-inbox-empty{padding:32px 20px;text-align:center;color:#7990a5;font-size:13px}
+.bb-inbox-page .bb-inbox-empty .bb-inbox-ico{width:32px;height:32px;margin:0 auto 12px;color:#91a9c1}
+.bb-inbox-page .bb-inbox-loading{opacity:.65;pointer-events:none}
+@media(max-width:650px){
+ .bb-inbox-page .page{padding:14px 11px 24px}
+ .bb-inbox-page .title{font-size:26px}
+ .bb-inbox-page .top{margin-bottom:14px}
+ .bb-inbox-page .actions{margin-top:12px}
+ .bb-inbox-page .bb-inbox-tab{min-width:79px;min-height:62px;padding:7px 9px}
+ .bb-inbox-page .bb-inbox-filter-card{padding:10px}
+ .bb-inbox-page .bb-inbox-item{padding:12px 11px 11px}
+ .bb-inbox-page .bb-inbox-main{gap:10px}
+ .bb-inbox-page .bb-inbox-icon-box{flex-basis:39px;width:39px;height:39px}
+ .bb-inbox-page .bb-inbox-bottom{margin-left:49px;flex-wrap:wrap}
+ .bb-inbox-page .bb-inbox-list-head{padding:11px}
+ .bb-inbox-page .bb-inbox-title{font-size:12.5px}
+ .bb-inbox-page .bb-inbox-time{font-size:10px}
+ .bb-inbox-page .bb-inbox-desc{font-size:11.5px}
+ .bb-inbox-page .bb-inbox-action{min-height:31px}
+}
+@media(max-width:350px){
+ .bb-inbox-page .bb-inbox-time{font-size:9px}
+ .bb-inbox-page .bb-inbox-main{gap:8px}
+ .bb-inbox-page .bb-inbox-bottom{margin-left:0}
+}
