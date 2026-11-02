@@ -161,7 +161,7 @@ async function load(showLoader=true){
     data=await rpc('bb_staff_relation_admin_requests',{p_limit:200});
     if(!data?.success)throw new Error('Could not load Staff Requests.');
     render();
-    if((data?.paymentRequests||[]).length&&!locationsLoaded)void loadLocationNames();
+    if((data?.paymentRequests||[]).length&&!locationsAttempted)void loadLocationNames();
     $('loading').hidden=true;
     $('main').hidden=false;
   }catch(e){
@@ -185,14 +185,15 @@ const locationNames={
   'KPT-02':'កំពង់ធំ (ផ្លូវ SR)','PP-01':'ភ្នំពេញ',
   'SR-01':'សៀមរាប','SVR-01':'ស្វាយរៀង','TK-01':'តាកែវ'
 };
-let locationsLoaded=false,locationsLoading=null;
+let locationsLoaded=false,locationsLoading=null,locationsAttempted=false;
 function earningLocation(x,s){
   const code=clean(s.locationCode||x.locationCode).toUpperCase();
   const named=clean(s.locationName||x.locationName);
   return locationNames[code]||(named&&named.toUpperCase()!==code?named:'Location unavailable');
 }
 async function loadLocationNames(){
-  if(locationsLoaded||locationsLoading)return locationsLoading;
+  if(locationsLoaded||locationsLoading||locationsAttempted)return locationsLoading;
+  locationsAttempted=true;
   locationsLoading=(async()=>{
     try{
       await ensureSession();
@@ -223,7 +224,7 @@ async function loadLocationNames(){
 }
 function paymentItemRow(x,currency){
   const s=x.snapshot||{},type=clean(x.earningType);
-  const display=clean(labelType(type))||'Earning';
+  const display=clean(labelType(type.toLowerCase()))||'Earning';
   const amt=money(x.amount,currency);
   let context=[],details=[];
   const add=(label,value)=>details.push('<span>'+esc(label)+': <b>'+esc(value)+'</b></span>');
@@ -236,7 +237,7 @@ function paymentItemRow(x,currency){
     add('Payable',money(s.allowanceAmount??x.earningAmount??x.amount,currency));
   }else if(type==='DRIVER_ALLOWANCE'){
     context=[date(s.batchDate||x.sourceDate),earningLocation(x,s),
-      labelType(s.driverRole||x.sourceRole)||'Driver'];
+      labelType(clean(s.driverRole||x.sourceRole).toLowerCase())||'Driver'];
     add('Rate',money(s.allowanceRate??x.baseAmount,currency));
     add('Gross',money(x.grossAmount,currency));
     add('Deduction',money(x.deductionAmount,currency));
@@ -251,7 +252,7 @@ function paymentItemRow(x,currency){
   }else{
     context=[x.salaryMonth?month(x.salaryMonth):date(x.sourceDate)];
     if(s.locationCode||x.locationCode)context.push(earningLocation(x,s));
-    if(x.sourceRole)context.push(labelType(x.sourceRole));
+    if(x.sourceRole)context.push(labelType(clean(x.sourceRole).toLowerCase()));
     add('Base',money(x.baseAmount,currency));
     add('Gross',money(x.grossAmount,currency));
     add('Deduction',money(x.deductionAmount,currency));
