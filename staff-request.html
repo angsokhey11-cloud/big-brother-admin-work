@@ -16,6 +16,56 @@
 .detail-section{margin:4px 0 16px}.detail-title{font-size:11px;font-weight:900;color:var(--navy);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}.earning-list{display:grid;gap:9px}.earning-card{border:1px solid #d8e3ef;border-radius:12px;background:#fbfdff;overflow:hidden}.earning-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;background:#f3f7fc;border-bottom:1px solid #e0e8f1}.earning-head strong{color:var(--navy);font-size:12px}.earning-head span{color:var(--navy);font-size:15px;font-weight:900}.detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}.detail-cell{padding:9px 11px;border-right:1px solid #e7edf4;border-bottom:1px solid #e7edf4;min-height:58px}.detail-cell small{display:block;color:var(--muted);font-size:8px;font-weight:900;text-transform:uppercase}.detail-cell b{display:block;margin-top:4px;color:#27445f;font-size:11px;word-break:break-word}.calcbar{display:flex;justify-content:flex-end;gap:18px;flex-wrap:wrap;padding:9px 12px;font-size:10px;color:#5d7186}.calcbar b{color:var(--navy)}.checkbar{margin-top:9px;border:1px solid #c9e7d5;background:#eef9f3;color:#176c4a;border-radius:9px;padding:9px 11px;font-size:10px;font-weight:900}.checkbar.bad{border-color:#efc5c0;background:#fff2f1;color:#b42318}
 .field{margin-bottom:10px}.field label{display:block;margin-bottom:5px;color:#536a83;font-size:9px;font-weight:900;text-transform:uppercase}.field input,.field select,.field textarea{width:100%;min-height:42px;border:1px solid #cbd8e7;border-radius:9px;background:#fff;padding:8px 10px;color:var(--text)}.field textarea{min-height:82px;resize:vertical}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.modalactions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:12px}.status{min-height:18px;margin-top:8px;color:var(--green);font-size:10px;font-weight:800}.status.error{color:var(--red)}.loading{min-height:300px;display:flex;align-items:center;justify-content:center}.loading[hidden]{display:none}.loadcard,.errorbox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 24px;color:var(--navy);font-weight:900;box-shadow:var(--shadow)}.errorbox{color:var(--red);background:var(--redbg);border-color:#f1c2bd}.errorbox[hidden]{display:none}.note{border:1px solid #d9e4ef;border-radius:11px;background:#f8fafc;padding:11px;color:#5f7287;font-size:10px;line-height:1.55}
 @media(max-width:900px){.summary{grid-template-columns:repeat(2,1fr)}.info{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.detail-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){body{padding:8px}.summary{grid-template-columns:1fr}.hero{display:block}.pill{display:inline-block;margin-top:8px}.detail-grid{grid-template-columns:1fr}}
+
+/* Staff Payment Review — compact, responsive two-line earnings list (2026-11-02). */
+#itemDetails.payment-details{min-width:0}
+#itemDetails.payment-details .detail-title{
+  margin:0 0 5px;padding:11px 13px;background:#eaf3ff;border-radius:9px;
+  font-size:12px;line-height:1.4;text-transform:none;letter-spacing:0
+}
+#itemDetails.payment-details .earning-list{display:block;gap:0}
+#itemDetails.payment-details .earning-row{
+  padding:10px 12px 11px;border-bottom:1px solid #d9e4ef;background:#fff;min-width:0
+}
+#itemDetails.payment-details .earning-primary{
+  display:grid;grid-template-columns:168px minmax(0,1fr) auto;
+  align-items:baseline;column-gap:12px;row-gap:3px;line-height:1.45
+}
+#itemDetails.payment-details .earning-name{
+  color:var(--navy);font-size:12px;font-weight:900
+}
+#itemDetails.payment-details .earning-meta{
+  min-width:0;color:#34485f;font-size:11px;overflow-wrap:anywhere;
+  font-family:Arial,"Khmer Nida","Noto Sans Khmer",sans-serif
+}
+#itemDetails.payment-details .earning-amount{
+  color:var(--navy);font-size:15px;font-weight:900;text-align:right;
+  white-space:nowrap;font-variant-numeric:tabular-nums
+}
+#itemDetails.payment-details .earning-secondary{
+  margin-top:4px;color:#536a83;font-size:10px;line-height:1.6;
+  display:flex;gap:3px 10px;flex-wrap:wrap;font-variant-numeric:tabular-nums
+}
+#itemDetails.payment-details .earning-secondary b{color:#274766;font-weight:800}
+#itemDetails.payment-details .checkbar{
+  margin-top:10px;padding:7px 10px;font-size:10px;line-height:1.5;border-radius:7px
+}
+@media(max-width:640px){
+  #itemDetails.payment-details .earning-row{padding:10px 5px}
+  #itemDetails.payment-details .earning-primary{
+    grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;align-items:start
+  }
+  #itemDetails.payment-details .earning-name{font-size:13px;grid-column:1}
+  #itemDetails.payment-details .earning-amount{font-size:14px;grid-column:2;grid-row:1}
+  #itemDetails.payment-details .earning-meta{grid-column:1/-1;grid-row:2;font-size:11px}
+  #itemDetails.payment-details .earning-secondary{font-size:10px;margin-top:4px;gap:2px 9px}
+  body.bb-staff-request-mobile #itemDetails.payment-details{
+    border:0;border-radius:0;background:#fff;padding:7px 9px;margin-bottom:12px
+  }
+  body.bb-staff-request-mobile #itemDetails.payment-details .detail-title{font-size:13px}
+  body.bb-staff-request-mobile #modalInfo.info{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.bb-staff-request-mobile #modalInfo.info .ibox:last-child:nth-child(odd){grid-column:1/-1}
+}
 </style>
 </head>
 <body>
@@ -111,6 +161,7 @@ async function load(showLoader=true){
     data=await rpc('bb_staff_relation_admin_requests',{p_limit:200});
     if(!data?.success)throw new Error('Could not load Staff Requests.');
     render();
+    if((data?.paymentRequests||[]).length&&!locationsLoaded)void loadLocationNames();
     $('loading').hidden=true;
     $('main').hidden=false;
   }catch(e){
@@ -125,25 +176,98 @@ async function load(showLoader=true){
   }
 }
 
-function paymentItemCard(x,currency){
-  const s=x.snapshot||{}, type=clean(x.earningType), amount=money(x.amount,currency);
-  let extra='';
-  if(type==='DRIVER_ALLOWANCE'){
-    extra=cell('Batch',s.batchId||x.batchId)+cell('Batch Date',date(s.batchDate||x.sourceDate))+cell('Location',(s.locationCode||x.locationCode||'-')+(s.locationName?' — '+s.locationName:''))+cell('Driver Role',labelType(s.driverRole||x.sourceRole))+cell('Allowance Rate',money(s.allowanceRate??x.baseAmount,currency));
-  }else if(type==='SPECIAL_ALLOWANCE'){
-    extra=cell('Allowance Month',month(s.allowanceMonth||x.salaryMonth))+cell('Base Allowance',money(s.baseAllowance??x.baseAmount,currency))+cell('Approved Leave',String(s.approvedLeaveDays??0)+' day(s)')+cell('Deduction / Day',money(s.deductionPerDay??0,currency))+cell('Deduction',money(s.deductionAmount??x.deductionAmount,currency))+cell('Final Allowance',money(s.allowanceAmount??x.earningAmount,currency));
+
+/* The live locations table is authoritative; seed familiar names so existing
+   earning snapshots also display names if the device temporarily has no network. */
+const locationNames={
+  'BTB-01':'បាត់ដំបង','KP-01':'កំពត','KPC-01':'កំពង់ចាម',
+  'KPS-01':'កំពង់ស្ពឺ','KPT-01':'កំពង់ធំ',
+  'KPT-02':'កំពង់ធំ (ផ្លូវ SR)','PP-01':'ភ្នំពេញ',
+  'SR-01':'សៀមរាប','SVR-01':'ស្វាយរៀង','TK-01':'តាកែវ'
+};
+let locationsLoaded=false,locationsLoading=null;
+function earningLocation(x,s){
+  const code=clean(s.locationCode||x.locationCode).toUpperCase();
+  const named=clean(s.locationName||x.locationName);
+  return locationNames[code]||(named&&named.toUpperCase()!==code?named:'Location unavailable');
+}
+async function loadLocationNames(){
+  if(locationsLoaded||locationsLoading)return locationsLoading;
+  locationsLoading=(async()=>{
+    try{
+      await ensureSession();
+      async function read(){
+        return fetch(SUPABASE_URL+'/rest/v1/locations?select=location_code,location_name',{
+          headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+session.access_token},
+          cache:'no-store'
+        });
+      }
+      let response=await read();
+      if(response.status===401){await refreshSession();response=await read()}
+      if(!response.ok)throw new Error('Location directory unavailable ('+response.status+')');
+      const rows=await response.json();
+      if(!Array.isArray(rows))throw new Error('Unexpected location directory result');
+      for(const row of rows){
+        const code=clean(row.location_code).toUpperCase(),name=clean(row.location_name);
+        if(code&&name)locationNames[code]=name;
+      }
+      locationsLoaded=true;
+      if(current?.kind==='payment'){
+        const request=(data?.paymentRequests||[]).find(r=>Number(r.requestId)===current.id);
+        if(request)showPaymentDetails(request);
+      }
+    }catch(error){console.warn('Staff Payment location display:',error.message||error)}
+    finally{locationsLoading=null}
+  })();
+  return locationsLoading;
+}
+function paymentItemRow(x,currency){
+  const s=x.snapshot||{},type=clean(x.earningType);
+  const display=clean(labelType(type))||'Earning';
+  const amt=money(x.amount,currency);
+  let context=[],details=[];
+  const add=(label,value)=>details.push('<span>'+esc(label)+': <b>'+esc(value)+'</b></span>');
+  if(type==='SPECIAL_ALLOWANCE'){
+    context=[month(s.allowanceMonth||x.salaryMonth),
+      String(s.approvedLeaveDays??0)+' leave day(s)'];
+    add('Base',money(s.baseAllowance??x.baseAmount,currency));
+    add('Deduction/day',money(s.deductionPerDay??0,currency));
+    add('Deduction',money(s.deductionAmount??x.deductionAmount,currency));
+    add('Payable',money(s.allowanceAmount??x.earningAmount??x.amount,currency));
+  }else if(type==='DRIVER_ALLOWANCE'){
+    context=[date(s.batchDate||x.sourceDate),earningLocation(x,s),
+      labelType(s.driverRole||x.sourceRole)||'Driver'];
+    add('Rate',money(s.allowanceRate??x.baseAmount,currency));
+    add('Gross',money(x.grossAmount,currency));
+    add('Deduction',money(x.deductionAmount,currency));
+    add('Payable',money(x.earningAmount??x.amount,currency));
   }else if(type==='SALES_INCENTIVE'){
-    extra=cell('Sale Date',date(s.saleDate||x.sourceDate))+cell('Location',s.locationCode||x.locationCode||'-')+cell('Eligible Sales',money(s.totalSaleUSD??s.dailySaleUSD??x.baseAmount,'USD'))+cell('Rate',String(s.incentiveRatePercent??x.ratePercent??0)+'%')+cell('Invoices',String(s.invoiceCount??'-'))+cell('Batch IDs',s.batchIds||x.batchId||'-');
+    context=[date(s.saleDate||x.sourceDate),earningLocation(x,s)];
+    add('Eligible Sales',money(s.totalSaleUSD??s.dailySaleUSD??x.baseAmount,'USD'));
+    add('Rate',String(s.incentiveRatePercent??x.ratePercent??0)+'%');
+    if(s.invoiceCount!=null)add('Invoices',String(s.invoiceCount));
+    add('Deduction',money(x.deductionAmount,currency));
+    add('Payable',money(x.earningAmount??x.amount,currency));
   }else{
-    extra=cell('Source Date',date(x.sourceDate))+cell('Role',labelType(x.sourceRole))+cell('Location',x.locationCode||'-')+cell('Reference',x.sourceReference||x.batchId||'-');
+    context=[x.salaryMonth?month(x.salaryMonth):date(x.sourceDate)];
+    if(s.locationCode||x.locationCode)context.push(earningLocation(x,s));
+    if(x.sourceRole)context.push(labelType(x.sourceRole));
+    add('Base',money(x.baseAmount,currency));
+    add('Gross',money(x.grossAmount,currency));
+    add('Deduction',money(x.deductionAmount,currency));
+    add('Payable',money(x.earningAmount??x.amount,currency));
   }
-  return `<div class="earning-card"><div class="earning-head"><strong>${esc(labelType(type))}</strong><span>${esc(amount)}</span></div><div class="detail-grid">${extra}</div><div class="calcbar"><span>Base: <b>${esc(money(x.baseAmount,currency))}</b></span><span>Gross: <b>${esc(money(x.grossAmount,currency))}</b></span><span>Deduction: <b>${esc(money(x.deductionAmount,currency))}</b></span><span>Payable: <b>${esc(money(x.earningAmount||x.amount,currency))}</b></span></div></div>`;
+  return '<div class="earning-row">'+
+    '<div class="earning-primary"><strong class="earning-name">'+esc(display)+'</strong>'+
+    '<span class="earning-meta">'+context.filter(Boolean).map(esc).join(' · ')+'</span>'+
+    '<strong class="earning-amount">'+esc(amt)+'</strong></div>'+
+    '<div class="earning-secondary">'+details.join('')+'</div></div>';
 }
 
 function showPaymentDetails(r){
   const items=r.items||[], sum=items.reduce((a,x)=>a+num(x.amount),0), ok=Math.abs(sum-num(r.requestedAmount))<0.005;
   $('itemDetails').hidden=false;
-  $('itemDetails').innerHTML=`<div class="detail-title">Earning Details — Admin Review</div><div class="earning-list">${items.map(x=>paymentItemCard(x,r.currency)).join('')}</div><div class="checkbar ${ok?'':'bad'}">Item total ${esc(money(sum,r.currency))} ${ok?'matches':'does NOT match'} requested total ${esc(money(r.requestedAmount,r.currency))}.</div>`;
+  $('itemDetails').innerHTML=`<div class="detail-title">Earning Details — Admin Review</div><div class="earning-list">${items.map(x=>paymentItemRow(x,r.currency)).join('')}</div><div class="checkbar ${ok?'':'bad'}">Item total ${esc(money(sum,r.currency))} ${ok?'matches':'does NOT match'} requested total ${esc(money(r.requestedAmount,r.currency))}.</div>`;
 }
 
 function openReview(kind,id){
@@ -158,7 +282,7 @@ function openReview(kind,id){
   $('approvedAmountField').style.display=kind==='special'?'':'none';
   $('approvedAmount').value=kind==='special'?num(r.requestedAmount).toFixed(2):'';
   $('exchangeRate').value='1';$('referenceNo').value='';$('adminNote').value='';setStatus('');
-  $('itemDetails').hidden=true;$('itemDetails').innerHTML='';
+  $('itemDetails').hidden=true;$('itemDetails').innerHTML='';$('itemDetails').classList.toggle('payment-details',kind==='payment');
   if(kind==='special')$('modalInfo').innerHTML=info('Salary Month',month(r.salaryMonth))+info('Gross Salary',money(r.grossSalary,r.currency))+info('Requested',money(r.requestedAmount,r.currency))+info('Approved Before',money(r.approvedBefore,r.currency))+info('Remaining Before',money(r.remainingBeforeApproval,r.currency))+info('Reason',r.reason||'-');
   else if(kind==='payment'){$('modalInfo').innerHTML=info('Requested',money(r.requestedAmount,r.currency))+info('Items',(r.items||[]).length+' earning(s)')+info('Requested At',date(r.requestedAt));showPaymentDetails(r)}
   else $('modalInfo').innerHTML=info('Leave From',date(r.leaveFrom))+info('Leave To',date(r.leaveTo))+info('Leave Days',String(r.leaveDays))+info('Reason',r.reason||'-');
