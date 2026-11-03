@@ -70,15 +70,12 @@ function renderRows(){
 async function load(){
   try{
     injectUI();
-    const [da,all]=await Promise.all([
-      rpc('bb_staff_relation_admin_driver_allowance_requests',{p_limit:200}),
-      rpc('bb_staff_relation_admin_requests',{p_limit:1})
-    ]);
+    const da=await rpc('bb_staff_relation_admin_driver_allowance_requests',{p_limit:200});
     payload=da?.success?da:{requests:[],count:0};
-    const c=Number(payload.count||0), counts=all?.counts||{};
+    const c=Number(payload.count||0);
     if($('driverAllowanceCount'))$('driverAllowanceCount').textContent=c.toLocaleString();
     if($('driverAllowanceTabCount'))$('driverAllowanceTabCount').textContent=c?'('+c+')':'';
-    if($('totalPending'))$('totalPending').textContent=(c+Number(counts.paymentRequests||0)+Number(counts.leaveRequests||0)+Number(counts.specialRequests||0)).toLocaleString();
+    window.bbStaffRequestRecalculatePendingTotal?.();
     renderRows();
   }catch(e){console.error('Driver Allowance:',e);const body=$('driverAllowanceRows');if(body)body.innerHTML='<tr><td colspan="7" class="empty">'+esc(e?.message||String(e))+'</td></tr>'}
 }
@@ -108,6 +105,27 @@ async function decide(action){
   finally{a.disabled=false;r.disabled=false}
 }
 
-function boot(){injectUI();load();const refresh=$('refreshBtn');if(refresh&&!refresh.dataset.bbDa){refresh.dataset.bbDa='1';refresh.addEventListener('click',()=>setTimeout(load,350))}}
+let lastReload=0, reloadInFlight=false;
+async function refreshWhenActive(){
+  if(document.visibilityState==='hidden'||reloadInFlight)return;
+  if(Date.now()-lastReload<2500)return;
+  lastReload=Date.now();
+  reloadInFlight=true;
+  try{await load()}finally{reloadInFlight=false}
+}
+function boot(){
+  injectUI();
+  void refreshWhenActive();
+  const refresh=$('refreshBtn');
+  if(refresh&&!refresh.dataset.bbDa){
+    refresh.dataset.bbDa='1';
+    refresh.addEventListener('click',()=>{lastReload=0;void refreshWhenActive()});
+  }
+  // Returning from Batch Stock Out refreshes the queue without background polling.
+  window.addEventListener('focus',refreshWhenActive);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')void refreshWhenActive();
+  });
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,30));else setTimeout(boot,30);
 })();
