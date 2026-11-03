@@ -79,11 +79,11 @@ function renderRows(){
 async function load(){
   try{
     injectUI();
-    const [ber,all]=await Promise.all([rpc('bb_staff_relation_admin_batch_earning_reviews',{p_limit:200}),rpc('bb_staff_relation_admin_requests',{p_limit:1})]);
-    payload=ber?.success?ber:{reviews:[],count:0};const c=Number(payload.count||0),counts=all?.counts||{};
+    const ber=await rpc('bb_staff_relation_admin_batch_earning_reviews',{p_limit:200});
+    payload=ber?.success?ber:{reviews:[],count:0};const c=Number(payload.count||0);
     if($('batchEarningCount'))$('batchEarningCount').textContent=c.toLocaleString();
     if($('batchEarningTabCount'))$('batchEarningTabCount').textContent=c?'('+c+')':'';
-    if($('totalPending'))$('totalPending').textContent=(c+Number(counts.paymentRequests||0)+Number(counts.leaveRequests||0)+Number(counts.specialRequests||0)).toLocaleString();
+    window.bbStaffRequestRecalculatePendingTotal?.();
     renderRows();
   }catch(e){console.error('Batch Earning Review:',e);const body=$('batchEarningRows');if(body)body.innerHTML='<tr><td colspan="7" class="empty">'+esc(e?.message||String(e))+'</td></tr>'}
 }
