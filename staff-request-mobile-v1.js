@@ -9,6 +9,7 @@ const $=id=>document.getElementById(id);
 const svg=(name)=>{
  const icons={
   batch:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  truck:'<path d="M3 7h11v10H3zM14 10h4l3 4v3h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>',
   advance:'<circle cx="12" cy="12" r="9"/><path d="M12 6v12M15.5 9c-.7-1-2-1.5-3.5-1.5-4.5 0-4.5 4.2 0 4.2s4.5 4.3 0 4.3c-1.5 0-2.8-.5-3.5-1.5"/>',
   payment:'<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 9h18M7 15h4"/>',
   leave:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 15h3"/>'
@@ -55,7 +56,8 @@ function compactRows(tbody){
   specialRows:{label:'Staff',value:'Amount',columns:[0,1,6]},
   paymentRows:{label:'Staff',value:'Amount',columns:[0,1,4]},
   leaveRows:{label:'Staff',value:'Days',columns:[0,1,4]},
-  batchEarningRows:{label:'Salesman',value:'Incentive',columns:[0,1,2,4]}
+  batchEarningRows:{label:'Salesman',value:'Incentive',columns:[0,1,2,4]},
+  driverAllowanceRows:{label:'Driver',value:'Issued',columns:[0,2,4]}
  };
  const cfg=types[tbody.id];
  if(!cfg)return;
@@ -130,7 +132,8 @@ function focusDeepLink(){
  if(section&&!section.classList.contains('active')){
   const name=section.id.replace(/^tab-/,'');
   const tab=[...document.querySelectorAll('.tabs .tab')].find(b=>b.dataset.tab===name ||
-    (name==='batch-earning'&&b.id==='batchEarningTab'));
+    (name==='batch-earning'&&b.id==='batchEarningTab') ||
+    (name==='driver-allowance'&&b.id==='driverAllowanceTab'));
   tab?.click();
  }
  const b=match.querySelector('button.review[data-id]');
@@ -176,6 +179,7 @@ function init(){
  shortcuts.className='bb-mr-shortcuts';
  shortcuts.setAttribute('aria-label','Approval categories');
  const definitions=[
+  ['driverAllowanceTab','Driver Allowance','truck'],
   ['batchEarningTab','Batch Earnings','batch'],
   ['special','Salary Advance','advance'],
   ['payment','Payment Request','payment'],
@@ -186,7 +190,7 @@ function init(){
   b.className='bb-mr-shortcut';b.dataset.targetTab=tabId;
   b.innerHTML='<span class="bb-mr-shortcut-icon">'+svg(ico)+'</span><strong>'+name+'</strong>';
   b.onclick=()=>{
-   const tab=tabId==='batchEarningTab'?$(tabId):
+   const tab=['batchEarningTab','driverAllowanceTab'].includes(tabId)?$(tabId):
      document.querySelector('.tabs .tab[data-tab="'+tabId+'"]');
    if(tab){
     // Original hidden tabs still own the validated category switching logic.
@@ -207,7 +211,7 @@ function init(){
   const filter=document.createElement('div');
   filter.className='bb-mr-filterbar';
   filter.innerHTML='<input type="search" id="bbMrSearch" placeholder="Search staff, request, batch..." autocomplete="off" aria-label="Search approvals"><span class="bb-mr-count" id="bbMrShown"></span>';
-  // Option B: shortcuts -> five counters -> search + Refresh -> queue.
+  // Option B: shortcuts -> combined approval counters -> search + Refresh -> queue.
   const summary=main.querySelector('.summary');
   if(summary)summary.insertAdjacentElement('afterend',filter);
   else tabs.insertAdjacentElement('afterend',filter);
