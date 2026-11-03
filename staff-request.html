@@ -140,10 +140,20 @@ function busy(b,on,text){if(on){b.dataset.old=b.textContent;b.textContent=text;b
 function info(label,value){return `<div class="ibox"><small>${esc(label)}</small><strong>${esc(value)}</strong></div>`}
 function cell(label,value){return `<div class="detail-cell"><small>${esc(label)}</small><b>${esc(value||'-')}</b></div>`}
 
+// One authoritative displayed total across the modular approval queues.
+window.bbStaffRequestRecalculatePendingTotal=function(){
+  const ids=['paymentCount','leaveCount','specialCount','batchEarningCount','driverAllowanceCount'];
+  const total=ids.reduce((sum,id)=>{
+    const el=document.getElementById(id);
+    return sum+(el?Number(String(el.textContent||'').replace(/,/g,''))||0:0);
+  },0);
+  const target=document.getElementById('totalPending');
+  if(target)target.textContent=total.toLocaleString();
+};
 function render(){
   const c=data?.counts||{},p=data?.paymentRequests||[],l=data?.leaveRequests||[],s=data?.specialRequests||[];
   $('paymentCount').textContent=c.paymentRequests??p.length;$('leaveCount').textContent=c.leaveRequests??l.length;$('specialCount').textContent=c.specialRequests??s.length;
-  $('totalPending').textContent=Number(c.paymentRequests??p.length)+Number(c.leaveRequests??l.length)+Number(c.specialRequests??s.length);
+  window.bbStaffRequestRecalculatePendingTotal();
   $('paymentTabCount').textContent=`(${p.length})`;$('leaveTabCount').textContent=`(${l.length})`;$('specialTabCount').textContent=`(${s.length})`;
   $('specialRows').innerHTML=s.length?s.map(r=>`<tr><td><strong>${esc(r.requestNo)}</strong><br>${esc(date(r.requestedAt))}</td><td><strong>${esc(r.staffName)}</strong><br>${esc(r.staffId)}</td><td>${esc(month(r.salaryMonth))}</td><td class="money">${esc(money(r.grossSalary,r.currency))}</td><td class="money">${esc(money(r.approvedBefore,r.currency))}</td><td class="money"><strong>${esc(money(r.remainingBeforeApproval,r.currency))}</strong></td><td class="money"><strong>${esc(money(r.requestedAmount,r.currency))}</strong></td><td>${esc(r.reason||'-')}</td><td><span class="badge pending">PENDING</span></td><td><button class="review" data-kind="special" data-id="${r.advanceRequestId}">Review</button></td></tr>`).join(''):'<tr><td colspan="10" class="empty">No pending Salary Advance request.</td></tr>';
   $('paymentRows').innerHTML=p.length?p.map(r=>`<tr><td><strong>${esc(r.requestNo)}</strong></td><td><strong>${esc(r.staffName)}</strong><br>${esc(r.staffId)}</td><td>${esc(date(r.requestedAt))}</td><td>${esc((r.items||[]).map(x=>labelType(x.earningType)).join(', ')||'-')}</td><td class="money"><strong>${esc(money(r.requestedAmount,r.currency))}</strong></td><td><span class="badge pending">REQUESTED</span></td><td><button class="review" data-kind="payment" data-id="${r.requestId}">Review</button></td></tr>`).join(''):'<tr><td colspan="7" class="empty">No pending Staff Payment request.</td></tr>';
@@ -339,5 +349,6 @@ load(true);
 })();
 </script>
 <script src="batch-earning-review-v1.js?v=20260926-native1"></script>
+<script src="driver-allowance-request-v1.js?v=20261103-pending1"></script>
 </body>
 </html>
