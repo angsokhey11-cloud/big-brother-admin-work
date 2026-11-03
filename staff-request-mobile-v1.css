@@ -20,7 +20,7 @@ body.bb-staff-request-mobile{
 }
 .bb-staff-request-mobile .bb-mr-section-label{font-size:12px;color:#194979;font-weight:900;margin:0 0 8px 2px}
 .bb-staff-request-mobile .bb-mr-shortcuts{
- display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:11px;
+ display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-bottom:11px;
 }
 .bb-staff-request-mobile .bb-mr-shortcut{
  min-width:0;border:1px solid var(--bbmr-border);border-radius:12px;background:#fff;
@@ -47,7 +47,7 @@ body.bb-staff-request-mobile{
  border:1px solid var(--bbmr-border);border-radius:13px;
  box-shadow:0 3px 12px #1e497010;position:relative;
 }
-.bb-staff-request-mobile .sum:nth-child(5){grid-column:1/-1;min-height:66px}
+.bb-staff-request-mobile .sum:nth-child(5){min-height:82px}
 .bb-staff-request-mobile .sum small{font-size:10px;font-weight:800;color:#647b91;letter-spacing:0;text-transform:none;line-height:1.45}
 .bb-staff-request-mobile .sum strong{font-size:21px;line-height:1.3;margin-top:4px;color:#104c88}
 .bb-staff-request-mobile .sum .sub{font-size:9px;line-height:1.4;margin-top:4px;color:#8b9aab}
@@ -133,6 +133,14 @@ body.bb-staff-request-mobile{
 .bb-staff-request-mobile #batchEarningRows td:nth-child(6){display:block;grid-area:status;text-align:right}
 .bb-staff-request-mobile #batchEarningRows td:nth-child(7){display:block;grid-area:action;text-align:right}
 .bb-staff-request-mobile #batchEarningRows td.empty{display:block}
+.bb-staff-request-mobile #driverAllowanceRows td{display:none}
+.bb-staff-request-mobile #driverAllowanceRows td:nth-child(1){display:block;grid-area:id}
+.bb-staff-request-mobile #driverAllowanceRows td:nth-child(2){display:block;grid-area:extra}
+.bb-staff-request-mobile #driverAllowanceRows td:nth-child(3){display:block;grid-area:name}
+.bb-staff-request-mobile #driverAllowanceRows td:nth-child(5){display:block;grid-area:amount;text-align:right}
+.bb-staff-request-mobile #driverAllowanceRows td:nth-child(6){display:block;grid-area:status;text-align:right}
+.bb-staff-request-mobile #driverAllowanceRows td:nth-child(7){display:block;grid-area:action;text-align:right}
+.bb-staff-request-mobile #driverAllowanceRows td.empty{display:block}
 .bb-staff-request-mobile .note{font-size:10px;line-height:1.7;border:1px solid #d9e7f2;background:#f9fcff}
 .bb-staff-request-mobile .modal{padding:0;align-items:stretch;justify-content:stretch;z-index:10000;background:#eef4fa}
 .bb-staff-request-mobile .modalbox{
