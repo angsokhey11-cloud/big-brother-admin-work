@@ -24,7 +24,7 @@
     }
 
     if(requestedView==='staff-request'){
-      const staffResponse=await fetch('staff-request.html?v=20261102-review-list1',{cache:'default'});
+      const staffResponse=await fetch('staff-request.html?v=20261106-approved-driver-hide1',{cache:'default'});
       if(!staffResponse.ok)throw new Error('Could not load Staff Request workspace.');
       let staffHtml=await staffResponse.text();
       const cashPatch='<scr'+'ipt src="staff-request-cash-settlement-v1.js?v=20260926-v1"></scr'+'ipt>';
