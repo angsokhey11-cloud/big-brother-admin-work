@@ -56,7 +56,7 @@ function injectModal(){
     <div id="bbBerModeMessage" class="bb-ber-flow"></div>
     <div id="bbBerInfo" class="bb-ber-grid"></div>
     <div class="detail-section"><div class="detail-title">Batch Stock Items</div><div id="bbBerItems"></div></div>
-    <div class="detail-section"><div class="detail-title">1. Driver Allowance</div><div class="info"><div class="field"><label id="bbBerD1Label">Driver 1 Allowance (USD)</label><input id="bbBerD1" type="number" min="0" step="0.01" value="0"></div><div class="field" id="bbBerD2Field"><label id="bbBerD2Label">Driver 2 Allowance (USD)</label><input id="bbBerD2" type="number" min="0" step="0.01" value="0"></div></div></div>
+    <div class="detail-section" id="bbBerAllowanceSection"><div class="detail-title">1. Driver Allowance</div><div id="bbBerAllowanceGuidance" class="bb-ber-flow bb-ber-warn" hidden></div><div class="info"><div class="field" id="bbBerD1Field"><label id="bbBerD1Label">Driver 1 Allowance (USD)</label><input id="bbBerD1" type="number" min="0" step="0.01" value="0"></div><div class="field" id="bbBerD2Field"><label id="bbBerD2Label">Driver 2 Allowance (USD)</label><input id="bbBerD2" type="number" min="0" step="0.01" value="0"></div></div></div>
     <div class="detail-section"><div class="detail-title">2. Sales Incentive Decision</div><div class="bb-ber-radio"><label class="bb-ber-choice"><input type="radio" name="bbBerDecision" value="APPROVE">Approve calculated incentive</label><label class="bb-ber-choice"><input type="radio" name="bbBerDecision" value="REJECT">Reject incentive · Driver Allowance only</label></div><div class="field" id="bbBerRejectReasonField" style="margin-top:9px"><label>Incentive Rejection Reason</label><textarea id="bbBerRejectReason" placeholder="Required when incentive is rejected..."></textarea></div></div>
     <div class="detail-section" id="bbBerSettlementSection"><div class="detail-title">3. Settlement Option</div><div class="field"><select id="bbBerOption"><option value="DIRECT">Option 1 — Sales Incentive direct to Salesperson</option><option value="SHARE_DRIVER1">Option 2 — (Sales Incentive + Driver 1 Allowance) ÷ 2</option><option value="SHARE_ALL">Option 3 — (Sales Incentive + Driver 1 + Driver 2 Allowance) ÷ 3</option></select></div></div>
     <div id="bbBerPreview" class="bb-ber-preview"></div>
@@ -96,6 +96,44 @@ function applyDecisionUI(){
   if(rejected)$('bbBerOption').value='DIRECT';
 }
 
+// Driver allowances already approved when stock was issued belong to the
+// independent Driver Allowance Request workflow, NOT this Batch Earnings review.
+// Older batches without separate requests keep their original earning flow.
+function separateAllowance(){return current?.separateDriverAllowanceWorkflow===true}
+function allowanceFor(role){return current?.driverAllowances?.[role]||null}
+function allowanceAlreadyApproved(role){
+  const a=allowanceFor(role);
+  return a?.status==='APPROVED' && Number(a?.earningId||0)>0;
+}
+function updateAllowanceVisibility(){
+  const separate=separateAllowance(),hasD2=!!current?.driver2StaffId;
+  const d1Approved=allowanceAlreadyApproved('DRIVER_1'),
+        d2Approved=allowanceAlreadyApproved('DRIVER_2');
+  $('bbBerD1Field').classList.toggle('bb-ber-hidden',d1Approved);
+  $('bbBerD2Field').classList.toggle('bb-ber-hidden',!hasD2||d2Approved);
+  // A separate request (even if pending) must not be changed from this form:
+  // the backend already forces driver allowances to zero for these batches.
+  $('bbBerD1').disabled=separate;
+  $('bbBerD2').disabled=separate;
+  const showD1=!d1Approved,showD2=hasD2&&!d2Approved;
+  $('bbBerAllowanceSection').classList.toggle('bb-ber-hidden',!showD1&&!showD2);
+  const note=$('bbBerAllowanceGuidance');
+  note.hidden=!separate||(!showD1&&!showD2);
+  if(!note.hidden)note.textContent='Driver Allowances for this batch use the separate Driver Allowance Request approval. Already-approved allowances are hidden; any outstanding driver allowance must be approved in the Driver Allowance tab. This Batch Earnings review handles Sales Incentive only.';
+  if(separate){
+    // Sharing incentive with drivers is intentionally prohibited by the
+    // existing protected financial approval RPC when separate requests exist.
+    $('bbBerOption').value='DIRECT';
+    for(const o of $('bbBerOption').options)o.disabled=o.value!=='DIRECT';
+    if(d1Approved&&(!hasD2||d2Approved)){
+      $('bbBerModeMessage').textContent+=' Driver Allowances were already approved at batch issue and will not be reviewed again.';
+    }
+  }else{
+    for(const o of $('bbBerOption').options){
+      o.disabled=o.value==='SHARE_ALL'&&!hasD2;
+    }
+  }
+}
 function openModal(id){
   current=(payload.reviews||[]).find(x=>Number(x.reviewId)===Number(id));if(!current)return;const c=current.calculation||{},eligible=current.incentiveMode==='SALESPERSON_ASSIGNED';
   $('bbBerTitle').textContent='🧾 '+clean(current.reviewNo)+' · '+clean(current.batchId);
@@ -107,15 +145,15 @@ function openModal(id){
   $('bbBerInfo').innerHTML=`<div class="bb-ber-box"><small>Salesperson / Batch Owner</small><strong>${esc(current.salesmanName||'-')}</strong><div>${esc(current.salesmanStaffId||'-')} · ${eligible?'Incentive eligible':'Not incentive eligible'}</div></div><div class="bb-ber-box"><small>Driver 1</small><strong>${esc(current.driver1Name||'-')}</strong><div>${esc(current.driver1StaffId||'-')}</div></div><div class="bb-ber-box"><small>Driver 2</small><strong>${esc(current.driver2Name||'No Driver 2')}</strong><div>${esc(current.driver2StaffId||'-')}</div></div><div class="bb-ber-box"><small>Net Batch Sales</small><strong>${money(c.netSaleUSD)}</strong><div>Gross ${money(c.grossSaleUSD)} · Returns ${money(c.saleReturnUSD)}</div></div><div class="bb-ber-box"><small>Incentive Rate</small><strong>${num(c.incentiveRatePercent).toFixed(2)}%</strong><div>${Number(c.invoiceCount||0)} valid invoice(s)</div></div><div class="bb-ber-box"><small>Calculated Incentive</small><strong>${money(c.calculatedIncentive)}</strong><div>${c.calculationReady?'Ready':'Calculation needs review'}</div></div><div class="bb-ber-box"><small>Issued / Sold Qty</small><strong>${num(current.issuedQty).toLocaleString()} / ${num(current.soldQty).toLocaleString()}</strong><div>${esc(current.locationCode)}</div></div>`;
   const items=Array.isArray(current.items)?current.items:[];
   $('bbBerItems').innerHTML=items.length?`<table class="bb-ber-lines"><thead><tr><th>Product</th><th>Unit</th><th class="money">Issued</th><th class="money">Sold</th><th class="money">Back</th><th class="money">Damage</th></tr></thead><tbody>${items.map(x=>`<tr><td><strong>${esc(x.productName)}</strong><br>${esc(x.productCode)}</td><td>${esc(x.unit||'-')}</td><td class="money">${num(x.issuedQty).toLocaleString()}</td><td class="money">${num(x.soldQty).toLocaleString()}</td><td class="money">${num(x.backSaleQty).toLocaleString()}</td><td class="money">${num(x.damagedQty).toLocaleString()}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No batch item detail found.</div>';
-  $('bbBerD1').value='0';$('bbBerD2').value='0';$('bbBerD1Label').textContent=(current.driver1Name||'Driver 1')+' Allowance (USD)';$('bbBerD2Label').textContent=(current.driver2Name||'Driver 2')+' Allowance (USD)';$('bbBerD2Field').classList.toggle('bb-ber-hidden',!current.driver2StaffId);
+  $('bbBerD1').value='0';$('bbBerD2').value='0';$('bbBerD1Label').textContent=(current.driver1Name||'Driver 1')+' Allowance (USD)';$('bbBerD2Label').textContent=(current.driver2Name||'Driver 2')+' Allowance (USD)';
   const approve=document.querySelector('input[name="bbBerDecision"][value="APPROVE"]'),reject=document.querySelector('input[name="bbBerDecision"][value="REJECT"]');if(eligible){approve.checked=true;reject.checked=false}else{approve.checked=false;reject.checked=true}
-  $('bbBerOption').value='DIRECT';Array.from($('bbBerOption').options).forEach(o=>{if(o.value==='SHARE_ALL')o.disabled=!current.driver2StaffId});$('bbBerRejectReason').value=eligible?'':'No incentive salesperson on carry batch';$('bbBerNote').value='';$('bbBerStatus').textContent='';$('bbBerStatus').className='status';
+  $('bbBerOption').value='DIRECT';updateAllowanceVisibility();$('bbBerRejectReason').value=eligible?'':'No incentive salesperson on carry batch';$('bbBerNote').value='';$('bbBerStatus').textContent='';$('bbBerStatus').className='status';
   applyDecisionUI();renderPreview();$('bbBerModal').hidden=false;
 }
 function closeModal(){$('bbBerModal').hidden=true;current=null}
 
 function calcPreview(){
-  if(!current)return null;const c=current.calculation||{},i=decision()==='APPROVE'?num(c.calculatedIncentive):0,d1=Math.max(0,num($('bbBerD1').value)),d2=current.driver2StaffId?Math.max(0,num($('bbBerD2').value)):0;let option=decision()==='REJECT'?'DRIVER_ALLOWANCE_ONLY':$('bbBerOption').value,sales=0,a1=0,a2=0,timing='ON_PAYMENT',pool=0;
+  if(!current)return null;const c=current.calculation||{},i=decision()==='APPROVE'?num(c.calculatedIncentive):0,d1=separateAllowance()?0:Math.max(0,num($('bbBerD1').value)),d2=separateAllowance()?0:(current.driver2StaffId?Math.max(0,num($('bbBerD2').value)):0);let option=decision()==='REJECT'?'DRIVER_ALLOWANCE_ONLY':(separateAllowance()?'DIRECT':$('bbBerOption').value),sales=0,a1=0,a2=0,timing='ON_PAYMENT',pool=0;
   if(option==='DIRECT'){sales=i;a1=d1;a2=d2}
   else if(option==='DRIVER_ALLOWANCE_ONLY'){sales=0;a1=d1;a2=d2}
   else if(option==='SHARE_DRIVER1'){pool=i+d1;sales=Math.round((pool/2)*100)/100;a1=Math.round((pool-sales)*100)/100;a2=d2;timing='PRE_RECORDED'}
@@ -124,11 +162,13 @@ function calcPreview(){
 }
 function renderPreview(){
   if(!current)return;const p=calcPreview();if(!p)return;const rejected=decision()==='REJECT',hasD2=!!current.driver2StaffId;
-  const salesName=rejected?'No Sales Incentive':(current.salesmanName||'Salesperson');
+  const salesName=rejected?'No Sales Incentive':(current.salesmanName||'Salesperson'),separate=separateAllowance();
   let expenseText='';
   if(p.timing==='PRE_RECORDED')expenseText=`Expense on this approval: <strong>Sale Incentive ${money(p.i)}</strong> + <strong>Driver Allowance ${money(p.d1+p.d2)}</strong>. These expenses are recorded once now as accrued expenses. Later staff claims only pay against them — no duplicate expense.`;
-  else expenseText=rejected?`Rejected incentive creates <strong>$0.00 Sale Incentive expense</strong>. Driver Allowance expense is created later when the driver successfully claims payment.`:`Option 1 keeps the normal flow: Sale Incentive and Driver Allowance expenses are created when each staff payment is successfully approved.`;
-  $('bbBerPreview').innerHTML=`<h3>Final Staff Earning Preview</h3><div class="bb-ber-person"><strong>${esc(salesName)}</strong><span>${rejected?'Incentive rejected':esc(current.salesmanStaffId||'')}</span><span class="bb-ber-money">${money(p.sales)}</span></div><div class="bb-ber-person"><strong>${esc(current.driver1Name||'Driver 1')}</strong><span>Driver 1</span><span class="bb-ber-money">${money(p.a1)}</span></div>${hasD2?`<div class="bb-ber-person"><strong>${esc(current.driver2Name||'Driver 2')}</strong><span>${p.option==='SHARE_DRIVER1'?'Outside pool · own allowance':'Driver 2'}</span><span class="bb-ber-money">${money(p.a2)}</span></div>`:''}<div class="bb-ber-person"><strong>Total Staff Earnings</strong><span>Original pool reconciled</span><span class="bb-ber-money">${money(p.total)}</span></div><div class="bb-ber-expense">${expenseText}</div>`;
+  else expenseText=separate
+    ?'Driver Allowances are handled by the separate Driver Allowance Requests and existing staff earnings. Only the Sales Incentive is decided here; no driver allowance is re-created.'
+    :rejected?`Rejected incentive creates <strong>$0.00 Sale Incentive expense</strong>. Driver Allowance expense is created later when the driver successfully claims payment.`:`Option 1 keeps the normal flow: Sale Incentive and Driver Allowance expenses are created when each staff payment is successfully approved.`;
+  $('bbBerPreview').innerHTML=`<h3>Final Staff Earning Preview</h3><div class="bb-ber-person"><strong>${esc(salesName)}</strong><span>${rejected?'Incentive rejected':esc(current.salesmanStaffId||'')}</span><span class="bb-ber-money">${money(p.sales)}</span></div>${separate?'':`<div class="bb-ber-person"><strong>${esc(current.driver1Name||'Driver 1')}</strong><span>Driver 1</span><span class="bb-ber-money">${money(p.a1)}</span></div>${hasD2?`<div class="bb-ber-person"><strong>${esc(current.driver2Name||'Driver 2')}</strong><span>${p.option==='SHARE_DRIVER1'?'Outside pool · own allowance':'Driver 2'}</span><span class="bb-ber-money">${money(p.a2)}</span></div>`:''}`}<div class="bb-ber-person"><strong>${separate?'Sales Incentive in this Review':'Total Staff Earnings'}</strong><span>${separate?'Driver allowances handled separately':'Original pool reconciled'}</span><span class="bb-ber-money">${money(p.total)}</span></div><div class="bb-ber-expense">${expenseText}</div>`;
 }
 
 async function approveReview(){
