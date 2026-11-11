@@ -136,14 +136,14 @@ $('bbOutletSave').onclick=async()=>{
 };
 
 // Bank History enhancement. Keep the original bank receipt as ONE row and ONE total.
-let shareLookup=new Map();
+let shareLookup=new Map(),outletFeatureReady=false;
 function outletLabel(tid,baseCurrency){
  const items=shareLookup.get(tid)||[];
  if(!items.length)return '';
  return '<div class="bb-shared-receipt-summary" style="font-size:11px;color:#26609c;line-height:1.55;margin-top:6px">'+
   '<b>'+items.length+' outlets · one bank receipt</b>'+
-  items.map(x=>'<div>'+esc(x.customerName||x.customerId)+' · '+esc(money(x.amount,baseCurrency))+
-    ' <span style="color:#70849a">(Remaining '+esc(money(x.remaining,baseCurrency))+')</span></div>').join('')+
+  items.map(x=>'<div>'+esc(x.customerName||x.customerId)+' · '+esc(baseCurrency+' '+money(x.amount,baseCurrency))+
+    ' <span style="color:#70849a">(Remaining '+esc(baseCurrency+' '+money(x.remaining,baseCurrency))+')</span></div>').join('')+
   '</div>';
 }
 function enhanceBankRows(){
@@ -161,7 +161,7 @@ function enhanceBankRows(){
     div.innerHTML=outletLabel(tid,items[0].currency||String(cells[4]?.textContent||'USD').split(' ')[0]);
     while(div.firstChild)cells[2].appendChild(div.firstChild);
   }
-  if((status==='AVAILABLE'||items.length)&&!cells[10].querySelector('.bb-allocate-trigger')){
+  if(outletFeatureReady&&(status==='AVAILABLE'||items.length)&&!cells[10].querySelector('.bb-allocate-trigger')){
    const btn=document.createElement('button');
    btn.type='button';
    btn.className='bb-allocate-trigger';
@@ -198,8 +198,10 @@ async function loadSplitDetails(){
     next.get(tid).push(x);
    }
    shareLookup=next;
+   outletFeatureReady=true;
   }
  }catch(e){
+  outletFeatureReady=false;
   console.warn('Shared bank outlet details unavailable (install Local Brain SQL upgrade first):',e?.message||e);
  }
  enhanceBankRows();enhanceSummary();
