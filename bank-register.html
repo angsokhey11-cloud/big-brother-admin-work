@@ -47,6 +47,14 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function msg(s,error=false){$('message').textContent=s;$('message').className='message'+(error?' error':'')}
 function customerLabel(c){return c.customer_name+' ['+c.customer_id+']'+(c.location_code?' · '+c.location_code:'')}
 function selectedCustomer(){return customers.find(x=>customerLabel(x)===$('customer').value.trim())||null}
+function payerLinkedOutletCount(payerName){
+ const normal=x=>String(x||'').toLowerCase().replace(/[.,\-_]+/g,' ').replace(/\s+/g,' ').trim();
+ const key=normal(payerName);
+ if(!key)return 0;
+ return new Set(identities.filter(x=>x.active===true&&
+  [x.account_holder_name,...(x.alternative_names||[])].some(y=>normal(y)===key))
+  .map(x=>String(x.customer_id))).size;
+}
 function customerIdentities(customerId){
  return identities.filter(r=>String(r.customer_id||'')===String(customerId||'')&&r.active===true);
 }
@@ -160,7 +168,9 @@ $('verify').onclick=async()=>{
   const payerIdentityId=Number(selectedPayerOption?.dataset?.identity||0);
   if(!payerIdentityId)throw new Error('Choose a valid registered payer identity.');
   await adapter.rpc('bb_bank_register_invoice_tx_v4',{p_customer_id:c.customer_id,p_transaction_id:id,p_amount:amount,p_currency:currency,p_invoice_currency:invoiceCurrency,p_exchange_rate:rate,p_received_date:receivedDate,p_payer_identity_id:payerIdentityId,p_bank_name:null});
-  msg('Verified payment registered for '+c.customer_name+'.');
+  const linkedCount=payerLinkedOutletCount($('bank').value);
+  msg('Verified bank receipt registered ONCE for '+c.customer_name+'.'+
+    (linkedCount>1?' SHARED PAYER: '+linkedCount+' linked outlets. Open Transaction History → Allocate Outlets BEFORE any invoice or A/R uses this receipt.':''));
   $('transaction').value='';$('amount').value='';updateEquivalent();
  }catch(e){msg(e.message||String(e),true)}
  finally{busy=false;$('verify').disabled=false}
