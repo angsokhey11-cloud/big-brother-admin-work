@@ -153,14 +153,14 @@ function render(){
    syncSelection();
  });
  $('rows').querySelectorAll('[data-cancel]').forEach(b=>b.onclick=async()=>{
-   const cancelMessage='Remove this unused verification from Bank History? Its transaction ID will remain reserved to prevent reuse.';
+   const cancelMessage='Cancel this unused bank verification? A cancelled ID may be re-registered later ONLY by an Admin if it has never been used. The cancellation and any re-registration are audit-logged.';
    const cancelOk=window.bbConfirm?await window.bbConfirm(cancelMessage,{title:'Cancel Verified Payment',okText:'Remove Verification',cancelText:'Keep'}):confirm(cancelMessage);
    if(!cancelOk)return;
    try{
      b.disabled=true;
      await api.rpc('bb_bank_cancel_invoice_tx',{p_transaction_id:b.dataset.cancel});
      selected.delete(b.dataset.cancel);
-     $('message').textContent='Unused verification removed from Bank History.';
+     $('message').textContent='Unused verification cancelled and preserved in cancellation history. Admin may re-register its ID only if it has no financial usage.';
      await refresh();
    }catch(e){$('message').textContent=e.message;b.disabled=false}
  });
