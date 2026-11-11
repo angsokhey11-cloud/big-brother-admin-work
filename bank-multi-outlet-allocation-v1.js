@@ -218,5 +218,11 @@ window.addEventListener('bb:bank-outlets-updated',()=>{
  });
 });
 loadSplitDetails();
+const deepLinkTransaction=new URLSearchParams(location.search).get('transaction')||'';
+if(/^[A-Z0-9_/-]{4,160}$/i.test(deepLinkTransaction)){
+ // An A/R batch can open the exact bank receipt, but allocation still requires
+ // explicit admin review and approval. Never auto-save amounts from a URL.
+ void open(deepLinkTransaction.toUpperCase());
+}
 window.BBBankOutletSplit={open,sharesFor:transactionId=>(shareLookup.get(String(transactionId))||[]).slice()};
 })();
