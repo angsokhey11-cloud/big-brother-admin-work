@@ -218,5 +218,5 @@ window.addEventListener('bb:bank-outlets-updated',()=>{
  });
 });
 loadSplitDetails();
-window.BBBankOutletSplit={open};
+window.BBBankOutletSplit={open,sharesFor:transactionId=>(shareLookup.get(String(transactionId))||[]).slice()};
 })();
