@@ -134,5 +134,87 @@ $('bbOutletSave').onclick=async()=>{
   refreshTotal();
  }
 };
+
+// Bank History enhancement. Keep the original bank receipt as ONE row and ONE total.
+let shareLookup=new Map();
+function outletLabel(tid,baseCurrency){
+ const items=shareLookup.get(tid)||[];
+ if(!items.length)return '';
+ return '<div class="bb-shared-receipt-summary" style="font-size:11px;color:#26609c;line-height:1.55;margin-top:6px">'+
+  '<b>'+items.length+' outlets · one bank receipt</b>'+
+  items.map(x=>'<div>'+esc(x.customerName||x.customerId)+' · '+esc(money(x.amount,baseCurrency))+
+    ' <span style="color:#70849a">(Remaining '+esc(money(x.remaining,baseCurrency))+')</span></div>').join('')+
+  '</div>';
+}
+function enhanceBankRows(){
+ const tbody=document.getElementById('rows');
+ if(!tbody)return;
+ tbody.querySelectorAll(':scope > tr').forEach(tr=>{
+  const cells=tr.cells;
+  if(cells.length!==11)return;
+  const tid=String(cells[3]?.textContent||'').trim();
+  const status=String(cells[7]?.textContent||'').trim();
+  const items=shareLookup.get(tid)||[];
+  if(!tid)return;
+  if(items.length&&!cells[2].querySelector('.bb-shared-receipt-summary')){
+    const div=document.createElement('div');
+    div.innerHTML=outletLabel(tid,items[0].currency||String(cells[4]?.textContent||'USD').split(' ')[0]);
+    while(div.firstChild)cells[2].appendChild(div.firstChild);
+  }
+  if((status==='AVAILABLE'||items.length)&&!cells[10].querySelector('.bb-allocate-trigger')){
+   const btn=document.createElement('button');
+   btn.type='button';
+   btn.className='bb-allocate-trigger';
+   btn.style.marginRight='5px';
+   btn.textContent=items.length?'View / Edit Outlets':'Allocate Outlets';
+   btn.onclick=()=>open(tid);
+   cells[10].prepend(btn);
+  }
+ });
+}
+function enhanceSummary(){
+ const table=document.querySelector('#summarySheet table');
+ if(!table)return;
+ table.querySelectorAll('tbody > tr').forEach(tr=>{
+  const cells=tr.cells;
+  if(cells.length<4||cells[2].querySelector('.bb-shared-receipt-summary'))return;
+  const tid=String(cells[3].textContent||'').trim();
+  const items=shareLookup.get(tid)||[];
+  if(!items.length)return;
+  const wrap=document.createElement('div');
+  wrap.innerHTML=outletLabel(tid,items[0].currency||'USD');
+  while(wrap.firstChild)cells[2].appendChild(wrap.firstChild);
+ });
+}
+async function loadSplitDetails(){
+ try{
+  const rows=await api.rpc('bb_bank_outlet_share_list_v1');
+  if(Array.isArray(rows)){
+   const next=new Map();
+   for(const x of rows){
+    const tid=String(x.transactionId||'');
+    if(!tid)continue;
+    if(!next.has(tid))next.set(tid,[]);
+    next.get(tid).push(x);
+   }
+   shareLookup=next;
+  }
+ }catch(e){
+  console.warn('Shared bank outlet details unavailable (install Local Brain SQL upgrade first):',e?.message||e);
+ }
+ enhanceBankRows();enhanceSummary();
+}
+const tableBody=document.getElementById('rows');
+if(tableBody)new MutationObserver(()=>{enhanceBankRows()}).observe(tableBody,{childList:true});
+const summarySheet=document.getElementById('summarySheet');
+if(summarySheet)new MutationObserver(()=>{enhanceSummary()}).observe(summarySheet,{childList:true});
+window.addEventListener('bb:bank-outlets-updated',()=>{
+ loadSplitDetails().then(()=>{
+  const refresh=document.getElementById('refresh');
+  if(refresh)refresh.click();
+  setTimeout(enhanceBankRows,250);
+ });
+});
+loadSplitDetails();
 window.BBBankOutletSplit={open};
 })();
