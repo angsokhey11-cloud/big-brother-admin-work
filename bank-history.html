@@ -192,7 +192,10 @@ function buildSummary(){
 function summaryText(){
  const rows=selectedRows();
  return ['BIG BROTHER — BANK TRANSACTION SUMMARY','Transactions: '+rows.length,'']
-  .concat(rows.map((t,i)=>{const eq=equivalent(t);return (i+1)+'. '+dateText(t.received_date)+' | '+(t.customer_name||t.customer_id)+' | TX: '+t.transaction_id+' | '+money(t.amount,t.currency)+' | Invoice: '+money(eq.amount,eq.currency)+(t.payer_name?' | Payer: '+t.payer_name:'');}))
+  .concat(rows.map((t,i)=>{const eq=equivalent(t);return (i+1)+'. '+dateText(t.received_date)+' | '+(t.customer_name||t.customer_id)+' | TX: '+t.transaction_id+' | '+money(t.amount,t.currency)+' | Invoice: '+money(eq.amount,eq.currency)+(t.payer_name?' | Payer: '+t.payer_name:'')+
+  ((window.BBBankOutletSplit?.sharesFor(t.transaction_id)||[]).length
+   ?' | OUTLETS: '+window.BBBankOutletSplit.sharesFor(t.transaction_id).map(x=>
+     (x.customerName||x.customerId)+' '+money(x.amount,t.currency)).join('; '):'');}))
   .join('\n');
 }
 async function refresh(){
@@ -226,6 +229,6 @@ $('copySummary').onclick=async()=>{
 refresh();
 })();
 </script>
-<script src="bank-multi-outlet-allocation-v1.js?v=20261111-sharedoutlets4"></script>
+<script src="bank-multi-outlet-allocation-v1.js?v=20261111-sharedoutlets5"></script>
 </body>
 </html>
