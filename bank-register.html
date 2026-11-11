@@ -13,6 +13,7 @@
 <div><label for="invoiceCurrency">Invoice currency</label><select id="invoiceCurrency"><option value="USD">USD</option><option value="KHR">KHR</option></select></div>
 <div id="rateWrap" style="display:none"><label for="rate">Admin-approved exchange rate (KHR per USD)</label><input id="rate" type="number" inputmode="decimal" min="1" step="any" placeholder="e.g. 4050"></div>
 <div style="grid-column:1/-1;background:#f2f7fd;border-radius:10px;padding:12px"><span style="font-size:12px;color:#60748b">Payment equivalent</span><div id="equivalent" style="font-size:22px;font-weight:900;margin-top:4px">—</div></div></div>
+<div id="bbBankReuseNotice" hidden role="status" style="margin-top:13px;border:1px solid #c2d7ea;background:#f3f9ff;color:#1d5080;padding:11px 12px;border-radius:10px;font-size:12px;line-height:1.55"></div>
 <div class="actions"><button id="verify">Register verified payment</button><a class="secondary" style="display:inline-flex;align-items:center;padding:11px 17px;background:#e7eff8;border-radius:8px;text-decoration:none;font-weight:bold" href="bank-history.html">View Transaction History →</a></div>
 <p id="message" class="message" role="status"></p></section>
 </main>
@@ -43,9 +44,54 @@ let identities=[];
 let busy=false;
 let identityBusy=false;
 let lastIdentityPromptCustomer='';
+let previousIdCheck=null,previousIdCheckSeq=0,previousIdTimer=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function msg(s,error=false){$('message').textContent=s;$('message').className='message'+(error?' error':'')}
 function customerLabel(c){return c.customer_name+' ['+c.customer_id+']'+(c.location_code?' · '+c.location_code:'')}
+
+function showBankIdStatus(detail){
+ const banner=$('bbBankReuseNotice');
+ if(!banner)return;
+ const status=String(detail?.status||''),tid=String(detail?.transactionId||'');
+ if(!tid||tid!==String($('transaction').value||'').trim().toUpperCase()||status==='NEW'){
+   banner.hidden=true;return;
+ }
+ if(status==='CANCELLED_UNUSED'){
+   banner.hidden=false;banner.style.background='#fff9ed';banner.style.borderColor='#ebc987';banner.style.color='#80531b';
+   const old=detail.previousBankAmount!=null&&detail.previousBankCurrency
+     ?' Previous registered amount: '+detail.previousBankCurrency+' '+Number(detail.previousBankAmount).toLocaleString('en-US')+'.':'';
+   banner.textContent='Previously cancelled but never used — eligible for Admin re-registration. Confirm the ACTUAL incoming bank amount, received date and payer against the bank statement.'+
+     old+' Re-registration will be kept in the audit log.';
+ }else if(status==='ACTIVE'||status==='USED'){
+   banner.hidden=false;banner.style.background='#fff1f0';banner.style.borderColor='#efb8b3';banner.style.color='#aa2424';
+   banner.textContent=status==='ACTIVE'
+     ?'This transaction ID is already registered. The same bank transfer must not be registered again.'
+     :'This transaction ID has financial history and cannot be re-registered.';
+ }else banner.hidden=true;
+}
+async function inspectBankId(force=false){
+ const tid=String($('transaction').value||'').trim().toUpperCase();
+ if(tid.length<4){previousIdCheck=null;showBankIdStatus(null);return null;}
+ if(!force&&previousIdCheck?.transactionId===tid)return previousIdCheck;
+ const seq=++previousIdCheckSeq;
+ try{
+  const detail=await adapter.rpc('bb_bank_reregistration_status_v1',{p_transaction_id:tid});
+  if(seq!==previousIdCheckSeq||tid!==String($('transaction').value||'').trim().toUpperCase())return null;
+  previousIdCheck=detail;showBankIdStatus(detail);return detail;
+ }catch(error){
+  if(seq===previousIdCheckSeq){previousIdCheck=null;showBankIdStatus(null);}
+  if(force)throw error;
+  console.warn('Bank reference status preview unavailable:',error?.message||error);
+  return null;
+ }
+}
+$('transaction').addEventListener('input',()=>{
+ previousIdCheck=null;previousIdCheckSeq++;
+ showBankIdStatus(null);clearTimeout(previousIdTimer);
+ previousIdTimer=setTimeout(()=>void inspectBankId().catch(()=>{}),350);
+});
+$('transaction').addEventListener('blur',()=>void inspectBankId().catch(()=>{}));
+
 function selectedCustomer(){return customers.find(x=>customerLabel(x)===$('customer').value.trim())||null}
 function payerLinkedOutletCount(payerName){
  const normal=x=>String(x||'').toLowerCase().replace(/[.,\-_]+/g,' ').replace(/\s+/g,' ').trim();
@@ -159,7 +205,19 @@ $('verify').onclick=async()=>{
  if(!id||!Number.isFinite(amount)||amount<=0)return msg('Enter a valid transaction ID and positive bank amount.',true);
  if(!receivedDate)return msg('Choose the date the bank payment was received.',true);
  if(!Number.isFinite(rate)||rate<=0||(currency!==invoiceCurrency&&rate<=1))return msg('Enter the Admin-approved KHR per USD exchange rate.',true);
- const registerMessage='I confirmed this transfer in my bank account:\n'+id+'\n'+customerLabel(c)+'\nPayer: '+$('bank').value+'\nReceived: '+receivedDate+'\n'+currency+' '+amount+'\nInvoice currency: '+invoiceCurrency+'\nExchange rate: '+rate+'\n\nRegister for staff Invoice Generator?';
+ let idInfo;
+ try{
+  idInfo=await inspectBankId(true);
+  if(!idInfo)throw Error('Could not verify bank reference status. Please retry.');
+ }catch(error){return msg('Bank ID verification failed: '+(error?.message||String(error)),true);}
+ if(['ACTIVE','USED','INVALID'].includes(String(idInfo.status)))
+   return msg('This transaction ID is already active or has financial history; registration blocked.',true);
+ const wasCancelled=idInfo.status==='CANCELLED_UNUSED';
+ const previousLine=idInfo.previousBankAmount!=null&&idInfo.previousBankCurrency
+   ?'\nPrevious registered amount: '+idInfo.previousBankCurrency+' '+Number(idInfo.previousBankAmount).toFixed(2):'';
+ const correctionNotice=wasCancelled
+   ?'\n\nPREVIOUSLY CANCELLED ID (never used). Confirm the actual bank statement amount and received date before approving. This re-registration will be audited.'+previousLine:'';
+ const registerMessage='I confirmed this transfer in my bank account:\n'+id+'\n'+customerLabel(c)+'\nPayer: '+$('bank').value+'\nReceived: '+receivedDate+'\n'+currency+' '+amount+'\nInvoice currency: '+invoiceCurrency+'\nExchange rate: '+rate+correctionNotice+'\n\nRegister for staff Invoice Generator?';
  const registerOk=window.bbConfirm?await window.bbConfirm(registerMessage,{title:'Register Verified Payment',okText:'Register Payment',cancelText:'Cancel'}):confirm(registerMessage);
  if(!registerOk)return;
  busy=true;$('verify').disabled=true;
@@ -167,11 +225,11 @@ $('verify').onclick=async()=>{
   const selectedPayerOption=$('bank').selectedOptions[0];
   const payerIdentityId=Number(selectedPayerOption?.dataset?.identity||0);
   if(!payerIdentityId)throw new Error('Choose a valid registered payer identity.');
-  await adapter.rpc('bb_bank_register_invoice_tx_v4',{p_customer_id:c.customer_id,p_transaction_id:id,p_amount:amount,p_currency:currency,p_invoice_currency:invoiceCurrency,p_exchange_rate:rate,p_received_date:receivedDate,p_payer_identity_id:payerIdentityId,p_bank_name:null});
+  const registered=await adapter.rpc('bb_bank_register_invoice_tx_v4',{p_customer_id:c.customer_id,p_transaction_id:id,p_amount:amount,p_currency:currency,p_invoice_currency:invoiceCurrency,p_exchange_rate:rate,p_received_date:receivedDate,p_payer_identity_id:payerIdentityId,p_bank_name:null});
   const linkedCount=payerLinkedOutletCount($('bank').value);
-  msg('Verified bank receipt registered ONCE for '+c.customer_name+'.'+
+  msg((registered?.reRegistered?'Cancelled, unused bank ID re-registered with audit record. ':'')+'Verified bank receipt registered ONCE for '+c.customer_name+'.'+
     (linkedCount>1?' SHARED PAYER: '+linkedCount+' linked outlets. Open Transaction History → Allocate Outlets BEFORE any invoice or A/R uses this receipt.':''));
-  $('transaction').value='';$('amount').value='';updateEquivalent();
+  $('transaction').value='';$('amount').value='';previousIdCheck=null;previousIdCheckSeq++;showBankIdStatus(null);updateEquivalent();
  }catch(e){msg(e.message||String(e),true)}
  finally{busy=false;$('verify').disabled=false}
 };
